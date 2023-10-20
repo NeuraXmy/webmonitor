@@ -7,7 +7,7 @@ import 'element-plus/dist/index.css'
 import store from './store'
 import Plugin from './utils/axios';
 import axios from 'axios'
-// import qs from 'qs'
+import qs from 'qs'
 
 // const axios = require('axios');
 // Vue.prototype.$axios = axios
