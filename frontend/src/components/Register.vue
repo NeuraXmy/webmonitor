@@ -5,8 +5,8 @@
             欢迎
           </div>
           <el-form ref="userRegisterRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
-              <el-form-item prop="mail">
-                  <el-input v-model="userForm.mail" placeholder="邮箱"></el-input>
+              <el-form-item prop="email">
+                  <el-input v-model="userForm.email" placeholder="邮箱"></el-input>
               </el-form-item>
               <el-form-item prop="password">
                   <el-input show-password v-model="userForm.password" placeholder="密码"></el-input>
@@ -26,13 +26,24 @@
 <script>
 export default {
   data() {
+    const validEmail = (rule, value, callback) => {
+      const EmailReg = /^^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/
+      if(EmailReg.test(value)){
+        return callback()
+      }
+      return callback(new Error('请输入正确的邮箱'))
+    }
     return {
       userForm:{
-          mail:'',
+          email:'',
           password:'',
           nickname:''
       },
       userRules:{
+          email:[
+              {required:true, message: '请输入邮箱', trigger:'blur'},
+              {validator: validEmail, trigger:'blur'}
+          ],
           password:[
               {required:true, message: '请输入密码', trigger:'blur'}
           ],
