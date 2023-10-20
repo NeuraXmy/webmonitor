@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+.idea
+.vscode
+
+config.py
+migrations/
