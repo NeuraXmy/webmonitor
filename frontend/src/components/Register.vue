@@ -6,13 +6,13 @@
           </div>
           <el-form ref="userRegisterRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
               <el-form-item prop="mail">
-                  <el-input v-model="userForm.name" placeholder="邮箱"></el-input>
+                  <el-input v-model="userForm.mail" placeholder="邮箱"></el-input>
               </el-form-item>
-              <el-form-item prop="pwd">
-                  <el-input show-password v-model="userForm.pwd" placeholder="密码"></el-input>
+              <el-form-item prop="password">
+                  <el-input show-password v-model="userForm.password" placeholder="密码"></el-input>
               </el-form-item>
-              <el-form-item prop="name">
-                  <el-input v-model="userForm.name" placeholder="昵称"></el-input>
+              <el-form-item prop="nickname">
+                  <el-input v-model="userForm.nickname" placeholder="昵称"></el-input>
               </el-form-item>
               <el-form-item>
                   <el-button type="primary" @click="register">注册</el-button>
@@ -29,14 +29,14 @@ export default {
     return {
       userForm:{
           mail:'',
-          pwd:'',
-          name:''
+          password:'',
+          nickname:''
       },
       userRules:{
-          pwd:[
+          password:[
               {required:true, message: '请输入密码', trigger:'blur'}
           ],
-          name:[
+          nickname:[
               {required:true, message: '请输入昵称', trigger:'blur'},
               // {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
           ]

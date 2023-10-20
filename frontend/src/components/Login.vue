@@ -5,11 +5,11 @@
             欢迎
           </div>
           <el-form ref="userRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
-              <el-form-item prop="name">
-                  <el-input v-model="userForm.name" placeholder="用户名"></el-input>
+              <el-form-item prop="email">
+                  <el-input v-model="userForm.email" placeholder="用户名"></el-input>
               </el-form-item>
-              <el-form-item prop="pwd">
-                  <el-input show-password v-model="userForm.pwd" placeholder="密码"></el-input>
+              <el-form-item prop="password">
+                  <el-input show-password v-model="userForm.password" placeholder="密码"></el-input>
               </el-form-item>
               <a class="form__link" @click="register">注册新账户</a>
               <el-form-item>
@@ -19,60 +19,22 @@
           </el-form>
       </div>
   </div>
-  <!-- <h1>多模态信息舆情监控</h1>
-  <el-form :model="form" label-width="120px">
-  <el-form-item label="用户名">
-    <el-input v-model="user" />
-  </el-form-item>
-  <el-form-item label="密码">
-    <el-input v-model="psw" type="password" />
-  </el-form-item>
-  <el-form-item label="身份">
-    <el-radio-group v-model="role">
-      <el-radio label="user">用户</el-radio>
-      <el-radio label="admin">管理员</el-radio>
-    </el-radio-group>
-  </el-form-item>
-  
-  <el-form-item>
-    <el-button type="primary" @click="onSubmit">登录</el-button>
-    <el-button>忘记密码</el-button>
-  </el-form-item>
-</el-form> -->
-
 </template>
 
 <script>
-// import { reactive,toRefs } from 'vue'
-// import adminManage from './../hooks/admin'
-
-// const form = reactive({
-//   user: '',
-//   psw:'',
-//   role:''
-// })
-
-// const {Admin_Login} = adminManage();
-
-// const {user,psw,role} = toRefs(form)
-
-// const onSubmit = ()=>{
-//   //发起请求
-//   Admin_Login(user.value,psw.value);
-// }
 export default {
   data() {
     return {
       userForm:{
-          name:'sxt',
-          pwd:'123'
+          email:'sxt',
+          password:'123'
       },
       userRules:{
-          name:[
+          email:[
               {required:true, message: '请输入邮箱', trigger:'blur'},
               // {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
           ],
-          pwd:[
+          password:[
               {required:true, message: '请输入密码', trigger:'blur'}
           ]
       }
