@@ -38,7 +38,7 @@ export default {
           ],
           name:[
               {required:true, message: '请输入昵称', trigger:'blur'},
-              {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
+              // {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
           ]
       }
     };
