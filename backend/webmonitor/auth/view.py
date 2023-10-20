@@ -10,50 +10,50 @@ from wtforms.validators import DataRequired, Email, EqualTo
 from webmonitor.utils.email import send_email
 
 
-# 注册表单
-class RegistrationForm(FlaskForm):
-    email       = StringField('Email', validators=[DataRequired(), Email()])
-    password1   = PasswordField('Password', validators=[DataRequired()])
-    password2   = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password1')])
-    nickname    = StringField('Nickname', validators=[DataRequired()])
-    submit      = SubmitField('Register')
-
-
 # 用户注册
-@auth_bp.route('/register', methods=['POST', 'GET'])
+@auth_bp.route('/register', methods=['POST'])
 def register():
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        user = models.User.query.filter_by(email=form.email.data).first()
-        # 用户已激活
-        if user and user.activated:
-            return make_response(400, msg="用户已存在")
-        # 如果用户不存在则创建
-        if not user:
-            user = models.User(email=form.email.data,
-                            password=form.password1.data,
-                            nickname=form.nickname.data)
-            models.db.session.add(user)
-            models.db.session.commit()
-        # 如果用户存在则更新信息
-        if user:
-            user.password = form.password1.data
-            user.nickname = form.nickname.data
-            models.db.session.commit()
-        # 生成激活链接
-        activation_token = generate_token(user.id)
-        activation_link = request.host_url + 'auth/activate/' + activation_token
-        # 发送验证邮件
-        send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
-        return make_response(200)
-    
-    else:
-        return render_template('auth/register.html', form=form)
+    email       = request.form.get('email')
+    password    = request.form.get('password')
+    nickname    = request.form.get('nickname')
+    if not all([email, password, nickname]):
+        return make_response(400, msg="参数不完整")
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+        return make_response(400, msg="邮箱格式错误")
+    if len(password) < 4:
+        return make_response(400, msg="密码长度不能小于4位")
+    if len(nickname) < 2:
+        return make_response(400, msg="昵称长度不能小于2位")
 
+    user = models.User.query.filter_by(email=email).first()
+    # 用户已激活
+    if user and user.activated:
+        return make_response(400, msg="用户已存在")
+    # 如果用户不存在则创建
+    if not user:
+        user = models.User(email=email, password=password, nickname=nickname)
+        models.db.session.add(user)
+        models.db.session.commit()
+    # 如果用户存在则更新信息
+    else:
+        user.password = password
+        user.nickname = nickname
+        models.db.session.commit()
+
+    # 生成激活链接
+    activation_token = generate_token(user.id)
+    activation_link = request.host_url + 'auth/activate?token=' + activation_token
+    # 发送验证邮件
+    send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
+    return make_response(200)
+    
 
 # 用户激活
-@auth_bp.route('/activate/<token>', methods=['GET'])
-def activate(token):
+@auth_bp.route('/activate', methods=['GET'])
+def activate():
+    token = request.args.get('token')
+
     user_id = verify_token(token, 3600)
     if not user_id:
         return make_response(401, msg="token无效")
@@ -72,44 +72,31 @@ def activate(token):
     except Exception as e:
         return make_response(500)
     
-    return make_response(200)
-
-
-# 登录表单
-class LoginForm(FlaskForm):
-    email       = StringField('Email', validators=[DataRequired(), Email()])
-    password    = PasswordField('Password', validators=[DataRequired()])
-    submit      = SubmitField('Login')
-
+    return make_response(200, msg="激活成功")
+    
 
 # 用户登录
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    return {
-        "status": 200,
-        "msg": "登录成功",
-        "data": {
-            'token': "123456"
-        }
-    }
-    form = request.form
-    if form.validate_on_submit():
-        user = models.User.query.filter_by(email=form.email.data).first()
-        # 用户不存在
-        if not user:
-            return make_response(400, msg="用户不存在")
-        # 密码错误
-        if not user.check_password(form.password.data):
-            return make_response(400, msg="密码错误")
-        # 用户未激活
-        if not user.activated:
-            return make_response(400, msg="用户未激活")
-        
-        token = generate_token(user.id)
-        return make_response(200, data={'token': token})
+    email    = request.form.get('email')
+    password = request.form.get('password')
+    if not all([email, password]):
+        return make_response(400, msg="参数不完整")
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+        return make_response(400, msg="邮箱格式错误")
 
-    return make_response(400, msg="表单验证失败")
-
-
-# 创建超级管理员
+    user = models.User.query.filter_by(email=email).first()
+    # 用户不存在
+    if not user:
+        return make_response(400, msg="用户不存在")
+    # 密码错误
+    if not user.check_password(password):
+        return make_response(400, msg="密码错误")
+    # 用户未激活
+    if not user.activated:
+        return make_response(400, msg="用户未激活")
+    
+    token = generate_token(user.id)
+    return make_response(200, data={'token': token})
 

@@ -5,8 +5,8 @@
             欢迎
           </div>
           <el-form ref="userRegisterRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
-              <el-form-item prop="mail">
-                  <el-input v-model="userForm.mail" placeholder="邮箱"></el-input>
+              <el-form-item prop="email">
+                  <el-input v-model="userForm.email" placeholder="邮箱"></el-input>
               </el-form-item>
               <el-form-item prop="password">
                   <el-input show-password v-model="userForm.password" placeholder="密码"></el-input>
@@ -28,7 +28,7 @@ export default {
   data() {
     return {
       userForm:{
-          mail:'',
+          email:'',
           password:'',
           nickname:''
       },
