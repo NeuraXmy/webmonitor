@@ -70,7 +70,7 @@ export default {
       userRules:{
           name:[
               {required:true, message: '请输入邮箱', trigger:'blur'},
-              {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
+              // {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
           ],
           pwd:[
               {required:true, message: '请输入密码', trigger:'blur'}
