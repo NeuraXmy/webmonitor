@@ -92,7 +92,7 @@
           // console.log(res)
           if(res.status ===200){
             window.sessionStorage.setItem('token',res.data.token)
-            this.$msg.success(res.msg)
+            this.$message.success(res.msg)
             this.$router.push('/home')
           }else{
             this.$msg.error(res.msg);

@@ -6,13 +6,13 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import store from './store'
 import Plugin from './utils/axios';
-// import axios from 'axios'
+import axios from 'axios'
 // import qs from 'qs'
 
 // const axios = require('axios');
 // Vue.prototype.$axios = axios
 // Vue.prototype.$qs = qs
-// axios.defaults.baseURL = 'http://localhost:5000'
+axios.defaults.baseURL = 'http://localhost:23456'
 
 const app = createApp(App)
 

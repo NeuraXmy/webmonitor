@@ -83,9 +83,16 @@ class LoginForm(FlaskForm):
 
 
 # 用户登录
-@auth_bp.route('/login', methods=['POST', 'GET'])
+@auth_bp.route('/login', methods=['POST'])
 def login():
-    form = LoginForm()
+    return {
+        "status": 200,
+        "msg": "登录成功",
+        "data": {
+            'token': "123456"
+        }
+    }
+    form = request.form
     if form.validate_on_submit():
         user = models.User.query.filter_by(email=form.email.data).first()
         # 用户不存在
@@ -100,8 +107,8 @@ def login():
         
         token = generate_token(user.id)
         return make_response(200, data={'token': token})
-    
-    return render_template('auth/login.html', form=form)
+
+    return make_response(400, msg="表单验证失败")
 
 
 # 创建超级管理员
