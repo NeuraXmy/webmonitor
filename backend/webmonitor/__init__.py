@@ -24,6 +24,12 @@ def register_database(app):
 def register_blueprints(app):
     from webmonitor.auth import auth_bp
     app.register_blueprint(auth_bp)
+    from webmonitor.watch import watch_bp
+    app.register_blueprint(watch_bp)
+    from webmonitor.space import space_bp
+    app.register_blueprint(space_bp)
+    from webmonitor.user import user_bp
+    app.register_blueprint(user_bp)
 
 
 def register_plugin(app):

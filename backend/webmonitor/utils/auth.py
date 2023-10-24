@@ -1,7 +1,8 @@
 from webmonitor.models import User
 from webmonitor.utils.token import verify_token
+from webmonitor.utils.response import make_response
 from functools import wraps
-from flask import make_response, request, redirect, url_for
+from flask import request, redirect, url_for
 
 
 # 验证用户登录装饰器
@@ -11,10 +12,10 @@ def login_required(view_func):
         try:
             token = request.headers['token']
         except Exception:
-            return make_response(401, msg="缺少token")
+            return make_response(401, msg="缺少验证token")
         
         try:
-            user_id = verify_token(token)
+            user_id = verify_token(token, 7 * 24 * 3600)
         except Exception:
             return make_response(401, msg="token无效")
         
@@ -24,5 +25,5 @@ def login_required(view_func):
         if not user.activated:
             return make_response(401, msg="用户未激活")
         
-        return view_func(*args, **kwargs)
+        return view_func(user, *args, **kwargs)
     return decorated_func
