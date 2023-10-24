@@ -26,6 +26,13 @@
 <script>
 export default {
   data() {
+    const validEmail = (rule, value, callback) => {
+      const EmailReg = /^^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/
+      if(EmailReg.test(value)){
+        return callback()
+      }
+      return callback(new Error('请输入正确的邮箱'))
+    }
     return {
       userForm:{
           email:'',
@@ -33,6 +40,10 @@ export default {
           nickname:''
       },
       userRules:{
+          email:[
+              {required:true, message: '请输入邮箱', trigger:'blur'},
+              {validator: validEmail, trigger:'blur'}
+          ],
           password:[
               {required:true, message: '请输入密码', trigger:'blur'}
           ],
