@@ -270,15 +270,22 @@ export default{
         }
     },
     created(){
-        // this.getMonitorSpaceList()
+        this.getMonitorSpaceList()
     },
     methods:{
         async getMonitorSpaceList(){
             // const {data: res} = await this.$axios.get('/spaces', {params: this.queryInfo})
-            const {data: res} = await this.$axios.get('/spaces')
-            console.log(res)
+            // token=window.sessionStorage.getItem('token')
+            // const {data: res} = await this.$axios.get('/spaces/?token=${token}')
+            console.log(sessionStorage.getItem('token'))
+            const {data: res} = await this.$axios.get('/spaces',
+            {
+                // params:{},
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            window.sessionStorage.setItem('token',res.data.token)
             this.$message.success(res.message)
             // this.total=res.data
             this.MonitorSpaceList = res.data
@@ -308,7 +315,13 @@ export default{
             // this.$router.push('/monitor')
             console.log(val.id)
             this.okMonitor=false
-            const {data: res} = await this.$axios.get('/space/${val.id}/watches')
+            const {data: res} = await this.$axios.get('/space/${val.id}/watches',
+            {
+                // params:{},
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
             if(res.status !== 200) return  this.$message.error(res.msg)
             window.sessionStorage.setItem('token',res.data.token)
             // this.total=res.data
@@ -316,7 +329,15 @@ export default{
         },
         async addMonitorList(){
             this.addMonitor=false
-            const {data: res} = await this.$axios.post('/space/${val.id}/watch',this.$qs.stringify(this.addMonitorForm))
+            const {data: res} = await this.$axios.post('/space/${val.id}/watch',
+            {
+                params:{
+                    url:this.addMonitorForm.url
+                },
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
             if(res.status !== 200) return  this.$message.error(res.msg)
             window.sessionStorage.setItem('token',res.data.token)
             this.JumpMonitorManage()
@@ -335,7 +356,13 @@ export default{
         },
         async DeleteWatch(row){
             console.log(row.id)
-            const {data: res} = await this.$axios.del('/watch/${row.id}',{data: {id: row.id}})
+            const {data: res} = await this.$axios.del('/watch/${row.id}',
+            {
+                params:{id: row.id},
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
             if(res.status !== 200) return  this.$message.error(res.msg)
             window.sessionStorage.setItem('token',res.data.token)
             this.JumpMonitorManage()
