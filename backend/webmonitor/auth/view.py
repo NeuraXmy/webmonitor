@@ -11,7 +11,7 @@ from webmonitor.utils.email import send_email
 
 
 # 用户注册
-@auth_bp.route('/register', methods=['POST'])
+@auth_bp.route('/auth/register', methods=['POST'])
 def register():
     email       = request.form.get('email')
     password    = request.form.get('password')
@@ -50,7 +50,7 @@ def register():
     
 
 # 用户激活
-@auth_bp.route('/activate', methods=['GET'])
+@auth_bp.route('/auth/activate', methods=['GET'])
 def activate():
     token = request.args.get('token')
 
@@ -65,10 +65,16 @@ def activate():
         return make_response(401, msg="用户已激活")
     
     try:
+        # 激活用户
         user.activated = True
         user.activated_on = models.datetime.now()
-        models.db.session.add(user)
+
+        # 创建默认空间
+        space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)
+        models.db.session.add(space)
+
         models.db.session.commit()
+
     except Exception as e:
         return make_response(500)
     
@@ -76,7 +82,7 @@ def activate():
     
 
 # 用户登录
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/auth/login', methods=['POST'])
 def login():
     email    = request.form.get('email')
     password = request.form.get('password')
