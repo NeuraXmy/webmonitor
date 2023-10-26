@@ -310,6 +310,7 @@ export default{
             this.okMonitor=false
             const {data: res} = await this.$axios.get('/space/${val.id}/watches')
             if(res.status !== 200) return  this.$message.error(res.msg)
+            window.sessionStorage.setItem('token',res.data.token)
             // this.total=res.data
             this.MonitorList = res.data
         },
@@ -317,6 +318,7 @@ export default{
             this.addMonitor=false
             const {data: res} = await this.$axios.post('/space/${val.id}/watch',this.$qs.stringify(this.addMonitorForm))
             if(res.status !== 200) return  this.$message.error(res.msg)
+            window.sessionStorage.setItem('token',res.data.token)
             this.JumpMonitorManage()
         },
         addMonitorListener(){
@@ -335,6 +337,7 @@ export default{
             console.log(row.id)
             const {data: res} = await this.$axios.del('/watch/${row.id}',{data: {id: row.id}})
             if(res.status !== 200) return  this.$message.error(res.msg)
+            window.sessionStorage.setItem('token',res.data.token)
             this.JumpMonitorManage()
         }
     }
