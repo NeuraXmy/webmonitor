@@ -7,18 +7,22 @@ import 'element-plus/dist/index.css'
 import store from './store'
 import Plugin from './utils/axios';
 import axios from 'axios'
+// import icons from './plugins/element.js'
+import './assets/css/global.css'
+import { Search,Plus } from '@element-plus/icons'
+// import { Search,Plus } from '@element-plus/icons-vue'
 import qs from 'qs'
 
-// const axios = require('axios');
-// Vue.prototype.$axios = axios
-// Vue.prototype.$qs = qs
 axios.defaults.baseURL = 'http://localhost:23456'
 
 const app = createApp(App)
 
+
+// icons elementPlusIcons(app);
 app.use(router);
 app.use(ElementPlus);
 app.use(store);
 app.use(Plugin);
+app.use(Search);
 
 app.mount('#app')

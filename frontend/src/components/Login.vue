@@ -50,8 +50,6 @@ export default {
         // console.log(valid)
         if(!valid) return 
         const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
-        // console.log()
-        // console.log(res)
         if(res.status ===200){
           window.sessionStorage.setItem('token',res.data.token)
           this.$message.success(res.message)
@@ -63,7 +61,7 @@ export default {
       })
     },
     register(){
-      console.log("----")
+      // console.log("----")
       this.$router.push('/register')
     }
   }

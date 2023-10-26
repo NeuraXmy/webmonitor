@@ -3,6 +3,9 @@ import Login from '../components/Login.vue'
 import Home from '../components/Home.vue'
 import Register from '../components/Register.vue'
 import Admin from '../components/Admin.vue'
+import Welcome from '../components/Welcome.vue'
+import Monitor from '../components/monitor/Monitor.vue'
+import MonitorManage from '../components/monitor/MonitorManage.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -20,7 +23,13 @@ const routes = [
     { 
         path: '/home',
         component: Home,
-        hidden: true
+        hidden: true,
+        redirect: '/welcome',
+        children:[
+            {path: '/welcome', component: Welcome },
+            {path: '/monitor_list', component: Monitor },
+            {path: '/monitor', component: MonitorManage }
+        ]
     },
     { 
         path: '/register',
