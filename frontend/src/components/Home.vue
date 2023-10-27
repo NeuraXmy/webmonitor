@@ -27,19 +27,19 @@
                         <el-icon><Operation /></el-icon>
                         <span>监控空间列表</span>
                     </el-menu-item>
-                    <el-menu-item index="monitor">
+                    <!-- <el-menu-item index="monitor">
                         <el-icon><Operation /></el-icon>
                         <span>网页监控管理</span>
-                    </el-menu-item>
+                    </el-menu-item> -->
                 </el-sub-menu>
-                <el-sub-menu index="3">
+                <!-- <el-sub-menu index="3">
                 <template #title>
                     <el-icon><location /></el-icon>
                     <span>系统管理</span>
                 </template>
                     <el-menu-item index="4">角色列表</el-menu-item>
                     <el-menu-item index="5">权限列表</el-menu-item>
-                </el-sub-menu>
+                </el-sub-menu> -->
             </el-menu>
         </el-aside>
         <el-main>
