@@ -121,9 +121,9 @@
                 <el-table-column prop="last_check_time" label="检查时间" width="180" />
                 <el-table-column prop="edit" label="Edit" width="140">
                     <template #default="scope">
-                        <!-- <el-button size="small" @click="handleEdit(scope.$index, scope.row)"
+                        <el-button size="small" @click="WatchEdit(scope.row)"
                         >Edit</el-button
-                        > -->
+                        >
                         <el-button
                         size="small"
                         type="danger"
@@ -164,19 +164,15 @@
                         <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
                     </el-col>
                     <el-col :span="4">
-                        <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
                         <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
                     </el-col>
                     <el-col :span="4">
-                        <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
                         <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
                     </el-col>
                     <el-col :span="4">
-                        <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
                         <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
                     </el-col>
                     <el-col :span="4">
-                        <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
                         <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
                     </el-col>
                 </el-form-item>
@@ -196,6 +192,63 @@
             </span>
             </template>
         </el-dialog>
+        <el-dialog
+            v-model="EditMonitor"
+            title="编辑监控信息"
+            width="40%"
+            :before-close="handleClose"
+        >
+            <!-- <el-form ref="addMonitorRef" :rules="addMonitorRules" :model="addMonitorForm" label-width="80px" class="form_style"> -->
+            <el-form :model="addMonitorForm" label-width="80px" class="form_style">
+                <el-form-item label="监控名">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item label="监控说明">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.desc" placeholder="请输入监控说明"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item label="网址">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.url" placeholder="请输入网址"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item label="刷新时间">
+                    <el-col :span="4">
+                        <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
+                        <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
+                    </el-col>
+                    <el-col :span="4">
+                        <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
+                    </el-col>
+                    <el-col :span="4">
+                        <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
+                    </el-col>
+                    <el-col :span="4">
+                        <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
+                    </el-col>
+                    <el-col :span="4">
+                        <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item label="通知邮箱">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.notification_email"></el-input>
+                    </el-col>
+                </el-form-item>
+            </el-form>
+            <!-- <span>....</span> -->
+            <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="EditMonitor = false">Cancel</el-button>
+                <el-button type="primary" @click="WatchEditConfirm">
+                Confirm
+                </el-button>
+            </span>
+            </template>
+        </el-dialog>
     </div>
 </template>
 <script>
@@ -209,36 +262,36 @@ export default{
             okMonitor:true,
             MonitorSpaceList:[
                 {
-                    id:'1',name:'1',create_time:'1',update_time:'1'
+                    id:1,name:'1',create_time:'1',update_time:'1'
                 },
                 {
-                    id:'2',name:'1',create_time:'1',update_time:'1'
+                    id:2,name:'1',create_time:'1',update_time:'1'
                 },
                 {
-                    id:'3',name:'1',create_time:'1',update_time:'1'
+                    id:3,name:'1',create_time:'1',update_time:'1'
                 },
                 {
-                    id:'4',name:'1',create_time:'1',update_time:'1'
+                    id:4,name:'1',create_time:'1',update_time:'1'
                 },
                 {
-                    id:'5',name:'1',create_time:'1',update_time:'1'
+                    id:5,name:'1',create_time:'1',update_time:'1'
                 }
             ],
             MonitorList:[
                 {
-                    id:'1',name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
+                    id:1,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 },
                 {
-                    id:'2',name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
+                    id:2,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 },
                 {
-                    id:'3',name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
+                    id:3,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 },
                 {
-                    id:'4',name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
+                    id:4,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 },
                 {
-                    id:'5',name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
+                    id:5,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 }
             ],
             queryInfo:{
@@ -266,7 +319,10 @@ export default{
             options_weeks:[
                 {value: 7,label: 'Guide'},
                 {value: 'guide',label: 'Guide'},
-            ]
+            ],
+            space_id:1,
+            watch_id:1,
+            EditMonitor:false
         }
     },
     created(){
@@ -313,9 +369,10 @@ export default{
         //获取某个space下的监控列表
         async JumpMonitorManage(val){
             // this.$router.push('/monitor')
+            this.space_id=val.id
             console.log(val.id)
             this.okMonitor=false
-            const {data: res} = await this.$axios.get('/space/${val.id}/watches',
+            const {data: res} = await this.$axios.get('/space/'+val.id+'/watches',
             {
                 // params:{},
                 headers : {
@@ -323,13 +380,13 @@ export default{
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            window.sessionStorage.setItem('token',res.data.token)
+            // window.sessionStorage.setItem('token',res.data.token)
             // this.total=res.data
             this.MonitorList = res.data
         },
         async addMonitorList(){
             this.addMonitor=false
-            const {data: res} = await this.$axios.post('/space/${val.id}/watch',
+            const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',
             {
                 params:{
                     url:this.addMonitorForm.url
@@ -355,8 +412,8 @@ export default{
             this.addMonitorForm.last_check_time=currentTime
         },
         async DeleteWatch(row){
-            console.log(row.id)
-            const {data: res} = await this.$axios.del('/watch/${row.id}',
+            // console.log(row.id)
+            const {data: res} = await this.$axios.del('/watch/'+row.id,
             {
                 params:{id: row.id},
                 headers : {
@@ -365,6 +422,22 @@ export default{
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             window.sessionStorage.setItem('token',res.data.token)
+            this.JumpMonitorManage()
+        },
+        WatchEdit(row){
+            this.EditMonitor=true;
+            this.watch_id=row.id;
+        },
+        async WatchEditConfirm(){
+            const {data: res} = await this.$axios.put('/watch/'+this.watch_id,
+            {
+                params:{id: this.watch_id},
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            // window.sessionStorage.setItem('token',res.data.token)
             this.JumpMonitorManage()
         }
     }
