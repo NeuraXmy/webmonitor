@@ -53,7 +53,7 @@
                 </el-table-column>
             </el-table>
         </el-row>
-            <el-pagination
+            <!-- <el-pagination
             v-model:current-page="queryInfo.pnum" 
             v-model:page-size="queryInfo.psize"
             :page-sizes="[1, 2, 5, 10]"
@@ -64,7 +64,7 @@
             :total="total"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
-            />
+            /> -->
     </el-card>
     <el-dialog
     v-model="addSpace"
@@ -105,6 +105,11 @@
                     <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>增加</el-button>
                 </div>
             </el-col>
+            <el-col :span="2">
+                <div>
+                    <el-button type="primary" @click="addMonitorUrl"><el-icon><Plus /></el-icon>增加网页</el-button>
+                </div>
+            </el-col>
             <!-- <el-col :span="2">
                 <div>
                     <el-button type="success"><el-icon><Delete /></el-icon>删除</el-button>
@@ -113,13 +118,13 @@
         </el-row>
         <el-row>
             <el-table :data="MonitorList" style="width: 100%">
-                <el-table-column prop="id" label="ID" width="180" />
-                <el-table-column prop="name" label="昵称" width="180" />
-                <el-table-column prop="url" label="网址" width="200" />
-                <el-table-column prop="create_time" label="创建时间" width="180" />
-                <el-table-column prop="update_time" label="更新时间" width="180" />
-                <el-table-column prop="last_check_time" label="检查时间" width="180" />
-                <el-table-column prop="edit" label="Edit" width="140">
+                <el-table-column prop="id" label="ID" width="50" />
+                <el-table-column prop="name" label="昵称" width="100" />
+                <el-table-column prop="url" label="网址" width="250" />
+                <el-table-column prop="create_time" label="创建时间" width="200" />
+                <el-table-column prop="update_time" label="更新时间" width="200" />
+                <el-table-column prop="last_check_time" label="检查时间" width="200" />
+                <el-table-column prop="edit" label="Edit" width="240">
                     <template #default="scope">
                         <el-button size="small" @click="WatchEdit(scope.row)"
                         >Edit</el-button
@@ -129,6 +134,12 @@
                         type="danger"
                         @click="DeleteWatch(scope.row)"
                         >Delete</el-button
+                        >
+                        <el-button
+                        size="small"
+                        type="info"
+                        @click="RefreshWatch(scope.row)"
+                        >Refresh</el-button
                         >
                     </template>
                 </el-table-column>
@@ -156,6 +167,19 @@
                 <el-form-item label="网址">
                     <el-col :span="20">
                         <el-input v-model="addMonitorForm.url" placeholder="请输入网址"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item label="监控元素">
+                    <el-col :span="20">
+                        <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
+                        <el-select v-model="value" placeholder="Select" size="large">
+                            <el-option
+                            v-for="item in options"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value"
+                            />
+                        </el-select>
                     </el-col>
                 </el-form-item>
                 <el-form-item label="刷新时间">
@@ -215,9 +239,21 @@
                         <el-input v-model="addMonitorForm.url" placeholder="请输入网址"></el-input>
                     </el-col>
                 </el-form-item>
+                <el-form-item label="监控元素">
+                    <el-col :span="20">
+                        <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
+                        <el-select v-model="value" placeholder="Select" size="large">
+                            <el-option
+                            v-for="item in options"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value"
+                            />
+                        </el-select>
+                    </el-col>
+                </el-form-item>
                 <el-form-item label="刷新时间">
                     <el-col :span="4">
-                        <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
                         <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
                     </el-col>
                     <el-col :span="4">
@@ -294,12 +330,27 @@ export default{
                     id:5,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 }
             ],
+            options:[
+                {
+                    value: 'Option1',
+                    label: 'Option1',
+                },
+                {
+                    value: 'Option2',
+                    label: 'Option2',
+                },
+                {
+                    value: 'Option3',
+                    label: 'Option3',
+                }
+            ],
             queryInfo:{
-                name:'',
-                pnum:1,
-                psize:2
+                name:''
+                // ,
+                // pnum:1,
+                // psize:2
             },
-            total:5,
+            // total:5,
             addSpace:false,
             addSpaceForm:{
                 name:''
@@ -309,6 +360,7 @@ export default{
                 name:'',
                 desc:'',
                 url:'',
+                element:'',
                 time_between_check_weeks:'',
                 time_between_check_days:'',
                 time_between_check_hours:'',
@@ -316,10 +368,6 @@ export default{
                 time_between_check_seconds:'',
                 notification_email:''
             },
-            options_weeks:[
-                {value: 7,label: 'Guide'},
-                {value: 'guide',label: 'Guide'},
-            ],
             space_id:1,
             watch_id:1,
             EditMonitor:false
@@ -346,16 +394,16 @@ export default{
             // this.total=res.data
             this.MonitorSpaceList = res.data
         },
-        handleSizeChange(val){
-            this.queryInfo.psize = val
-            this.getMonitorSpaceList()
-            console.log(val);
-        },
-        handleCurrentChange(val){
-            this.queryInfo.pnum = val
-            console.log(val);
-            this.getMonitorSpaceList()
-        },
+        // handleSizeChange(val){
+        //     this.queryInfo.psize = val
+        //     this.getMonitorSpaceList()
+        //     console.log(val);
+        // },
+        // handleCurrentChange(val){
+        //     this.queryInfo.pnum = val
+        //     console.log(val);
+        //     this.getMonitorSpaceList()
+        // },
         //根据昵称搜索空间
         searchSpace(){
             this.queryInfo.pnum = 1
@@ -368,9 +416,9 @@ export default{
         },
         //获取某个space下的监控列表
         async JumpMonitorManage(val){
-            // this.$router.push('/monitor')
+            
             this.space_id=val.id
-            console.log(val.id)
+            
             this.okMonitor=false
             const {data: res} = await this.$axios.get('/space/'+val.id+'/watches',
             {
@@ -380,23 +428,23 @@ export default{
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            // window.sessionStorage.setItem('token',res.data.token)
-            // this.total=res.data
+            
             this.MonitorList = res.data
         },
+        //用户在某个space下创建监控
         async addMonitorList(){
             this.addMonitor=false
-            const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',
+            let data={
+                'token': sessionStorage.getItem('token')
+            }
+            const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
             {
-                params:{
-                    url:this.addMonitorForm.url
-                },
                 headers : {
                     'token': sessionStorage.getItem('token')
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            window.sessionStorage.setItem('token',res.data.token)
+            
             this.JumpMonitorManage()
         },
         addMonitorListener(){
@@ -411,9 +459,9 @@ export default{
             this.addMonitorForm.update_time=currentTime
             this.addMonitorForm.last_check_time=currentTime
         },
+        //用户删除监控
         async DeleteWatch(row){
-            // console.log(row.id)
-            const {data: res} = await this.$axios.del('/watch/'+row.id,
+            const {data: res} = await this.$axios.delete('/watch/'+row.id,
             {
                 params:{id: row.id},
                 headers : {
@@ -421,24 +469,43 @@ export default{
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            window.sessionStorage.setItem('token',res.data.token)
             this.JumpMonitorManage()
         },
+        //触发用户修改监控,保存watch_id
         WatchEdit(row){
             this.EditMonitor=true;
             this.watch_id=row.id;
         },
+        //用户修改监控
         async WatchEditConfirm(){
             const {data: res} = await this.$axios.put('/watch/'+this.watch_id,
             {
-                params:{id: this.watch_id},
                 headers : {
                     'token': sessionStorage.getItem('token')
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            // window.sessionStorage.setItem('token',res.data.token)
+            
             this.JumpMonitorManage()
+        },
+        //用户立刻刷新监控
+        async RefreshWatch(row){
+            
+            let data={
+                'token': sessionStorage.getItem('token')
+            }
+            const {data: res} = await this.$axios.post('/watch/'+row.id+'/check',data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            
+            this.JumpMonitorManage()
+        },
+        addMonitorUrl(){
+            
         }
     }
 }

@@ -6,6 +6,7 @@ import Admin from '../components/Admin.vue'
 import Welcome from '../components/Welcome.vue'
 import Monitor from '../components/monitor/Monitor.vue'
 import MonitorManage from '../components/monitor/MonitorManage.vue'
+import SelectMonitor from '../components/monitor/SelectMonitor.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -29,7 +30,14 @@ const routes = [
             {path: '/welcome', component: Welcome },
             {path: '/monitor_list', component: Monitor },
             {path: '/monitor', component: MonitorManage }
+            // ,
+            // {path: '/select_monitor', component: SelectMonitor }
         ]
+    },
+    { 
+        path: '/select_monitor',
+        component: SelectMonitor,
+        hidden: true
     },
     { 
         path: '/register',

@@ -2,16 +2,16 @@
   <div class="login_container">
       <div class="login_box">
           <div class="title">
-            欢迎
+            多模态信息舆情监控
           </div>
           <el-form ref="userRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
-              <el-form-item prop="email">
-                  <el-input v-model="userForm.email" placeholder="用户名"></el-input>
+              <el-form-item prop="email" >
+                  <el-input prefix-icon="User" v-model="userForm.email" placeholder="用户名"></el-input>
               </el-form-item>
-              <el-form-item prop="password">
-                  <el-input show-password v-model="userForm.password" placeholder="密码"></el-input>
+              <el-form-item  prop="password">
+                  <el-input show-password prefix-icon="Lock" v-model="userForm.password" placeholder="密码"></el-input>
               </el-form-item>
-              <a class="form__link" @click="register">注册新账户</a>
+                  <a class="form__link" @click="register">注册新账户</a>
               <el-form-item>
                   <el-button type="primary" @click="login">登录</el-button>
                   <el-button @click="restForm">重置</el-button>
@@ -19,10 +19,47 @@
           </el-form>
       </div>
   </div>
+  <!-- <div
+        class="container b-container"
+        id="b-container"
+    >
+          <el-form class="form" ref="userRef" :rules="userRules" :model="userForm" label-width="0px">
+            <h2 class="form_title title">多模态信息舆情监控</h2>
+            <el-form-item prop="email">
+              <input
+                  class="form__input"
+                  type="text"
+                  placeholder="用户名"
+                  v-model="userForm.email"
+              />
+            </el-form-item>
+            <el-form-item prop="password">
+              <input
+                  class="form__input"
+                  type="password"
+                  placeholder="密码"
+                  v-model="userForm.password"
+              />
+            </el-form-item>
+            <div class="login-info">
+                <a class="form__link" @click="forgetPassword">忘记密码了？</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <a class="form__link" @click="register"
+                    >注册新账户</a
+                >
+            </div>
+            <button class="form__button button submit" @click="login">
+                登&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;陆
+            </button>
+          </el-form>
+    </div> -->
 </template>
 
 <script>
-export default {
+import { User,Lock } from '@element-plus/icons-vue'
+// import { ref, computed } from 'vue';
+export default{
+  components: { User,Lock },
   data() {
     return {
       userForm:{
@@ -46,8 +83,8 @@ export default {
       this.$refs.userRef.resetFields()
     },
     login(){
+      console.log(this.userForm)
       this.$refs.userRef.validate(async valid => {
-        // console.log(valid)
         if(!valid) return 
         const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
         if(res.status ===200){
@@ -61,21 +98,23 @@ export default {
       })
     },
     register(){
-      // console.log("----")
       this.$router.push('/register')
+    },
+    forgetPassword(){
+
     }
   }
 }
 </script>
 <style lang='less' scoped>
 .login_container {
-  background-color:darkcyan;
+  background-color:#f8fbfd;
   height: 100%
 }
 .login_box{
   width: 450px;
   height: 300px;
-  border-radius: 5px;
+  border-radius: 5px; 
   background-color: #ccc;
   position: absolute;
   left: 50%;
@@ -83,7 +122,7 @@ export default {
   transform: translate(-50%,-50%);
 }
   .title {
-  // width: 200px;
+  width: 350px;
   // height: 100px;
   font-size: 34px;
   font-weight: 700;
@@ -112,6 +151,9 @@ export default {
 }
 
 
-
-
+@import '@/assets/css/login.css';
+ 
+.login-info {
+    margin-top: 10px;
+}
 </style>

@@ -21,11 +21,11 @@
                 <el-sub-menu index="1">
                 <template #title>
                     <el-icon><location /></el-icon>
-                    <span>任务管理</span>
+                    <span><el-icon><Menu /></el-icon>任务管理</span>
                 </template>
                     <el-menu-item index="monitor_list">
                         <el-icon><Operation /></el-icon>
-                        <span>监控空间列表</span>
+                        <span><el-icon><Compass /></el-icon>监控空间列表</span>
                     </el-menu-item>
                     <!-- <el-menu-item index="monitor">
                         <el-icon><Operation /></el-icon>
@@ -51,7 +51,10 @@
 
 
 <script>
+import { Menu,Compass } from '@element-plus/icons-vue'
+// import { ref, computed } from 'vue';
 export default{
+    components: { Menu,Compass },
     data(){
         
     },

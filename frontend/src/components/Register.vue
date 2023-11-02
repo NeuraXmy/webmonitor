@@ -2,7 +2,7 @@
   <div class="login_container">
       <div class="login_box">
           <div class="title">
-            欢迎
+            多模态信息舆情监控
           </div>
           <el-form ref="userRegisterRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
               <el-form-item prop="email">
@@ -21,6 +21,36 @@
           </el-form>
       </div>
   </div>
+  <!-- <div
+        class="container b-container"
+        id="b-container"
+    >
+    
+        <form class="form" id="b-form" method="" action="">
+            <h2 class="form_title title">多模态信息舆情监控</h2>
+            <input
+                class="form__input"
+                type="text"
+                placeholder="邮箱"
+                v-model="userForm.email"
+            />
+            <input
+                class="form__input"
+                type="password"
+                placeholder="密码"
+                v-model="userForm.password"
+            />
+            <input
+                class="form__input"
+                type="text"
+                placeholder="昵称"
+                v-model="userForm.nickname"
+            />
+            <button class="form__button button submit" @click="register">
+                注&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;册
+            </button>
+        </form>
+    </div> -->
 </template>
 
 <script>
@@ -79,7 +109,7 @@ export default {
 </script>
 <style lang='less' scoped>
 .login_container {
-  background-color:darkcyan;
+  background-color:#f8fbfd;
   height: 100%
 }
 .login_box{
@@ -93,7 +123,7 @@ export default {
   transform: translate(-50%,-50%);
 }
   .title {
-  // width: 200px;
+  width: 350px;
   // height: 100px;
   font-size: 34px;
   font-weight: 700;
@@ -111,6 +141,10 @@ export default {
   box-sizing: border-box;
 
 }
-
+@import '@/assets/css/login.css';
+ 
+.login-info {
+    margin-top: 10px;
+}
 
 </style>
