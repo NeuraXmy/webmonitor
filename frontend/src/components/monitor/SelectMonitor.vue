@@ -1,6 +1,11 @@
 <template>
-    <div>
+    <div class="iframe_style">
         <el-form :model="addMonitorForm" label-width="80px" class="form_style">
+            <el-form-item label="空间ID">
+                <el-col :span="20">
+                    <el-input v-model="space_id" placeholder="请输入空间ID"></el-input>
+                </el-col>
+            </el-form-item>
             <el-form-item label="监控名">
                 <el-col :span="20">
                     <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
@@ -19,7 +24,7 @@
             <el-form-item label="监控元素">
                 <el-col :span="20">
                     <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
-                    <el-select v-model="value" placeholder="Select" size="large">
+                    <el-select v-model="addMonitorForm.include_filters" placeholder="Select" size="large" @change="ChangeElement">
                         <el-option
                         v-for="item in options"
                         :key="item.value"
@@ -27,6 +32,9 @@
                         :value="item.value"
                         />
                     </el-select>
+                </el-col>
+                <el-col :span="20">
+                    <el-input v-model="addMonitorForm.element"></el-input>
                 </el-col>
             </el-form-item>
             <el-form-item label="刷新时间">
@@ -53,7 +61,7 @@
                 </el-col>
             </el-form-item>
         </el-form>
-        <el-button @click="test">123</el-button>
+        <el-button type="primary" @click="confirm_monitor">确定</el-button>
     </div>
 </template>
   
@@ -61,6 +69,21 @@
 export default{
     data(){
         return {
+            space_id:'',
+            options:[
+                {
+                    value: 'XPath',
+                    label: 'XPath',
+                },
+                {
+                    value: 'CssSelector',
+                    label: 'CssSelector',
+                },
+                {
+                    value: 'JSONPath',
+                    label: 'JSONPath',
+                }
+            ],
             addMonitor:false,
             addMonitorForm:{
                 name:'',
@@ -72,21 +95,56 @@ export default{
                 time_between_check_hours:'',
                 time_between_check_minutes:'',
                 time_between_check_seconds:'',
-                notification_email:''
-            }
+                notification_email:'',
+                include_filters:''
+            },
+            Element:''
         }
     },
     mounted(){
         window.addEventListener("message", (e) => {
+            console.log(this.addMonitorForm.include_filters);
+            this.Element = e.data;
+            this.addMonitorForm.url=e.origin;
+            if(this.addMonitorForm.include_filters === ''){
+                this.addMonitorForm.include_filters='XPath';
+                this.addMonitorForm.element=e.data.xpath;
+            }else if(this.addMonitorForm.include_filters === 'XPath'){
+                this.addMonitorForm.element=e.data.xpath;
+            }else if(this.addMonitorForm.include_filters === 'CssSelector'){
+                this.addMonitorForm.element=e.data.selector;
+            }
             console.log(e);
-            // this.addMonitorForm.=e.data;
         });
     },
     methods:{
-        test(val){
-            this.addMonitorForm.name="val";
+        ChangeElement(){
+            if(this.addMonitorForm.include_filters === 'XPath'){
+                this.addMonitorForm.element=this.Element.xpath;
+            }else if(this.addMonitorForm.include_filters === 'CssSelector'){
+                this.addMonitorForm.element=this.Element.selector;
+            }else if(this.addMonitorForm.include_filters === 'JSONPath'){
+                this.addMonitorForm.element=this.Element.jsonPath;
+            }
+        },
+        async confirm_monitor(){
+            let data = this.$qs.stringify(this.addMonitorForm)
+            const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            
+            // this.JumpMonitorManage()
         }
     }
 }
 </script>
   
+<style>
+.iframe_style{
+    background-color: aliceblue;
+}
+</style>

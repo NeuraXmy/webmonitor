@@ -1,14 +1,22 @@
 javascript:(function() {
+  var newWidth = window.innerWidth-300;
+  var newHeight = window.innerHeight;
+  var container = document.body;
+  container.style.width = newWidth + 'px';
+  container.style.height = newHeight + 'px';
+
 
   var iframe = document.createElement('iframe');
   iframe.src = 'http://127.0.0.1:5173/select_monitor';
   console.log(iframe.src);
+  iframe.width = 300;
+  iframe.height = "100%";
   iframe.style.position = "fixed";
-  iframe.style.top = "70%";
+  iframe.style.top = "0";
   iframe.style.right = "0";
 
-  iframe.style.width = '100%';
-  iframe.style.height = '30%';
+  iframe.style.width = '300px';
+  iframe.style.height = (window.innerHeight)+'px';
   iframe.style.zIndex = 2147483647;
   
   iframe.id = 'iframe';
@@ -38,15 +46,12 @@ javascript:(function() {
 
       var element = evt.target;
       var xpath = getXPath(element);
+      console.log(selector);
       selector = getcssSelector(selector);
-      const path = getPathToElement(element);
-      const value = JSON.stringify(path);
-      
       console.log(xpath);
       console.log(selector);
-      console.log(value);
       var targetWindow = document.getElementById('iframe').contentWindow;
-      targetWindow.postMessage({xpath:xpath, selector:selector, jsonPath:value}, 'http://127.0.0.1:5173/select_monitor');
+      targetWindow.postMessage({xpath:xpath, selector:selector}, 'http://127.0.0.1:5173/select_monitor');
   });
   function mouse_over(event) {
     var element = event.target;
@@ -84,30 +89,6 @@ javascript:(function() {
         index++;
       }
     }
-  }
-  function getPathToElement(element) {
-    const path = [];
-    while (element) {
-      if (element.id) {
-        path.unshift(`#${element.id}`);
-        break;
-      }
-
-      let sibling = element;
-      let name = element.localName;
-
-      while (sibling) {
-        if (sibling.localName === name) {
-          sibling = sibling.nextElementSibling;
-          name += '+';
-        }
-      }
-
-      path.unshift(name);
-      element = element.parentElement;
-    }
-
-    return path.join(' > ');
   }
   document.addEventListener("mouseover", mouse_over);
   document.addEventListener("mouseout", mouse_out);

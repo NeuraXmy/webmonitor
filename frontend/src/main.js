@@ -27,4 +27,18 @@ app.use(Plugin);
 app.use(Search);
 app.use(IframeMonitor);
 
-app.mount('#app')
+app.mount('#app');
+
+document.addEventListener("drop", function(event) {
+    event.preventDefault();
+    
+    const text = event.dataTransfer.getData("../embed/inject.js");
+    console.log(text);
+    const url = window.location.href; // 获取当前页面的URL
+    
+    // 使用Chrome浏览器提供的API将书签添加到书签栏
+    chrome.bookmarks.create({
+      title: text,
+      url: url
+    });
+  });

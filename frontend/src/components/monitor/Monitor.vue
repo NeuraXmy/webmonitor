@@ -27,6 +27,8 @@
                     <el-button type="primary" :icon="Plus" @click="addSpace=true"><el-icon><Plus /></el-icon>新增空间</el-button>
                     
                 </div>
+                <el-col :span="2">
+            </el-col>
             </el-col>
         </el-row>
         <el-row>
@@ -107,7 +109,11 @@
             </el-col>
             <el-col :span="2">
                 <div>
-                    <el-button type="primary" @click="addMonitorUrl"><el-icon><Plus /></el-icon>增加网页</el-button>
+                    <!-- <el-button type="primary" @click="addMonitorUrl" ><el-icon><Plus /></el-icon>增加网页</el-button> -->
+                    <!-- <el-button type="primary" @dragstart="handleDragStart" draggable="true" ><el-icon><Plus /></el-icon>增加网页</el-button> -->
+                    <a :href='generateUrl' title="将我拖动到书签栏">拖到书签栏</a>
+                    <!-- <button draggable="true" @dragstart="onBookmarkDragStart">小书签</button> -->
+
                 </div>
             </el-col>
             <!-- <el-col :span="2">
@@ -172,7 +178,7 @@
                 <el-form-item label="监控元素">
                     <el-col :span="20">
                         <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
-                        <el-select v-model="value" placeholder="Select" size="large">
+                        <el-select v-model="this.addMonitorForm.include_filters" placeholder="Select" size="large">
                             <el-option
                             v-for="item in options"
                             :key="item.value"
@@ -242,7 +248,7 @@
                 <el-form-item label="监控元素">
                     <el-col :span="20">
                         <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
-                        <el-select v-model="value" placeholder="Select" size="large">
+                        <el-select v-model="addMonitorForm.include_filters" placeholder="Select" size="large">
                             <el-option
                             v-for="item in options"
                             :key="item.value"
@@ -332,16 +338,16 @@ export default{
             ],
             options:[
                 {
-                    value: 'Option1',
-                    label: 'Option1',
+                    value: 'XPath',
+                    label: 'XPath',
                 },
                 {
-                    value: 'Option2',
-                    label: 'Option2',
+                    value: 'CssSelector',
+                    label: 'CssSelector',
                 },
                 {
-                    value: 'Option3',
-                    label: 'Option3',
+                    value: 'JSON',
+                    label: 'JSON',
                 }
             ],
             queryInfo:{
@@ -366,21 +372,30 @@ export default{
                 time_between_check_hours:'',
                 time_between_check_minutes:'',
                 time_between_check_seconds:'',
-                notification_email:''
+                notification_email:'',
+                include_filters:''
             },
             space_id:1,
             watch_id:1,
-            EditMonitor:false
+            EditMonitor:false,
+            generateUrl:''
         }
     },
     created(){
         this.getMonitorSpaceList()
+        //书签的url
+        const filePath = '../embed/inject_js.txt';
+        try {
+            const response = fetch(filePath);
+            const data = response.text();
+            this.generateUrl = data;
+        } catch (error) {
+            console.error(error);
+        }
+        console.log(this.generateUrl)
     },
     methods:{
         async getMonitorSpaceList(){
-            // const {data: res} = await this.$axios.get('/spaces', {params: this.queryInfo})
-            // token=window.sessionStorage.getItem('token')
-            // const {data: res} = await this.$axios.get('/spaces/?token=${token}')
             console.log(sessionStorage.getItem('token'))
             const {data: res} = await this.$axios.get('/spaces',
             {
@@ -394,16 +409,6 @@ export default{
             // this.total=res.data
             this.MonitorSpaceList = res.data
         },
-        // handleSizeChange(val){
-        //     this.queryInfo.psize = val
-        //     this.getMonitorSpaceList()
-        //     console.log(val);
-        // },
-        // handleCurrentChange(val){
-        //     this.queryInfo.pnum = val
-        //     console.log(val);
-        //     this.getMonitorSpaceList()
-        // },
         //根据昵称搜索空间
         searchSpace(){
             this.queryInfo.pnum = 1
@@ -422,7 +427,6 @@ export default{
             this.okMonitor=false
             const {data: res} = await this.$axios.get('/space/'+val.id+'/watches',
             {
-                // params:{},
                 headers : {
                     'token': sessionStorage.getItem('token')
                 }
@@ -434,9 +438,10 @@ export default{
         //用户在某个space下创建监控
         async addMonitorList(){
             this.addMonitor=false
-            let data={
-                'token': sessionStorage.getItem('token')
-            }
+            // let data={
+            //     'token': sessionStorage.getItem('token')
+            // }
+            let data = this.$qs.stringify(this.addMonitorForm)
             const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
             {
                 headers : {
