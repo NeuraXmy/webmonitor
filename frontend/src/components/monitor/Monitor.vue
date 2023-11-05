@@ -248,7 +248,7 @@
                 <el-form-item label="监控元素">
                     <el-col :span="20">
                         <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
-                        <el-select v-model="addMonitorForm.include_filters" placeholder="Select" size="large">
+                        <el-select v-model="value" placeholder="Select" size="large">
                             <el-option
                             v-for="item in options"
                             :key="item.value"
@@ -256,6 +256,7 @@
                             :value="item.value"
                             />
                         </el-select>
+                        <el-input v-model="addMonitorForm.include_filters" placeholder="请输入监控元素说明"></el-input>
                     </el-col>
                 </el-form-item>
                 <el-form-item label="刷新时间">
@@ -336,6 +337,7 @@ export default{
                     id:5,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 }
             ],
+            value:'',
             options:[
                 {
                     value: 'XPath',

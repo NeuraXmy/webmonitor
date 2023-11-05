@@ -24,7 +24,7 @@
             <el-form-item label="监控元素">
                 <el-col :span="20">
                     <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
-                    <el-select v-model="addMonitorForm.include_filters" placeholder="Select" size="large" @change="ChangeElement">
+                    <el-select v-model="value" placeholder="Select" size="large" @change="ChangeElement">
                         <el-option
                         v-for="item in options"
                         :key="item.value"
@@ -34,7 +34,7 @@
                     </el-select>
                 </el-col>
                 <el-col :span="20">
-                    <el-input v-model="addMonitorForm.element"></el-input>
+                    <el-input v-model="addMonitorForm.include_filters"></el-input>
                 </el-col>
             </el-form-item>
             <el-form-item label="刷新时间">
@@ -70,6 +70,7 @@ export default{
     data(){
         return {
             space_id:'',
+            value:'',
             options:[
                 {
                     value: 'XPath',
@@ -89,7 +90,6 @@ export default{
                 name:'',
                 desc:'',
                 url:'',
-                element:'',
                 time_between_check_weeks:'',
                 time_between_check_days:'',
                 time_between_check_hours:'',
@@ -103,28 +103,28 @@ export default{
     },
     mounted(){
         window.addEventListener("message", (e) => {
-            console.log(this.addMonitorForm.include_filters);
+            // console.log(this.addMonitorForm.include_filters);
             this.Element = e.data;
             this.addMonitorForm.url=e.origin;
-            if(this.addMonitorForm.include_filters === ''){
-                this.addMonitorForm.include_filters='XPath';
-                this.addMonitorForm.element=e.data.xpath;
-            }else if(this.addMonitorForm.include_filters === 'XPath'){
-                this.addMonitorForm.element=e.data.xpath;
-            }else if(this.addMonitorForm.include_filters === 'CssSelector'){
-                this.addMonitorForm.element=e.data.selector;
+            if(this.value === ''){
+                this.value='XPath';
+                this.addMonitorForm.include_filters=e.data.xpath;
+            }else if(this.value=== 'XPath'){
+                this.addMonitorForm.include_filters=e.data.xpath;
+            }else if(this.value === 'CssSelector'){
+                this.addMonitorForm.include_filters=e.data.selector;
             }
             console.log(e);
         });
     },
     methods:{
         ChangeElement(){
-            if(this.addMonitorForm.include_filters === 'XPath'){
-                this.addMonitorForm.element=this.Element.xpath;
-            }else if(this.addMonitorForm.include_filters === 'CssSelector'){
-                this.addMonitorForm.element=this.Element.selector;
-            }else if(this.addMonitorForm.include_filters === 'JSONPath'){
-                this.addMonitorForm.element=this.Element.jsonPath;
+            if(this.value === 'XPath'){
+                this.addMonitorForm.include_filters=this.Element.xpath;
+            }else if(this.value === 'CssSelector'){
+                this.addMonitorForm.include_filters=this.Element.selector;
+            }else if(this.value === 'JSONPath'){
+                this.addMonitorForm.include_filters=this.Element.jsonPath;
             }
         },
         async confirm_monitor(){
