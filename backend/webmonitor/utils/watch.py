@@ -68,13 +68,38 @@ def create_watch(watch_url):
 
 
 # 修改一个watch
-def update_watch(id, watch_url):
+def update_watch(id, update_data):
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, "Content-Type": "application/json" }   
     data = {
-        "url": watch_url,
+        "url": update_data['url']
     }
+    time_between_check = {}
+
+    if update_data['time_between_check_weeks']:
+        time_between_check['weeks'] = update_data['time_between_check_weeks']
+    if update_data['time_between_check_days']:
+        time_between_check['days'] = update_data['time_between_check_days']
+    if update_data['time_between_check_hours']:
+        time_between_check['hours'] = update_data['time_between_check_hours']
+    if update_data['time_between_check_minutes']:
+        time_between_check['minutes'] = update_data['time_between_check_minutes']
+    if update_data['time_between_check_seconds']:
+        time_between_check['seconds'] = update_data['time_between_check_seconds']
+
+    if time_between_check:
+        data['time_between_check'] = time_between_check
+    if update_data['include_filters']:
+        data['include_filters'] = update_data['include_filters']
+    if update_data['subtractive_selectors']:
+        data['subtractive_selectors'] = update_data['subtractive_selectors']
+    if update_data['ignore_text']:
+        data['ignore_text'] = update_data['ignore_text']
+    if update_data['trigger_text']:
+        data['trigger_text'] = update_data['trigger_text']
+
+    print(data)
     response = requests.put(url + f"/watch/{id}", headers=headers, json=data)
     print(response)
     return response
