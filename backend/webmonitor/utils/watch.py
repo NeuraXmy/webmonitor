@@ -77,27 +77,28 @@ def update_watch(id, update_data):
     }
     time_between_check = {}
 
-    if update_data['time_between_check_weeks']:
+    # 如果有time_between_check的任何一个字段有值，就更新time_between_check
+    if 'time_between_check_weeks' in update_data and update_data['time_between_check_weeks']:
         time_between_check['weeks'] = update_data['time_between_check_weeks']
-    if update_data['time_between_check_days']:
+    if 'time_between_check_days' in update_data and update_data['time_between_check_days']:
         time_between_check['days'] = update_data['time_between_check_days']
-    if update_data['time_between_check_hours']:
+    if 'time_between_check_hours' in update_data and update_data['time_between_check_hours']:
         time_between_check['hours'] = update_data['time_between_check_hours']
-    if update_data['time_between_check_minutes']:
+    if 'time_between_check_minutes' in update_data and update_data['time_between_check_minutes']:
         time_between_check['minutes'] = update_data['time_between_check_minutes']
-    if update_data['time_between_check_seconds']:
+    if 'time_between_check_seconds' in update_data and update_data['time_between_check_seconds']:
         time_between_check['seconds'] = update_data['time_between_check_seconds']
 
     if time_between_check:
         data['time_between_check'] = time_between_check
-    if update_data['include_filters']:
+    if 'include_filters' in update_data and update_data['include_filters']:
         data['include_filters'] = update_data['include_filters']
-    if update_data['subtractive_selectors']:
-        data['subtractive_selectors'] = update_data['subtractive_selectors']
-    if update_data['ignore_text']:
-        data['ignore_text'] = update_data['ignore_text']
-    if update_data['trigger_text']:
-        data['trigger_text'] = update_data['trigger_text']
+    # if update_data['subtractive_selectors']:
+    #     data['subtractive_selectors'] = update_data['subtractive_selectors']
+    # if update_data['ignore_text']:
+    #     data['ignore_text'] = update_data['ignore_text']
+    # if update_data['trigger_text']:
+    #     data['trigger_text'] = update_data['trigger_text']
 
     print(data)
     response = requests.put(url + f"/watch/{id}", headers=headers, json=data)
@@ -111,7 +112,7 @@ def delete_watch(id):
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, }
     response = requests.delete(url + f"/watch/{id}", headers=headers)
-    return response.json()
+    return response
 
 
 # 查询一个watch的所有历史记录 返回按时间排序的历史记录列表

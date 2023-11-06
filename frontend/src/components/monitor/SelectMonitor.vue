@@ -34,7 +34,7 @@
                     </el-select>
                 </el-col>
                 <el-col :span="20">
-                    <el-input v-model="addMonitorForm.include_filters"></el-input>
+                    <el-input type="textarea"  v-model="addMonitorForm.include_filters"></el-input>
                 </el-col>
             </el-form-item>
             <el-form-item label="刷新时间">
@@ -108,11 +108,13 @@ export default{
             this.addMonitorForm.url=e.origin;
             if(this.value === ''){
                 this.value='XPath';
-                this.addMonitorForm.include_filters=e.data.xpath;
+                this.addMonitorForm.include_filters="xpath:" + e.data.xpath + '\n';
             }else if(this.value=== 'XPath'){
-                this.addMonitorForm.include_filters=e.data.xpath;
+                this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "xpath:" + e.data.xpath + '\n';
             }else if(this.value === 'CssSelector'){
-                this.addMonitorForm.include_filters=e.data.selector;
+                this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "css:" + e.data.selector + '\n' ;
+            }else if(this.value === 'JSONPath'){
+                this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "json:" + e.data.jsonPath + '\n' ;
             }
             console.log(e);
         });
@@ -120,11 +122,11 @@ export default{
     methods:{
         ChangeElement(){
             if(this.value === 'XPath'){
-                this.addMonitorForm.include_filters=this.Element.xpath;
+                // this.addMonitorForm.include_filters=this.Element.xpath;
             }else if(this.value === 'CssSelector'){
-                this.addMonitorForm.include_filters=this.Element.selector;
+                // this.addMonitorForm.include_filters=this.Element.selector;
             }else if(this.value === 'JSONPath'){
-                this.addMonitorForm.include_filters=this.Element.jsonPath;
+                // this.addMonitorForm.include_filters=this.Element.jsonPath;
             }
         },
         async confirm_monitor(){

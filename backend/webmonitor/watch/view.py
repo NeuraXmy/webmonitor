@@ -54,6 +54,9 @@ def create_watch(user, space_id):
     watch.url = request.form.get('url')
     if not watch.url:
         return make_response(400, msg="参数不完整")
+    # url需要http或者https开头
+    if not watch.url.startswith('http://') and not watch.url.startswith('https://'):
+        return make_response(400, msg="url参数不合法")
     
     watch.space_id = space_id
     watch.time_between_check_weeks = request.form.get('time_between_check_weeks')
@@ -107,8 +110,8 @@ def delete_watch(user, watch_id):
         return make_response(403, msg="无权访问")
     
     # 在changedetection.io上删除监控
-    watch_utils.delete_watch(watch.external_id)
-
+    response = watch_utils.delete_watch(watch.external_id)
+    print(response)
     models.db.session.delete(watch)
     models.db.session.commit()
 
@@ -163,23 +166,23 @@ def update_watch(user, watch_id):
         include_filters = include_filters.split('\n')
         update_data["include_filters"] = include_filters
 
-    # 去除部分,如header,footer,nav等
-    if request.form.get('subtractive_selectors'):
-        subtractive_selectors = request.form.get('subtractive_selectors')
-        subtractive_selectors = subtractive_selectors.split('\n')
-        update_data["subtractive_selectors"] = subtractive_selectors
-
-    # 触发部分，有就提醒，支持正则表达式
-    if request.form.get('trigger_text'):
-        trigger_text = request.form.get('trigger_text')
-        trigger_text = trigger_text.split('\n')
-        update_data["trigger_text"] = trigger_text
-
-    # 忽略部分，支持正则表达式
-    if request.form.get('ignore_text'):
-        ignore_text = request.form.get('ignore_text')
-        ignore_text = ignore_text.split('\n')
-        update_data["ignore_text"] = ignore_text
+    # # 去除部分,如header,footer,nav等
+    # if request.form.get('subtractive_selectors'):
+    #     subtractive_selectors = request.form.get('subtractive_selectors')
+    #     subtractive_selectors = subtractive_selectors.split('\n')
+    #     update_data["subtractive_selectors"] = subtractive_selectors
+    #
+    # # 触发部分，有就提醒，支持正则表达式
+    # if request.form.get('trigger_text'):
+    #     trigger_text = request.form.get('trigger_text')
+    #     trigger_text = trigger_text.split('\n')
+    #     update_data["trigger_text"] = trigger_text
+    #
+    # # 忽略部分，支持正则表达式
+    # if request.form.get('ignore_text'):
+    #     ignore_text = request.form.get('ignore_text')
+    #     ignore_text = ignore_text.split('\n')
+    #     update_data["ignore_text"] = ignore_text
 
 
     watch_utils.update_watch(watch.external_id, update_data)
@@ -207,7 +210,7 @@ def check_watch(user, watch_id):
 
     # 延迟等待changedetection.io刷新监控
     import time
-    time.sleep(5)
+    time.sleep(10)
 
     # 查询历史进行比对，如果有变更则发送邮件
     snapshot = watch_utils.get_latest_snapshot(watch.external_id)
