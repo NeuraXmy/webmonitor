@@ -64,6 +64,7 @@ class Watch(BaseModel):
     time_between_check_hours    = db.Column(db.Integer, nullable=False, default=0)
     time_between_check_minutes  = db.Column(db.Integer, nullable=False, default=0)
     time_between_check_seconds  = db.Column(db.Integer, nullable=False, default=0)
+    include_filters             = db.Column(db.String(256), nullable=True)
 
     last_check_time = db.Column(db.DateTime, nullable=True)
     notification_email = db.Column(db.String(64), nullable=True)
