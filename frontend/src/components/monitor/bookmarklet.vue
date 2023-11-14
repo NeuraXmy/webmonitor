@@ -1,6 +1,6 @@
 <template>
     <div>
-      <a href="javascript:void(0);" @dragstart="handleDragStart" id="bookmarkButton">小书签</a>
+      <a href="javascript:`alert('Hello, World!');`" @dragstart="handleDragStart" id="bookmarkButton">小书签</a>
     </div>
   </template>
   

@@ -2,60 +2,53 @@ javascript:(function() {
 
   var iframe = document.createElement('iframe');
   iframe.src = 'http://127.0.0.1:5173/select_monitor';
-  console.log(iframe.src);
   iframe.style.position = "fixed";
   iframe.style.top = "70%";
   iframe.style.right = "0";
-
   iframe.style.width = '100%';
   iframe.style.height = '30%';
   iframe.style.zIndex = 2147483647;
-  
   iframe.id = 'iframe';
+
   var container = document.body;
   container.appendChild(iframe);
-  var getcssSelector = function(path) {
-    return path[path.length-1];
-  };
-  var cssPath = function(el) {
-      var path = [];
-      while (
-        (el.nodeName.toLowerCase() != 'body') &&
-          (el = el.parentNode) &&
-          path.unshift(el.nodeName.toLowerCase() +
-            (el.id ? '#' + el.id : '') +
-              (el.className ? '.' + el.className.replace(/\s+/g, ".") : ''))
-      );
-      return path;
-  };
-  window.addEventListener('click', function(evt) {
-      console.log(evt);
-      console.log(evt.target.baseURI);
-      var x = evt.clientX;
-      var y = evt.clientY;
-      var el = document.elementFromPoint(x, y);
-      var selector = cssPath(el);
 
-      var element = evt.target;
-      var xpath = getXPath(element);
-      selector = getcssSelector(selector);
-      const path = getPathToElement(element);
-      const value = JSON.stringify(path);
-      
-      console.log(xpath);
-      console.log(selector);
-      console.log(value);
-      var targetWindow = document.getElementById('iframe').contentWindow;
-      targetWindow.postMessage({xpath:xpath, selector:selector, jsonPath:value}, 'http://127.0.0.1:5173/select_monitor');
+  window.addEventListener('click', function(evt) {
+    console.log(evt);
+    var x = evt.clientX;
+    var y = evt.clientY;
+    var el = document.elementFromPoint(x, y);
+    var selector = cssPath(el);
+    var xpath = getXPath(el);
+
+    var targetWindow = document.getElementById('iframe').contentWindow;
+    targetWindow.postMessage({ xpath: xpath, selector: selector }, 'http://127.0.0.1:5173/select_monitor');
   });
-  function mouse_over(event) {
-    var element = event.target;
-    element.style.border = "1px solid red";
+
+  function cssPath(el) {
+    var path = [];
+    while ((el.nodeName.toLowerCase() != 'body') && (el = el.parentNode)) {
+      if (el.id) {
+        path.unshift('#' + el.id);
+        break;
+      } else {
+        var tagName = el.tagName.toLowerCase();
+        var siblings = el.parentNode.querySelectorAll(tagName);
+        if (siblings.length > 1) {
+          for (var i = 0; i < siblings.length; i++) {
+            if (siblings[i] === el) {
+              path.unshift(tagName + ':nth-child(' + (i + 1) + ')');
+              break;
+            }
+          }
+        } else {
+          path.unshift(tagName);
+        }
+      }
+    }
+    return path.join(' > ');
   }
-  function mouse_out(event) {
-    var element = event.target;
-    element.style.border = "";
-  }
+
   function getXPath(element) {
     if (element.id !== "") {
       return '//*[@id="' + element.id + '"]';
@@ -84,40 +77,5 @@ javascript:(function() {
         index++;
       }
     }
-  }
-  function getPathToElement(element) {
-    const path = [];
-    while (element) {
-      if (element.id) {
-        path.unshift(`#${element.id}`);
-        break;
-      }
-
-      let sibling = element;
-      let name = element.localName;
-
-      while (sibling) {
-        if (sibling.localName === name) {
-          sibling = sibling.nextElementSibling;
-          name += '+';
-        }
-      }
-
-      path.unshift(name);
-      element = element.parentElement;
-    }
-
-    return path.join(' > ');
-  }
-  document.addEventListener("mouseover", mouse_over);
-  document.addEventListener("mouseout", mouse_out);
-
-  var links = document.getElementsByTagName('a');
-
-  for (var i = 0; i < links.length; i++) {
-    links[i].addEventListener('click', function(event) {
-      event.preventDefault();
-      event.stopPropagation();
-    });
   }
 })();
