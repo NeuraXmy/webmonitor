@@ -1,156 +1,73 @@
 <template>
-  <div v-if="okMonitor">
-    <el-breadcrumb :separator-class="el-icon-arrow-right">
-        <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>任务管理</el-breadcrumb-item>
-        <el-breadcrumb-item>监控空间列表</el-breadcrumb-item>
-        <!-- <el-breadcrumb-item>promotion detail</el-breadcrumb-item> -->  
-    </el-breadcrumb>
-    <el-card>
-        <el-row>
-            <el-col :span="12">
-                <div>
-                    <el-input
-                    v-model="queryInfo.name"
-                    placeholder="请输入Name"
-                    >
-                    <template #append>
-                        <el-button @click="searchSpace"><el-icon><Search /></el-icon></el-button>
-
-                    </template>  
-                    </el-input>
-                    
-                </div>
-            </el-col>
-            <el-col :span="12">
-                <div>
-                    <el-button type="primary" :icon="Plus" @click="addSpace=true"><el-icon><Plus /></el-icon>新增空间</el-button>
-                    
-                </div>
-                <el-col :span="2">
-            </el-col>
-            </el-col>
-        </el-row>
-        <el-row>
-            <el-table :data="MonitorSpaceList" style="width: 100%">
-                <el-table-column prop="id" label="ID" width="180" />
-                <el-table-column prop="name" label="昵称" width="180" />
-                <el-table-column prop="create_time" label="创建时间" width="180" />
-                <el-table-column prop="update_time" label="更新时间" width="180" />
-                <el-table-column prop="edit" label="Edit" width="280">
-                    <template #default="scope">
-                        <el-button size="small" @click="handleEdit(scope.$index, scope.row)"
-                        >Edit</el-button
-                        >
-                        <el-button
-                        size="small"
-                        type="danger"
-                        @click="handleDelete(scope.$index, scope.row)"
-                        >Delete</el-button
-                        >
-                        <el-button size="small" @click="JumpMonitorManage(scope.row)"
-                        >Check</el-button
-                        >
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-row>
-            <!-- <el-pagination
-            v-model:current-page="queryInfo.pnum" 
-            v-model:page-size="queryInfo.psize"
-            :page-sizes="[1, 2, 5, 10]"
-            :small="small"
-            :disabled="disabled"
-            :background="background"
-            layout="total, sizes, prev, pager, next, jumper"
-            :total="total"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-            /> -->
-    </el-card>
-    <el-dialog
-    v-model="addSpace"
-    title="新增空间"
-    width="40%"
-    :before-close="handleClose"
-  >
-    <el-form ref="addSpaceRef" :rules="addSpaceRules" :model="addSpaceForm" label-width="80px" class="form_style">
-        <el-form-item label="昵称">
-            <el-col :span="20">
-                <el-input v-model="addSpaceForm.name" placeholder="请输入昵称"></el-input>
-            </el-col>
-        </el-form-item>
-    </el-form>
-    <!-- <span>....</span> -->
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="addSpace = false">Cancel</el-button>
-        <el-button type="primary" @click="addSpaceList">
-          Confirm
-        </el-button>
-      </span>
-    </template>
-  </el-dialog>
-  </div>
-  <div v-if="!okMonitor">
+    <div v-if="okMonitor">
       <el-breadcrumb :separator-class="el-icon-arrow-right">
           <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item>任务管理</el-breadcrumb-item>
-          <el-breadcrumb-item @click="this.okMonitor=true">监控空间列表</el-breadcrumb-item>
+          <el-breadcrumb-item @click="returnMonitorList">监控空间列表</el-breadcrumb-item>
           <el-breadcrumb-item>空间监控管理</el-breadcrumb-item>
           <!-- <el-breadcrumb-item>promotion detail</el-breadcrumb-item> -->
       </el-breadcrumb>
       <el-card>
-        <el-row>
-            <el-col :span="2">
-                <div>
-                    <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>增加</el-button>
-                </div>
-            </el-col>
-            <el-col :span="2">
-                <div>
-                    <!-- <el-button type="primary" @click="addMonitorUrl" ><el-icon><Plus /></el-icon>增加网页</el-button> -->
-                    <!-- <el-button type="primary" @dragstart="handleDragStart" draggable="true" ><el-icon><Plus /></el-icon>增加网页</el-button> -->
-                    <a :href='generateUrl' title="将我拖动到书签栏">拖到书签栏</a>
-                    <!-- <button draggable="true" @dragstart="onBookmarkDragStart">小书签</button> -->
-
-                </div>
-            </el-col>
-            <!-- <el-col :span="2">
-                <div>
-                    <el-button type="success"><el-icon><Delete /></el-icon>删除</el-button>
-                </div>
-            </el-col> -->
-        </el-row>
-        <el-row>
-            <el-table :data="MonitorList" style="width: 100%">
-                <el-table-column prop="id" label="ID" width="50" />
-                <el-table-column prop="name" label="昵称" width="100" />
-                <el-table-column prop="url" label="网址" width="250" />
-                <el-table-column prop="create_time" label="创建时间" width="200" />
-                <el-table-column prop="update_time" label="更新时间" width="200" />
-                <el-table-column prop="last_check_time" label="检查时间" width="200" />
-                <el-table-column prop="edit" label="Edit" width="240">
-                    <template #default="scope">
-                        <el-button size="small" @click="WatchEdit(scope.row)"
-                        >Edit</el-button
-                        >
-                        <el-button
-                        size="small"
-                        type="danger"
-                        @click="DeleteWatch(scope.row)"
-                        >Delete</el-button
-                        >
-                        <el-button
-                        size="small"
-                        type="info"
-                        @click="RefreshWatch(scope.row)"
-                        >Refresh</el-button
-                        >
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-row>
+          <el-row>
+              <el-col :span="12">
+                  <div>
+                      <el-input
+                      v-model="queryInfo.name"
+                      placeholder="请输入Name"
+                      >
+                      <template #append>
+                          <el-button @click="searchSpace"><el-icon><Search /></el-icon></el-button>
+  
+                      </template>  
+                      </el-input>
+                      
+                  </div>
+              </el-col>
+              <el-col :span="12">
+                  <div>
+                      <el-button type="primary" :icon="Plus" @click="addSpace=true"><el-icon><Plus /></el-icon>新增空间</el-button>
+                      
+                  </div>
+                  <el-col :span="2">
+              </el-col>
+              </el-col>
+          </el-row>
+          <el-row>
+              <el-table :data="MonitorSpaceList" style="width: 100%">
+                  <el-table-column prop="id" label="ID" width="180" />
+                  <el-table-column prop="name" label="昵称" width="180" />
+                  <el-table-column prop="create_time" label="创建时间" width="180" />
+                  <el-table-column prop="update_time" label="更新时间" width="180" />
+                  <el-table-column prop="edit" label="Edit" width="280">
+                      <template #default="scope">
+                          <el-button size="small" @click="handleEdit(scope.$index, scope.row)"
+                          >Edit</el-button
+                          >
+                          <el-button
+                          size="small"
+                          type="danger"
+                          @click="handleDelete(scope.$index, scope.row)"
+                          >Delete</el-button
+                          >
+                          <el-button size="small" @click="JumpMonitorManage(scope.row)"
+                          >Check</el-button
+                          >
+                      </template>
+                  </el-table-column>
+              </el-table>
+          </el-row>
+              <!-- <el-pagination
+              v-model:current-page="queryInfo.pnum" 
+              v-model:page-size="queryInfo.psize"
+              :page-sizes="[1, 2, 5, 10]"
+              :small="small"
+              :disabled="disabled"
+              :background="background"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              /> -->
       </el-card>
       <el-dialog
             v-model="addMonitor"
@@ -186,11 +103,12 @@
                             :value="item.value"
                             />
                         </el-select>
+                        <el-input type="textarea" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素说明"></el-input>
                     </el-col>
+                    
                 </el-form-item>
                 <el-form-item label="刷新时间">
                     <el-col :span="4">
-                        <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
                         <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
                     </el-col>
                     <el-col :span="4">
@@ -256,7 +174,7 @@
                             :value="item.value"
                             />
                         </el-select>
-                        <el-input v-model="addMonitorForm.include_filters" placeholder="请输入监控元素说明"></el-input>
+                        <el-input type="textarea" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素说明"></el-input>
                     </el-col>
                 </el-form-item>
                 <el-form-item label="刷新时间">
@@ -306,18 +224,6 @@ export default{
             MonitorSpaceList:[
                 {
                     id:1,name:'1',create_time:'1',update_time:'1'
-                },
-                {
-                    id:2,name:'1',create_time:'1',update_time:'1'
-                },
-                {
-                    id:3,name:'1',create_time:'1',update_time:'1'
-                },
-                {
-                    id:4,name:'1',create_time:'1',update_time:'1'
-                },
-                {
-                    id:5,name:'1',create_time:'1',update_time:'1'
                 }
             ],
             MonitorList:[
@@ -326,15 +232,6 @@ export default{
                 },
                 {
                     id:2,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
-                },
-                {
-                    id:3,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
-                },
-                {
-                    id:4,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
-                },
-                {
-                    id:5,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
                 }
             ],
             value:'',
@@ -348,15 +245,12 @@ export default{
                     label: 'CssSelector',
                 },
                 {
-                    value: 'JSON',
-                    label: 'JSON',
+                    value: 'JSONPath',
+                    label: 'JSONPath',
                 }
             ],
             queryInfo:{
                 name:''
-                // ,
-                // pnum:1,
-                // psize:2
             },
             // total:5,
             addSpace:false,
@@ -386,7 +280,8 @@ export default{
     created(){
         this.getMonitorSpaceList()
         //书签的url
-        const filePath = '../embed/inject_js.txt';
+        const filePath = '../embed/inject.js';
+        console.log(filePath)
         try {
             const response = fetch(filePath);
             const data = response.text();
@@ -410,6 +305,11 @@ export default{
             this.$message.success(res.message)
             // this.total=res.data
             this.MonitorSpaceList = res.data
+        },
+        //返回监控列表刷新space空间
+        returnMonitorList(){
+            this.okMonitor=true
+            this.getMonitorSpaceList();
         },
         //根据昵称搜索空间
         searchSpace(){
@@ -437,12 +337,23 @@ export default{
             
             this.MonitorList = res.data
         },
+        //刷新监控列表
+        async RefreshMonitorManage(val){
+            this.space_id = val
+            // this.okMonitor=false
+            const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            
+            this.MonitorList = res.data
+        },
         //用户在某个space下创建监控
         async addMonitorList(){
             this.addMonitor=false
-            // let data={
-            //     'token': sessionStorage.getItem('token')
-            // }
             let data = this.$qs.stringify(this.addMonitorForm)
             const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
             {
@@ -452,14 +363,14 @@ export default{
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             
-            this.JumpMonitorManage()
+            this.RefreshMonitorManage(this.space_id)
         },
         addMonitorListener(){
             this.addMonitor=true
             const currentTime = ref(new Date());
             // 使用 computed 属性来实时更新时间
             const updateTime = computed(() => {
-            currentTime.value = new Date();
+                currentTime.value = new Date();
             });
             console.log(currentTime)
             this.addMonitorForm.create_time=currentTime
@@ -476,16 +387,13 @@ export default{
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            this.JumpMonitorManage()
+            this.RefreshMonitorManage(this.space_id)
         },
-        //触发用户修改监控,保存watch_id
-        WatchEdit(row){
+        //触发用户修改监控,保存watch_id并且获取监控信息
+        async WatchEdit(row){
             this.EditMonitor=true;
             this.watch_id=row.id;
-        },
-        //用户修改监控
-        async WatchEditConfirm(){
-            const {data: res} = await this.$axios.put('/watch/'+this.watch_id,
+            const {data: res} = await this.$axios.get('/watch/'+this.watch_id,
             {
                 headers : {
                     'token': sessionStorage.getItem('token')
@@ -493,11 +401,34 @@ export default{
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             
-            this.JumpMonitorManage()
+            this.addMonitorForm = res.data
+        },
+        //用户修改监控
+        async WatchEditConfirm(){
+            this.EditMonitor=false
+            let data = this.$qs.stringify(this.addMonitorForm)
+            const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            
+            this.RefreshMonitorManage(this.space_id)
         },
         //用户立刻刷新监控
         async RefreshWatch(row){
-            
+            // this.space_id = row.id
+            // const currentTime = ref(new Date());
+            // // 使用 computed 属性来实时更新时间
+            // const updateTime = computed(() => {
+            //     currentTime.value = new Date();
+            // });
+            // console.log(currentTime)
+            // this.MonitorList.update_time=currentTime
+            // this.MonitorList.last_check_time=currentTime
+
             let data={
                 'token': sessionStorage.getItem('token')
             }
@@ -509,7 +440,7 @@ export default{
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             
-            this.JumpMonitorManage()
+            this.RefreshMonitorManage(this.space_id)
         },
         addMonitorUrl(){
             
