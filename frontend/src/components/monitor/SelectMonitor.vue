@@ -90,11 +90,12 @@ export default{
                 {
                     value: 'CssSelector',
                     label: 'CssSelector',
-                },
-                {
-                    value: 'JSONPath',
-                    label: 'JSONPath',
                 }
+                // ,
+                // {
+                //     value: 'JSONPath',
+                //     label: 'JSONPath',
+                // }
             ],
             addMonitor:false,
             addMonitorForm:{
