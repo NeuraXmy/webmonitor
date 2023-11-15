@@ -91,13 +91,13 @@ export default {
     },
     register(){
       this.$refs.userRegisterRef.validate(async valid => {
-        // console.log(valid)
         if(!valid) return 
         const {data: res} = await this.$axios.post('/auth/register',this.$qs.stringify(this.userForm))
         if(res.status ===200){
-          window.sessionStorage.setItem('token',res.data.token)
+          console.log(res)
+          // window.sessionStorage.setItem('token',res.data.token)
           this.$message.success(res.message)
-          this.$route.push('/home')
+          // this.$route.push('/home')
         }else{
           this.$message.error(res.message);
         }

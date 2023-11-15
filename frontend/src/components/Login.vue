@@ -63,8 +63,8 @@ export default{
   data() {
     return {
       userForm:{
-          email:'sxt',
-          password:'123'
+          email:'',
+          password:''
       },
       userRules:{
           email:[

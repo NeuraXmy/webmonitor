@@ -14,32 +14,16 @@
                 class="el-menu-vertical-demo"
                 default-active="2"
                 text-color="#fff"
-                @open="handleOpen"
-                @close="handleClose"
-                router="true"
+                :router="true"
             >
                 <el-sub-menu index="1">
                 <template #title>
-                    <el-icon><location /></el-icon>
                     <span><el-icon><Menu /></el-icon>任务管理</span>
                 </template>
                     <el-menu-item index="monitor_list">
-                        <el-icon><Operation /></el-icon>
                         <span><el-icon><Compass /></el-icon>监控空间列表</span>
                     </el-menu-item>
-                    <!-- <el-menu-item index="monitor">
-                        <el-icon><Operation /></el-icon>
-                        <span>网页监控管理</span>
-                    </el-menu-item> -->
                 </el-sub-menu>
-                <!-- <el-sub-menu index="3">
-                <template #title>
-                    <el-icon><location /></el-icon>
-                    <span>系统管理</span>
-                </template>
-                    <el-menu-item index="4">角色列表</el-menu-item>
-                    <el-menu-item index="5">权限列表</el-menu-item>
-                </el-sub-menu> -->
             </el-menu>
         </el-aside>
         <el-main>
@@ -52,12 +36,9 @@
 
 <script>
 import { Menu,Compass } from '@element-plus/icons-vue'
-// import { ref, computed } from 'vue';
+
 export default{
     components: { Menu,Compass },
-    data(){
-        
-    },
     methods:{
         logout(){
             window.sessionStorage.clear()
@@ -78,10 +59,6 @@ export default{
     justify-content: space-between;
     color: #fff;
     font-size: 20px;
-    /* div{
-        display: flex;
-        align-items: center;
-    } */
 }
 .el-aside{
     background-color: #303133;

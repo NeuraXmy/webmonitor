@@ -1,14 +1,13 @@
 <template>
     <div v-if="okMonitor">
-      <el-breadcrumb :separator-class="el-icon-arrow-right">
+      <el-breadcrumb>
           <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item>任务管理</el-breadcrumb-item>
           <el-breadcrumb-item>监控空间列表</el-breadcrumb-item>
-          <!-- <el-breadcrumb-item>promotion detail</el-breadcrumb-item> -->  
       </el-breadcrumb>
       <el-card>
           <el-row>
-              <el-col :span="12">
+              <!-- <el-col :span="12">
                   <div>
                       <el-input
                       v-model="queryInfo.name"
@@ -21,25 +20,29 @@
                       </el-input>
                       
                   </div>
-              </el-col>
-              <el-col :span="12">
+              </el-col> -->
+              <el-col :span="4">
                   <div>
-                      <el-button type="primary" :icon="Plus" @click="addSpace=true"><el-icon><Plus /></el-icon>新增空间</el-button>
+                      <el-button type="primary" @click="addSpace=true"><el-icon><Plus /></el-icon>新增空间</el-button>
                       
                   </div>
-                  <el-col :span="2">
               </el-col>
+              <el-col :span="2">
+                  <div>
+                      <a href="javascript:(function() {var iframe = document.createElement('iframe');iframe.src = 'http://127.0.0.1:5173/select_monitor';iframe.style.position = 'fixed';iframe.style.top = '70%';iframe.style.right = '0';iframe.style.width = '100%';iframe.style.height = '30%';iframe.style.zIndex = 2147483647;iframe.id = 'iframe';var container = document.body;container.appendChild(iframe);var getcssSelector = function(path) {  console.log(path.length);  return path[path.length-1];};var cssPath = function(el) {    var path = [];    while (      (el.nodeName.toLowerCase() != 'body') &&        (el = el.parentNode) &&        path.unshift(el.nodeName.toLowerCase() +          (el.id ? %27#' + el.id : '') +            (el.className ? '.' + el.className.replace(/\s+/g, '.') : ''))    );    return path;};window.addEventListener('click', function(evt) {    console.log(evt);    console.log(evt.target.baseURI);    console.log(evt.target.innerText);    var x = evt.clientX;    var y = evt.clientY;    var el = document.elementFromPoint(x, y);    var selector = cssPath(el);    var element = evt.target;    var xpath = getXPath(element);    selector = getcssSelector(selector);        console.log(xpath);    console.log(selector);    var targetWindow = document.getElementById('iframe').contentWindow;    targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText}, 'http://127.0.0.1:5173/select_monitor');});function mouse_over(event) {  var element = event.target;  element.style.border = '1px solid red';}function mouse_out(event) {  var element = event.target;  element.style.border = '';}function getXPath(element) {  if (element.id !== '') {    return '//*[@id=' + '%22' + element.id + '%22' + ']';  }  if (element === document.body) {    return '/html/body';  }  var index = 1;  const childNodes = element.parentNode ? element.parentNode.childNodes : [];  var siblings = childNodes;  for (var i = 0; i < siblings.length; i++) {    var sibling = siblings[i];    if (sibling === element) {      return (        getXPath(element.parentNode) +        '/' +        element.tagName.toLowerCase() +        '[' +        index +        ']'      );    }    if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {      index++;    }  }}document.addEventListener('mouseover', mouse_over);document.addEventListener('mouseout', mouse_out);var links = document.getElementsByTagName('a');for (var i = 0; i < links.length; i++) {    links[i].addEventListener('click', function(event) {    event.preventDefault();    event.stopPropagation();  });}})();" title="将我拖动到书签栏">小书签</a>
+                      
+                  </div>
               </el-col>
           </el-row>
           <el-row>
               <el-table :data="MonitorSpaceList" style="width: 100%">
-                  <el-table-column prop="id" label="ID" width="180" />
-                  <el-table-column prop="name" label="昵称" width="180" />
-                  <el-table-column prop="create_time" label="创建时间" width="180" />
-                  <el-table-column prop="update_time" label="更新时间" width="180" />
-                  <el-table-column prop="edit" label="Edit" width="280">
+                  <el-table-column prop="id" label="ID" width="100" />
+                  <el-table-column prop="name" label="昵称" width="200" />
+                  <el-table-column prop="create_time" label="创建时间" width="400" />
+                  <el-table-column prop="update_time" label="更新时间" width="400" />
+                  <el-table-column prop="edit" label="Edit" width="120">
                       <template #default="scope">
-                          <el-button size="small" @click="handleEdit(scope.$index, scope.row)"
+                          <!-- <el-button size="small" @click="handleEdit(scope.$index, scope.row)"
                           >Edit</el-button
                           >
                           <el-button
@@ -47,32 +50,19 @@
                           type="danger"
                           @click="handleDelete(scope.$index, scope.row)"
                           >Delete</el-button
-                          >
+                          > -->
                           <el-button size="small" @click="JumpMonitorManage(scope.row)"
-                          >Check</el-button
+                          >查看空间</el-button
                           >
                       </template>
                   </el-table-column>
               </el-table>
           </el-row>
-              <!-- <el-pagination
-              v-model:current-page="queryInfo.pnum" 
-              v-model:page-size="queryInfo.psize"
-              :page-sizes="[1, 2, 5, 10]"
-              :small="small"
-              :disabled="disabled"
-              :background="background"
-              layout="total, sizes, prev, pager, next, jumper"
-              :total="total"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-              /> -->
       </el-card>
       <el-dialog
       v-model="addSpace"
       title="新增空间"
       width="40%"
-      :before-close="handleClose"
     >
       <el-form ref="addSpaceRef" :rules="addSpaceRules" :model="addSpaceForm" label-width="80px" class="form_style">
           <el-form-item label="昵称">
@@ -81,24 +71,22 @@
               </el-col>
           </el-form-item>
       </el-form>
-      <!-- <span>....</span> -->
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="addSpace = false">Cancel</el-button>
+          <el-button @click="addSpace = false">取消</el-button>
           <el-button type="primary" @click="addSpaceList">
-            Confirm
+            确定
           </el-button>
         </span>
       </template>
     </el-dialog>
     </div>
     <div v-if="!okMonitor">
-        <el-breadcrumb :separator-class="el-icon-arrow-right">
+        <el-breadcrumb>
             <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item>任务管理</el-breadcrumb-item>
             <el-breadcrumb-item @click="this.okMonitor=true">监控空间列表</el-breadcrumb-item>
             <el-breadcrumb-item>空间监控管理</el-breadcrumb-item>
-            <!-- <el-breadcrumb-item>promotion detail</el-breadcrumb-item> -->
         </el-breadcrumb>
         <el-card>
           <el-row>
@@ -107,42 +95,37 @@
                       <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>增加</el-button>
                   </div>
               </el-col>
-              <el-col :span="2">
+              <!-- <el-col :span="2">
                   <div>
                       <a :href='generateUrl' title="将我拖动到书签栏">拖到书签栏</a>
                       
-                  </div>
-              </el-col>
-              <!-- <el-col :span="2">
-                  <div>
-                      <el-button type="success"><el-icon><Delete /></el-icon>删除</el-button>
                   </div>
               </el-col> -->
           </el-row>
           <el-row>
               <el-table :data="MonitorList" style="width: 100%">
                   <el-table-column prop="id" label="ID" width="50" />
-                  <el-table-column prop="name" label="昵称" width="100" />
-                  <el-table-column prop="url" label="网址" width="250" />
+                  <el-table-column prop="name" label="昵称" width="80" />
+                  <el-table-column prop="url" label="网址" width="270" />
                   <el-table-column prop="create_time" label="创建时间" width="200" />
                   <el-table-column prop="update_time" label="更新时间" width="200" />
                   <el-table-column prop="last_check_time" label="检查时间" width="200" />
                   <el-table-column prop="edit" label="Edit" width="240">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
-                          >Edit</el-button
+                          >编辑</el-button
                           >
                           <el-button
                           size="small"
                           type="danger"
                           @click="DeleteWatch(scope.row)"
-                          >Delete</el-button
+                          >删除</el-button
                           >
                           <el-button
                           size="small"
                           type="info"
                           @click="RefreshWatch(scope.row)"
-                          >Refresh</el-button
+                          >刷新</el-button
                           >
                       </template>
                   </el-table-column>
@@ -153,9 +136,7 @@
               v-model="addMonitor"
               title="新增监控网址"
               width="40%"
-              :before-close="handleClose"
           >
-              <!-- <el-form ref="addMonitorRef" :rules="addMonitorRules" :model="addMonitorForm" label-width="80px" class="form_style"> -->
               <el-form :model="addMonitorForm" label-width="80px" class="form_style">
                   <el-form-item label="监控名">
                       <el-col :span="20">
@@ -174,7 +155,6 @@
                   </el-form-item>
                   <el-form-item label="监控元素">
                       <el-col :span="20">
-                          <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
                           <el-select v-model="this.addMonitorForm.include_filters" placeholder="Select" size="large">
                               <el-option
                               v-for="item in options"
@@ -224,9 +204,7 @@
               v-model="EditMonitor"
               title="编辑监控信息"
               width="40%"
-              :before-close="handleClose"
           >
-              <!-- <el-form ref="addMonitorRef" :rules="addMonitorRules" :model="addMonitorForm" label-width="80px" class="form_style"> -->
               <el-form :model="addMonitorForm" label-width="80px" class="form_style">
                   <el-form-item label="监控名">
                       <el-col :span="20">
@@ -245,7 +223,6 @@
                   </el-form-item>
                   <el-form-item label="监控元素">
                       <el-col :span="20">
-                          <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
                           <el-select v-model="value" placeholder="Select" size="large">
                               <el-option
                               v-for="item in options"
@@ -280,7 +257,6 @@
                       </el-col>
                   </el-form-item>
               </el-form>
-              <!-- <span>....</span> -->
               <template #footer>
               <span class="dialog-footer">
                   <el-button @click="EditMonitor = false">Cancel</el-button>
@@ -290,11 +266,27 @@
               </span>
               </template>
           </el-dialog>
+          <el-dialog
+            v-model="okDeleteWatch"
+            width="30%"
+            align-center
+            >
+            <span>是否删除监控？</span>
+            <template #footer>
+                <span class="dialog-footer">
+                <el-button @click="okDeleteWatch = false">取消</el-button>
+                <el-button type="primary" @click="ConfirmDeleteWatch">
+                    确定
+                </el-button>
+                </span>
+            </template>
+            </el-dialog>
       </div>
   </template>
   <script>
   import { Search,Plus,Delete } from '@element-plus/icons-vue'
   import { ref, computed } from 'vue';
+//   import filePath from '../../embed/inject.js';
   export default{
       
       components: { Search,Plus,Delete },
@@ -302,17 +294,14 @@
           return {
               okMonitor:true,
               MonitorSpaceList:[
-                  {
-                      id:1,name:'1',create_time:'1',update_time:'1'
-                  }
+                //   {
+                //       id:'',name:'',create_time:'',update_time:''
+                //   }
               ],
               MonitorList:[
-                  {
-                      id:1,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
-                  },
-                  {
-                      id:2,name:'1',url:'https://www.baidu.com/',create_time:'1',update_time:'1',last_check_time:'1'
-                  }
+                //   {
+                //       id:'',name:'',url:'',create_time:'',update_time:'',last_check_time:''
+                //   }
               ],
               value:'',
               options:[
@@ -323,16 +312,13 @@
                   {
                       value: 'CssSelector',
                       label: 'CssSelector',
-                  },
-                  {
-                      value: 'JSONPath',
-                      label: 'JSONPath',
                   }
+                //   ,
+                //   {
+                //       value: 'JSONPath',
+                //       label: 'JSONPath',
+                //   }
               ],
-              queryInfo:{
-                  name:''
-              },
-              // total:5,
               addSpace:false,
               addSpaceForm:{
                   name:''
@@ -354,51 +340,44 @@
               space_id:1,
               watch_id:1,
               EditMonitor:false,
-              generateUrl:''
+              generateUrl:'',
+              okDeleteWatch:false,
+              DeleteWatchID:''
           }
       },
       created(){
           this.getMonitorSpaceList()
           //书签的url
-          const filePath = '../embed/inject.js';
-          console.log(filePath)
-          try {
-              const response = fetch(filePath);
-              const data = response.text();
-              this.generateUrl = data;
-          } catch (error) {
-              console.error(error);
-          }
-          console.log(this.generateUrl)
+        //   const filePath = '../embed/inject.js';
+        //   console.log(filePath)
+        //   try {
+        //       const response = fetch(filePath);
+        //       const data = response.text();
+        //       this.generateUrl = data;
+        //   } catch (error) {
+        //       console.error(error);
+        //   }
+        //   console.log(this.generateUrl)
       },
       methods:{
           async getMonitorSpaceList(){
-              console.log(sessionStorage.getItem('token'))
+            console.log("---")
               const {data: res} = await this.$axios.get('/spaces',
               {
-                  // params:{},
                   headers : {
                       'token': sessionStorage.getItem('token')
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.$message.success(res.message)
-              // this.total=res.data
+              
+              console.log(res.data)
               this.MonitorSpaceList = res.data
-          },
-          //根据昵称搜索空间
-          searchSpace(){
-              this.queryInfo.pnum = 1
-              this.getMonitorSpaceList();
-          },
-          //新增空间
-          async addSpaceList(){
-              this.addSpace=false
-              // const {data: res} = await this.$axios.get('/space/')
+
+              console.log(this.MonitorSpaceList)
           },
           //获取某个space下的监控列表
           async JumpMonitorManage(val){
-              
               this.space_id=val.id
               
               this.okMonitor=false
@@ -452,17 +431,22 @@
               this.addMonitorForm.update_time=currentTime
               this.addMonitorForm.last_check_time=currentTime
           },
-          //用户删除监控
-          async DeleteWatch(row){
-              const {data: res} = await this.$axios.delete('/watch/'+row.id,
+          //用户确定删除监控
+          async ConfirmDeleteWatch(){
+              const {data: res} = await this.$axios.delete('/watch/'+this.DeleteWatchID,
               {
-                  params:{id: row.id},
+                  params:{id: this.DeleteWatchID},
                   headers : {
                       'token': sessionStorage.getItem('token')
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.RefreshMonitorManage(this.space_id)
+              this.okDeleteWatch = false;
+          },
+          DeleteWatch(row){
+            this.okDeleteWatch = true;
+            this.DeleteWatchID = row.id;
           },
           //触发用户修改监控,保存watch_id并且获取监控信息
           async WatchEdit(row){
@@ -494,16 +478,6 @@
           },
           //用户立刻刷新监控
           async RefreshWatch(row){
-              // this.space_id = row.id
-              // const currentTime = ref(new Date());
-              // // 使用 computed 属性来实时更新时间
-              // const updateTime = computed(() => {
-              //     currentTime.value = new Date();
-              // });
-              // console.log(currentTime)
-              // this.MonitorList.update_time=currentTime
-              // this.MonitorList.last_check_time=currentTime
-  
               let data={
                   'token': sessionStorage.getItem('token')
               }
@@ -516,9 +490,6 @@
               if(res.status !== 200) return  this.$message.error(res.msg)
               
               this.RefreshMonitorManage(this.space_id)
-          },
-          addMonitorUrl(){
-              
           }
       }
   }

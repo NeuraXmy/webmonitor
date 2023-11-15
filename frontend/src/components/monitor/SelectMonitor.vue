@@ -152,7 +152,6 @@ export default{
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             
-            // this.JumpMonitorManage()
         }
     }
 }
