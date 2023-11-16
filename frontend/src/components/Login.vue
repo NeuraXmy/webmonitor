@@ -19,45 +19,11 @@
           </el-form>
       </div>
   </div>
-  <!-- <div
-        class="container b-container"
-        id="b-container"
-    >
-          <el-form class="form" ref="userRef" :rules="userRules" :model="userForm" label-width="0px">
-            <h2 class="form_title title">多模态信息舆情监控</h2>
-            <el-form-item prop="email">
-              <input
-                  class="form__input"
-                  type="text"
-                  placeholder="用户名"
-                  v-model="userForm.email"
-              />
-            </el-form-item>
-            <el-form-item prop="password">
-              <input
-                  class="form__input"
-                  type="password"
-                  placeholder="密码"
-                  v-model="userForm.password"
-              />
-            </el-form-item>
-            <div class="login-info">
-                <a class="form__link" @click="forgetPassword">忘记密码了？</a>
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                <a class="form__link" @click="register"
-                    >注册新账户</a
-                >
-            </div>
-            <button class="form__button button submit" @click="login">
-                登&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;陆
-            </button>
-          </el-form>
-    </div> -->
 </template>
 
 <script>
 import { User,Lock } from '@element-plus/icons-vue'
-// import { ref, computed } from 'vue';
+
 export default{
   components: { User,Lock },
   data() {
@@ -69,7 +35,6 @@ export default{
       userRules:{
           email:[
               {required:true, message: '请输入邮箱', trigger:'blur'},
-              // {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
           ],
           password:[
               {required:true, message: '请输入密码', trigger:'blur'}
@@ -85,14 +50,15 @@ export default{
     login(){
       console.log(this.userForm)
       this.$refs.userRef.validate(async valid => {
+        console.log(valid)
         if(!valid) return 
         const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
         if(res.status ===200){
           window.sessionStorage.setItem('token',res.data.token)
-          this.$message.success(res.message)
+          this.$message.success(res.msg)
           this.$router.push('/home')
         }else{
-          this.$message.error(res.message);
+          this.$message.error(res.msg);
         }
         
       })

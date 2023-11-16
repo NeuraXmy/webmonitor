@@ -52,7 +52,7 @@
                           >Delete</el-button
                           > -->
                           <el-button size="small" @click="JumpMonitorManage(scope.row)"
-                          >查看空间</el-button
+                          >进入</el-button
                           >
                       </template>
                   </el-table-column>
@@ -137,25 +137,25 @@
               title="新增监控网址"
               width="40%"
           >
-              <el-form :model="addMonitorForm" label-width="80px" class="form_style">
-                  <el-form-item label="监控名">
+              <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+                  <el-form-item label="监控名" prop="name">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="监控说明">
+                  <el-form-item label="监控说明" prop="desc">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.desc" placeholder="请输入监控说明"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="网址">
+                  <el-form-item label="网址" prop="url">
                       <el-col :span="20">
-                          <el-input v-model="addMonitorForm.url" placeholder="请输入网址"></el-input>
+                          <el-input v-model="addMonitorForm.url" placeholder="请输入网址（http://或https://开头）"></el-input>
                       </el-col>
                   </el-form-item>
                   <el-form-item label="监控元素">
                       <el-col :span="20">
-                          <el-select v-model="this.addMonitorForm.include_filters" placeholder="Select" size="large">
+                          <el-select v-model="this.value" placeholder="Select" size="large" @change="ChangeElement">
                               <el-option
                               v-for="item in options"
                               :key="item.value"
@@ -163,7 +163,7 @@
                               :value="item.value"
                               />
                           </el-select>
-                          <el-input type="textarea" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素说明"></el-input>
+                          <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
                       </el-col>
                       
                   </el-form-item>
@@ -184,7 +184,7 @@
                           <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="通知邮箱">
+                  <el-form-item label="通知邮箱" prop="notification_email">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.notification_email"></el-input>
                       </el-col>
@@ -205,25 +205,25 @@
               title="编辑监控信息"
               width="40%"
           >
-              <el-form :model="addMonitorForm" label-width="80px" class="form_style">
-                  <el-form-item label="监控名">
+              <el-form  ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+                  <el-form-item label="监控名" prop="name">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="监控说明">
+                  <el-form-item label="监控说明" prop="desc">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.desc" placeholder="请输入监控说明"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="网址">
+                  <el-form-item label="网址" prop="url">
                       <el-col :span="20">
-                          <el-input v-model="addMonitorForm.url" placeholder="请输入网址"></el-input>
+                          <el-input v-model="addMonitorForm.url" placeholder="请输入网址（http://或https://开头）"></el-input>
                       </el-col>
                   </el-form-item>
                   <el-form-item label="监控元素">
                       <el-col :span="20">
-                          <el-select v-model="value" placeholder="Select" size="large">
+                          <el-select v-model="value" placeholder="Select" size="large" @change="ChangeElement">
                               <el-option
                               v-for="item in options"
                               :key="item.value"
@@ -231,7 +231,7 @@
                               :value="item.value"
                               />
                           </el-select>
-                          <el-input type="textarea" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素说明"></el-input>
+                          <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
                       </el-col>
                   </el-form-item>
                   <el-form-item label="刷新时间">
@@ -251,7 +251,7 @@
                           <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="通知邮箱">
+                  <el-form-item label="通知邮箱" prop="notification_email">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.notification_email"></el-input>
                       </el-col>
@@ -266,7 +266,7 @@
               </span>
               </template>
           </el-dialog>
-          <el-dialog
+        <el-dialog
             v-model="okDeleteWatch"
             width="30%"
             align-center
@@ -280,44 +280,55 @@
                 </el-button>
                 </span>
             </template>
-            </el-dialog>
+        </el-dialog>
+        <el-dialog
+            v-model="okReflashWatch"
+            width="30%"
+            align-center
+            >
+            <span>刷新监控成功</span>
+        </el-dialog>
       </div>
   </template>
   <script>
   import { Search,Plus,Delete } from '@element-plus/icons-vue'
   import { ref, computed } from 'vue';
-//   import filePath from '../../embed/inject.js';
   export default{
       
       components: { Search,Plus,Delete },
       data(){
+          const vaildateEmail = (rule, value, callback) => {
+            let EmailReg = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
+            console.log("++++")
+            if(EmailReg.test(value)){
+                return callback()
+            } 
+            return callback(new Error('请输入有效的邮箱'))
+          }
+          const vaildateUrl = (rule, value, callback) => {
+            let UrlReg = /^(https|http|ftp)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(:[0-9]{1,5})?(\/[\S]*)?$/
+            console.log("++++")
+            if(UrlReg.test(value)){
+                return callback()
+            } 
+            return callback(new Error('请输入有效的网址'))
+          }
           return {
               okMonitor:true,
               MonitorSpaceList:[
-                //   {
-                //       id:'',name:'',create_time:'',update_time:''
-                //   }
+                //   {id:'',name:'',create_time:'',update_time:''}
               ],
               MonitorList:[
-                //   {
-                //       id:'',name:'',url:'',create_time:'',update_time:'',last_check_time:''
-                //   }
+                //   {id:'',name:'',url:'',create_time:'',update_time:'',last_check_time:''}
               ],
               value:'',
               options:[
                   {
-                      value: 'XPath',
-                      label: 'XPath',
+                      value: '1',label: 'None',
                   },
                   {
-                      value: 'CssSelector',
-                      label: 'CssSelector',
+                      value: '2',label: 'XPath/CssSelector',
                   }
-                //   ,
-                //   {
-                //       value: 'JSONPath',
-                //       label: 'JSONPath',
-                //   }
               ],
               addSpace:false,
               addSpaceForm:{
@@ -337,12 +348,36 @@
                   notification_email:'',
                   include_filters:''
               },
+              MonitorRules:{
+                  name:[
+                      {required:true, message: '请输入昵称', trigger:'blur'},
+                  ],
+                  desc:[
+                      {required:true, message: '请输入描述', trigger:'blur'}
+                  ],
+                  url:[
+                    //   {required:true, message: '请输入网址', trigger:'blur'}
+                      {required:true, validator: vaildateUrl, trigger:'blur'}
+                  ],
+                  element:[
+                      {required:true, message: '请输入元素', trigger:'blur'}
+                  ],
+                  notification_email:[
+                    //   {required:true, message: '请输入元素', trigger:'blur'}
+                      {required:true, validator: vaildateEmail, trigger:'blur'}
+                  ],
+                  include_filters:[
+                      {required:true, message: '请输入密码', trigger:'blur'}
+                  ]
+              },
               space_id:1,
               watch_id:1,
               EditMonitor:false,
               generateUrl:'',
               okDeleteWatch:false,
-              DeleteWatchID:''
+              DeleteWatchID:'',
+              okReflashWatch:false,
+              okDisabled:false
           }
       },
       created(){
@@ -369,7 +404,7 @@
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
-              this.$message.success(res.message)
+              this.$message.success(res.msg)
               
               console.log(res.data)
               this.MonitorSpaceList = res.data
@@ -388,7 +423,7 @@
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
-              
+              this.$message.success(res.msg)
               this.MonitorList = res.data
           },
           //刷新监控列表
@@ -406,30 +441,46 @@
               this.MonitorList = res.data
           },
           //用户在某个space下创建监控
-          async addMonitorList(){
-              this.addMonitor=false
-              let data = this.$qs.stringify(this.addMonitorForm)
-              const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
-              {
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
-              
-              this.RefreshMonitorManage(this.space_id)
+          addMonitorList(){
+            this.$refs.MonitorRef.validate(async valid => {
+                console.log(valid)
+                if(!valid) return 
+                let data = this.$qs.stringify(this.addMonitorForm)
+                const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
+                {
+                    headers : {
+                        'token': sessionStorage.getItem('token')
+                    }
+                })
+                if(res.status ===200){
+                    this.addMonitor=false
+                    this.RefreshMonitorManage(this.space_id)
+                }else{
+                    this.$message.error(res.msg);
+                }
+            })
           },
           addMonitorListener(){
               this.addMonitor=true
-              const currentTime = ref(new Date());
-              // 使用 computed 属性来实时更新时间
-              const updateTime = computed(() => {
-                  currentTime.value = new Date();
-              });
-              console.log(currentTime)
-              this.addMonitorForm.create_time=currentTime
-              this.addMonitorForm.update_time=currentTime
-              this.addMonitorForm.last_check_time=currentTime
+            //   const currentTime = ref(new Date());
+            //   // 使用 computed 属性来实时更新时间
+            //   const updateTime = computed(() => {
+            //       currentTime.value = new Date();
+            //   });
+            //   console.log(currentTime)
+
+            //   this.addMonitorForm = ''//清空对话框
+              this.addMonitorForm.desc = ''
+              this.addMonitorForm.element = ''
+              this.addMonitorForm.include_filters = ''
+              this.addMonitorForm.notification_email = ''
+              this.addMonitorForm.url = ''
+              this.addMonitorForm.name = ''
+              this.addMonitorForm.time_between_check_days = '1'
+              this.addMonitorForm.time_between_check_hours = '0'
+              this.addMonitorForm.time_between_check_minutes = '0'
+              this.addMonitorForm.time_between_check_seconds = '0'
+              this.addMonitorForm.time_between_check_weeks = ''
           },
           //用户确定删除监控
           async ConfirmDeleteWatch(){
@@ -463,18 +514,35 @@
               this.addMonitorForm = res.data
           },
           //用户修改监控
-          async WatchEditConfirm(){
-              this.EditMonitor=false
-              let data = this.$qs.stringify(this.addMonitorForm)
-              const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
-              {
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
+          WatchEditConfirm(){
+            this.$refs.MonitorRef.validate(async valid => {
+                console.log(valid)
+                if(!valid) return 
+                let data = this.$qs.stringify(this.addMonitorForm)
+                const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
+                {
+                    headers : {
+                        'token': sessionStorage.getItem('token')
+                    }
+                })
+                if(res.status ===200){
+                    this.EditMonitor=false
+                    this.RefreshMonitorManage(this.space_id)
+                }else{
+                    this.$message.error(res.message);
+                }
+            })
+            //   this.EditMonitor=false
+            //   let data = this.$qs.stringify(this.addMonitorForm)
+            //   const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
+            //   {
+            //       headers : {
+            //           'token': sessionStorage.getItem('token')
+            //       }
+            //   })
+            //   if(res.status !== 200) return  this.$message.error(res.msg)
               
-              this.RefreshMonitorManage(this.space_id)
+            //   this.RefreshMonitorManage(this.space_id)
           },
           //用户立刻刷新监控
           async RefreshWatch(row){
@@ -490,7 +558,19 @@
               if(res.status !== 200) return  this.$message.error(res.msg)
               
               this.RefreshMonitorManage(this.space_id)
-          }
+              this.okReflashWatch = true
+          },
+          //改变多选框
+          ChangeElement(){
+            console.log(this.value)
+            if(this.value === '1'){
+                this.okDisabled = true
+            }else if(this.value === '2'){
+                this.okDisabled = false
+            }else if(this.value === 'JSONPath'){
+                // this.addMonitorForm.include_filters=this.Element.jsonPath;
+            }
+        },
       }
   }
   

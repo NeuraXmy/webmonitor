@@ -21,36 +21,6 @@
           </el-form>
       </div>
   </div>
-  <!-- <div
-        class="container b-container"
-        id="b-container"
-    >
-    
-        <form class="form" id="b-form" method="" action="">
-            <h2 class="form_title title">多模态信息舆情监控</h2>
-            <input
-                class="form__input"
-                type="text"
-                placeholder="邮箱"
-                v-model="userForm.email"
-            />
-            <input
-                class="form__input"
-                type="password"
-                placeholder="密码"
-                v-model="userForm.password"
-            />
-            <input
-                class="form__input"
-                type="text"
-                placeholder="昵称"
-                v-model="userForm.nickname"
-            />
-            <button class="form__button button submit" @click="register">
-                注&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;册
-            </button>
-        </form>
-    </div> -->
 </template>
 
 <script>
@@ -71,15 +41,13 @@ export default {
       },
       userRules:{
           email:[
-              {required:true, message: '请输入邮箱', trigger:'blur'},
-              {validator: validEmail, trigger:'blur'}
+              {required:true, validator: validEmail, trigger:'blur'}
           ],
           password:[
               {required:true, message: '请输入密码', trigger:'blur'}
           ],
           nickname:[
-              {required:true, message: '请输入昵称', trigger:'blur'},
-              // {min:2, max:6,  message: '长度在2到6个字符', trigger:'blur'}
+              {required:true, min:2,  message: '昵称长度不能小于2位', trigger:'blur'}
           ]
       }
     };
@@ -91,15 +59,16 @@ export default {
     },
     register(){
       this.$refs.userRegisterRef.validate(async valid => {
+        console.log(valid)
         if(!valid) return 
         const {data: res} = await this.$axios.post('/auth/register',this.$qs.stringify(this.userForm))
         if(res.status ===200){
           console.log(res)
-          // window.sessionStorage.setItem('token',res.data.token)
-          this.$message.success(res.message)
-          // this.$route.push('/home')
+          this.$message.success(res.msg)
+          this.$router.push('/login')
         }else{
-          this.$message.error(res.message);
+          console.log(res)
+          this.$message.error(res.msg);
         }
         
       })
