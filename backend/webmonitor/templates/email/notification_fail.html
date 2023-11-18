@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{subject}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{subject}}</h1>
+    <p>监控名：{{watch.name}}</p>
+    <p>监控地址：{{watch.url}}</p>
+    <p>更新时间：{{watch.last_check_time}}</p>
+    <div>
+        {{message|safe}}
+    </div>
+</body>
+</html>

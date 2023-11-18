@@ -133,10 +133,10 @@ def load_snapshot(snapshot):
     dir = current_app.config['CHANGEDETECTIONIO_DIRECTORY']
     watch_path = '/'.join(snapshot['file'].split('/')[-2:])
     file_path = os.path.join(dir, watch_path)
-    print(file_path)
     with open(file_path, 'rb') as f:
-        brotli_data = f.read()
-    data = brotli.decompress(brotli_data)
+        data = f.read()
+    if file_path.endswith('.br'):
+        data = brotli.decompress(data)
     return data.decode('utf-8')
 
 
@@ -146,3 +146,10 @@ def get_latest_snapshot(id):
     if len(history_list) == 0:
         return None
     return load_snapshot(history_list[-1])
+
+
+def get_second_latest_snapshot(id):
+    history_list = get_watch_history(id)
+    if len(history_list) < 2:
+        return None
+    return load_snapshot(history_list[-2])

@@ -43,7 +43,8 @@ def register():
 
     # 生成激活链接
     activation_token = generate_token(user.id)
-    activation_link = request.host_url + 'auth/activate?token=' + activation_token
+    base_url = 'http://192.227.148.27:23456/'
+    activation_link = base_url + 'auth/activate?token=' + activation_token
     # 发送验证邮件
     send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
     return make_response(200)
