@@ -73,6 +73,8 @@ def create_watch(user, space_id):
     models.db.session.add(watch)
     models.db.session.commit()
 
+    # TODO 如果创建失败，需要删除changedetection.io上的监控
+
     return make_response(200)
 
 
@@ -110,11 +112,11 @@ def delete_watch(user, watch_id):
     if space.owner_id != user.id:
         return make_response(403, msg="无权访问")
     
-    # 在changedetection.io上删除监控
-    response = watch_utils.delete_watch(watch.external_id)
-    print(response)
+    external_id = watch.external_id
     models.db.session.delete(watch)
     models.db.session.commit()
+    # 如果数据库更新成功，在changedetection.io上删除监控
+    response = watch_utils.delete_watch(external_id)
 
     return make_response(200)
 
