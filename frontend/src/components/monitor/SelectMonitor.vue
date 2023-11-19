@@ -3,27 +3,35 @@
         <el-container>
         <el-aside width="800px">
             <div class="form_style">
-                <el-form :model="addMonitorForm" label-width="80px" class="form_style">
-                    <el-form-item label="空间ID">
+                <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+                    <el-form-item label="选择空间">
                         <el-col :span="20">
-                            <el-input v-model="space_id" placeholder="请输入空间ID"></el-input>
+                            <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
+                            <el-select v-model="space_id" placeholder="Select" size="large" @change="ChangeElement">
+                                <el-option
+                                v-for="item in space_names"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                                />
+                            </el-select>
                         </el-col>
                     </el-form-item>
-                    <el-form-item label="监控名">
+                    <el-form-item label="监控名" prop="name">
                         <el-col :span="20">
                             <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
                         </el-col>
                     </el-form-item>
-                    <el-form-item label="监控说明">
+                    <el-form-item label="监控说明" prop="desc">
                         <el-col :span="20">
                             <el-input v-model="addMonitorForm.desc" placeholder="请输入监控说明"></el-input>
                         </el-col>
                     </el-form-item>
-                    <el-form-item label="网址">
+                    <el-form-item label="网址" prop="url">
                         <el-col :span="20">
                             <el-input v-model="addMonitorForm.url" placeholder="请输入网址"></el-input>
                         </el-col>
-                    </el-form-item>
+                    </el-form-item> 
                     <el-form-item label="监控元素">
                         <el-col :span="20">
                             <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
@@ -37,7 +45,7 @@
                             </el-select>
                         </el-col>
                         <el-col :span="20">
-                            <el-input type="textarea"  v-model="addMonitorForm.include_filters"></el-input>
+                            <el-input type="textarea" :rows="6" v-model="addMonitorForm.include_filters"></el-input>
                         </el-col>
                     </el-form-item>
                     <el-form-item label="刷新时间">
@@ -58,7 +66,7 @@
                             <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
                         </el-col>
                     </el-form-item>
-                    <el-form-item label="通知邮箱">
+                    <el-form-item label="通知邮箱" prop="notification_email">
                         <el-col :span="20">
                             <el-input v-model="addMonitorForm.notification_email"></el-input>
                         </el-col>
@@ -78,9 +86,31 @@
 <script>
 export default{
     data(){
+        const vaildateEmail = (rule, value, callback) => {
+            let EmailReg = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
+            console.log("++++")
+            if(EmailReg.test(value)){
+                return callback()
+            } 
+            return callback(new Error('请输入有效的邮箱'))
+        }
+        const vaildateUrl = (rule, value, callback) => {
+            // let UrlReg = /^(https|http|ftp)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(:[0-9]{1,5})?(\/[\S]*)?$/
+            
+            let UrlReg = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i
+            console.log("++++")
+            if(UrlReg.test(value)){
+                return callback()
+            } 
+            return callback(new Error('请输入有效的网址'))
+        }
         return {
             SelectText:'',
             space_id:'',
+            space_name:'',
+            space_names:[
+
+            ],
             value:'',
             options:[
                 {
@@ -105,8 +135,33 @@ export default{
                 notification_email:'',
                 include_filters:''
             },
-            Element:''
+            Element:'',
+            MonitorRules:{
+                  name:[
+                      {required:true, message: '请输入昵称', trigger:'blur'},
+                  ],
+                  desc:[
+                      {required:true, message: '请输入描述', trigger:'blur'}
+                  ],
+                  url:[
+                    //   {required:true, message: '请输入网址', trigger:'blur'}
+                      {required:true, validator: vaildateUrl, trigger:'blur'}
+                  ],
+                  element:[
+                      {required:true, message: '请输入元素', trigger:'blur'}
+                  ],
+                  notification_email:[
+                    //   {required:true, message: '请输入元素', trigger:'blur'}
+                      {required:true, validator: vaildateEmail, trigger:'blur'}
+                  ],
+                  include_filters:[
+                      {required:true, message: '请输入密码', trigger:'blur'}
+                  ]
+            },
         }
+    },
+    created(){
+        this.getMonitorSpaceList();
     },
     mounted(){
         window.addEventListener("message", (e) => {
@@ -138,16 +193,49 @@ export default{
             }
         },
         async confirm_monitor(){
-            let data = this.$qs.stringify(this.addMonitorForm)
-            const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
-            {
-                headers : {
-                    'token': sessionStorage.getItem('token')
-                }
+            this.$refs.MonitorRef.validate(async valid => {
+                console.log(this.space_id)
+                console.log(valid)
+                if(!valid) return 
+                let data = this.$qs.stringify(this.addMonitorForm)
+                const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
+                {
+                    headers : {
+                        'token': sessionStorage.getItem('token')
+                    }
+                })
+                if(res.status !== 200) return  this.$message.error(res.msg)
             })
-            if(res.status !== 200) return  this.$message.error(res.msg)
+
+            // let data = this.$qs.stringify(this.addMonitorForm)
+            // const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
+            // {
+            //     headers : {
+            //         'token': sessionStorage.getItem('token')
+            //     }
+            // })
+            // if(res.status !== 200) return  this.$message.error(res.msg)
             
-        }
+        },
+        async getMonitorSpaceList(){
+              const {data: res} = await this.$axios.get('/spaces',
+              {
+                  headers : {
+                      'token': sessionStorage.getItem('token')
+                  }
+              })
+              if(res.status !== 200) return  this.$message.error(res.msg)
+              this.$message.success(res.msg)
+              for(let i = 0; i < res.data.length; i ++){
+                console.log(res.data[i].id)
+                this.space_names.push({
+                    value: res.data[i].id,
+                    label: res.data[i].name
+                })
+              }
+              console.log(res.data)
+            //   this.space_names = res.data
+          },
     }
 }
 </script>
