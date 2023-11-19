@@ -1,6 +1,6 @@
 from webmonitor.auth import auth_bp
 from webmonitor import models
-from flask import render_template, request
+from flask import render_template, request, current_app, redirect, url_for
 from flask_restful import Resource
 from webmonitor.utils.response import make_response
 from webmonitor.utils.token import generate_token, verify_token
@@ -43,8 +43,8 @@ def register():
 
     # 生成激活链接
     activation_token = generate_token(user.id)
-    base_url = 'http://192.227.148.27:23456/'
-    activation_link = base_url + 'auth/activate?token=' + activation_token
+    base_url = current_app.config['BACKEND_BASE_URL']
+    activation_link = base_url + '/auth/activate?token=' + activation_token
     # 发送验证邮件
     send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
     return make_response(200)
@@ -79,7 +79,8 @@ def activate():
     except Exception as e:
         return make_response(500)
     
-    return make_response(200, msg="激活成功")
+    url = current_app.config['FRONTEND_BASE_URL'] + '/activate_success'
+    return redirect(url)
     
 
 # 用户登录
