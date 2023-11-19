@@ -1,0 +1,9 @@
+flask
+flask_wtf
+flask_cors
+flask_restful
+flask_sqlalchemy
+flask_migrate
+pymysql
+requests
+brotli
