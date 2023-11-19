@@ -59,12 +59,13 @@ def create_watch(user, space_id):
         return make_response(400, msg="url参数不合法")
     
     watch.space_id = space_id
-    watch.time_between_check_weeks = request.form.get('time_between_check_weeks')
-    watch.time_between_check_days = request.form.get('time_between_check_days')
-    watch.time_between_check_hours = request.form.get('time_between_check_hours')
-    watch.time_between_check_minutes = request.form.get('time_between_check_minutes')
-    watch.time_between_check_seconds = request.form.get('time_between_check_seconds')
+    watch.time_between_check_weeks = int(request.form.get('time_between_check_weeks'))
+    watch.time_between_check_days = int(request.form.get('time_between_check_days'))
+    watch.time_between_check_hours = int(request.form.get('time_between_check_hours'))
+    watch.time_between_check_minutes = int(request.form.get('time_between_check_minutes'))
+    watch.time_between_check_seconds = int(request.form.get('time_between_check_seconds'))
     watch.notification_email = request.form.get('notification_email')
+    watch.include_filters = request.form.get('include_filters')
     
     # 在changedetection.io上创建监控
     watch.external_id = watch_utils.create_watch(watch.url)
@@ -208,21 +209,21 @@ def check_watch(user, watch_id):
     # 在changedetection.io上立刻刷新监控
     watch_utils.update_watch_state(watch.external_id, recheck=True)
 
-    # 延迟等待changedetection.io刷新监控
-    import time
-    time.sleep(10)
+    # # 延迟等待changedetection.io刷新监控
+    # import time
+    # time.sleep(10)
 
-    # 查询历史进行比对，如果有变更则发送邮件
-    snapshot = watch_utils.get_latest_snapshot(watch.external_id)
-    if snapshot != last_snapshot:
-        import difflib
-        diff = difflib.HtmlDiff().make_file(last_snapshot.splitlines(), snapshot.splitlines())
-        # 发送邮件通知
-        if watch.notification_email:
-            send_email(watch.notification_email, 
-                    'webmonitor-监控项变更通知', 
-                    'email/notification.html', 
-                    watch=watch, diff=diff)
+    # # 查询历史进行比对，如果有变更则发送邮件
+    # snapshot = watch_utils.get_latest_snapshot(watch.external_id)
+    # if snapshot != last_snapshot:
+    #     import difflib
+    #     diff = difflib.HtmlDiff().make_file(last_snapshot.splitlines(), snapshot.splitlines())
+    #     # 发送邮件通知
+    #     if watch.notification_email:
+    #         send_email(watch.notification_email, 
+    #                 'webmonitor-监控项变更通知', 
+    #                 'email/notification.html', 
+    #                 watch=watch, diff=diff)
         
     # 更新监控的最后检查时间
     watch.last_check_time = models.datetime.now()
@@ -230,3 +231,43 @@ def check_watch(user, watch_id):
 
     return make_response(200)
 
+
+@watch_bp.route('/cdio/notification/change', methods=['POST'])
+def send_notification():
+    state = request.values.get('state') # False, True
+    watch_uuid = str(request.values.get('watch_uuid'))
+    print('watch_uuid', watch_uuid)
+    msg = request.values.get('msg')
+    second_last_snapshot = watch_utils.get_second_latest_snapshot(watch_uuid)
+    watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
+
+    # 更新失败发送失败通知
+    if state == 'False':
+        if msg == " ":
+            message = 'Sorry, We met an error when checking your watch'
+        else:
+            message = 'We met an error when checking your watch. Something below may help you:\n\n' + msg
+
+        if watch.notification_email:
+            send_email(watch.notification_email, 
+                'webmonitor-监控项获取失败通知', 
+                'email/notification_fail.html', 
+                watch=watch, message=message)
+            print(message)
+
+    # 更新成功则在当前快照数大于1时发送变更通知
+    elif second_last_snapshot:
+        # watch_uuid is not primary ley
+        last_snapshot = watch_utils.get_latest_snapshot(watch_uuid)
+        second_last_snapshot = watch_utils.get_second_latest_snapshot(watch_uuid)
+
+        if second_last_snapshot != last_snapshot:
+            import difflib
+            diff = difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())
+            if watch.notification_email:
+                send_email(watch.notification_email, 
+                    'webmonitor-监控项变更通知', 
+                    'email/notification_success.html', 
+                    watch=watch, diff=diff)
+                
+    return make_response(200)
