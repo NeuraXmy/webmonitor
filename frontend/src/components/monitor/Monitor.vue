@@ -35,7 +35,7 @@
               </el-col>
           </el-row>
           <el-row>
-              <el-table :data="MonitorSpaceList" style="width: 100%">
+              <el-table v-loading="loading" :data="MonitorSpaceList" style="width: 100%">
                   <el-table-column prop="id" label="ID" width="100" />
                   <el-table-column prop="name" label="昵称" width="200" />
                   <el-table-column prop="create_time" label="创建时间" width="400" />
@@ -103,7 +103,7 @@
               </el-col> -->
           </el-row>
           <el-row>
-              <el-table :data="MonitorList" style="width: 100%">
+              <el-table v-loading="loading" :data="MonitorList" style="width: 100%">
                   <el-table-column prop="id" label="ID" width="50" />
                   <el-table-column prop="name" label="昵称" width="80" />
                   <el-table-column prop="url" label="网址" width="270" />
@@ -379,26 +379,16 @@
               okDeleteWatch:false,
               DeleteWatchID:'',
               okReflashWatch:false,
-              okDisabled:false
+              okDisabled:false,
+              loading:false
           }
       },
       created(){
           this.getMonitorSpaceList()
-          //书签的url
-        //   const filePath = '../embed/inject.js';
-        //   console.log(filePath)
-        //   try {
-        //       const response = fetch(filePath);
-        //       const data = response.text();
-        //       this.generateUrl = data;
-        //   } catch (error) {
-        //       console.error(error);
-        //   }
-        //   console.log(this.generateUrl)
       },
       methods:{
           async getMonitorSpaceList(){
-            console.log("---")
+              this.loading = true
               const {data: res} = await this.$axios.get('/spaces',
               {
                   headers : {
@@ -410,13 +400,13 @@
               
               console.log(res.data)
               this.MonitorSpaceList = res.data
-
+              this.loading = false
               console.log(this.MonitorSpaceList)
           },
           //获取某个space下的监控列表
           async JumpMonitorManage(val){
               this.space_id=val.id
-              
+              this.loading = true
               this.okMonitor=false
               const {data: res} = await this.$axios.get('/space/'+val.id+'/watches',
               {
@@ -426,11 +416,13 @@
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.$message.success(res.msg)
+              this.loading = false
               this.MonitorList = res.data
           },
           //刷新监控列表
           async RefreshMonitorManage(val){
               this.space_id = val
+            //   this.loading = true
               // this.okMonitor=false
               const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
               {
@@ -439,7 +431,7 @@
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
-              
+            //   this.loading = false
               this.MonitorList = res.data
           },
           //用户在某个space下创建监控
@@ -447,6 +439,8 @@
             this.$refs.MonitorRef.validate(async valid => {
                 console.log(valid)
                 if(!valid) return 
+                this.addMonitor=false
+                this.loading = true
                 let data = this.$qs.stringify(this.addMonitorForm)
                 const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
                 {
@@ -455,23 +449,16 @@
                     }
                 })
                 if(res.status ===200){
-                    this.addMonitor=false
+                    // this.addMonitor=false
                     this.RefreshMonitorManage(this.space_id)
                 }else{
                     this.$message.error(res.msg);
                 }
+                this.loading = false
             })
           },
           addMonitorListener(){
               this.addMonitor=true
-            //   const currentTime = ref(new Date());
-            //   // 使用 computed 属性来实时更新时间
-            //   const updateTime = computed(() => {
-            //       currentTime.value = new Date();
-            //   });
-            //   console.log(currentTime)
-
-            //   this.addMonitorForm = ''//清空对话框
               this.addMonitorForm.desc = ''
               this.addMonitorForm.element = ''
               this.addMonitorForm.include_filters = ''
@@ -486,6 +473,8 @@
           },
           //用户确定删除监控
           async ConfirmDeleteWatch(){
+              this.okDeleteWatch = false;
+              this.loading = true
               const {data: res} = await this.$axios.delete('/watch/'+this.DeleteWatchID,
               {
                   params:{id: this.DeleteWatchID},
@@ -495,7 +484,7 @@
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.RefreshMonitorManage(this.space_id)
-              this.okDeleteWatch = false;
+              this.loading = false
           },
           DeleteWatch(row){
             this.okDeleteWatch = true;
@@ -503,7 +492,8 @@
           },
           //触发用户修改监控,保存watch_id并且获取监控信息
           async WatchEdit(row){
-              this.EditMonitor=true;
+              this.loading = true
+            //   this.EditMonitor=true;
               this.watch_id=row.id;
               const {data: res} = await this.$axios.get('/watch/'+this.watch_id,
               {
@@ -512,7 +502,8 @@
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
-              
+              this.EditMonitor=true;
+              this.loading = false
               this.addMonitorForm = res.data
           },
           //用户修改监控
@@ -520,6 +511,8 @@
             this.$refs.MonitorRef.validate(async valid => {
                 console.log(valid)
                 if(!valid) return 
+                this.EditMonitor=false
+                this.loading = true
                 let data = this.$qs.stringify(this.addMonitorForm)
                 const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
                 {
@@ -528,26 +521,18 @@
                     }
                 })
                 if(res.status ===200){
-                    this.EditMonitor=false
+                    // this.EditMonitor=false
+                    // this.loading = true
                     this.RefreshMonitorManage(this.space_id)
                 }else{
                     this.$message.error(res.message);
                 }
+                this.loading = false
             })
-            //   this.EditMonitor=false
-            //   let data = this.$qs.stringify(this.addMonitorForm)
-            //   const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
-            //   {
-            //       headers : {
-            //           'token': sessionStorage.getItem('token')
-            //       }
-            //   })
-            //   if(res.status !== 200) return  this.$message.error(res.msg)
-              
-            //   this.RefreshMonitorManage(this.space_id)
           },
           //用户立刻刷新监控
           async RefreshWatch(row){
+              this.loading = true
               let data={
                   'token': sessionStorage.getItem('token')
               }
@@ -560,6 +545,7 @@
               if(res.status !== 200) return  this.$message.error(res.msg)
               
               this.RefreshMonitorManage(this.space_id)
+              this.loading = false
               this.okReflashWatch = true
           },
           //改变多选框

@@ -7,6 +7,8 @@ import Welcome from '../components/Welcome.vue'
 import Monitor from '../components/monitor/Monitor.vue'
 import MonitorManage from '../components/monitor/MonitorManage.vue'
 import SelectMonitor from '../components/monitor/SelectMonitor.vue'
+import Activate from '../components/activate/Activate.vue'
+import ActivateSuccess from '../components/activate/ActivateSuccess.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -48,6 +50,16 @@ const routes = [
         path: '/admin',
         component: Admin,
         hidden: true
+    },
+    { 
+        path: '/activate',
+        component: Activate,
+        hidden: true
+    },
+    { 
+        path: '/activate_success',
+        component: ActivateSuccess,
+        hidden: true
     }
 ]
 
@@ -59,7 +71,7 @@ const router = createRouter({
 export default router;
 
 router.beforeEach((to, from, next) => {
-    if(to.path === '/login' || to.path === '/register') return next()
+    if(to.path === '/login' || to.path === '/register' || to.path === '/activate' || to.path === '/activate_success') return next()
     const tokenStr = window.sessionStorage.getItem('token')
     if(!tokenStr) return next('/login')
     next()

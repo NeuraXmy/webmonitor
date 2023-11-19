@@ -14,6 +14,16 @@
               <el-form-item prop="nickname">
                   <el-input v-model="userForm.nickname" placeholder="昵称"></el-input>
               </el-form-item>
+              <vue-recaptcha
+                :sitekey="v2Sitekey"
+                size="normal"
+                theme="light"
+                hl="zh"
+                @verify="recaptchaVerified"
+                @expire="recaptchaExpired"
+                @fail="recaptchaFailed"
+                ref="vueRecaptcha">
+              </vue-recaptcha>
               <el-form-item>
                   <el-button type="primary" @click="register">注册</el-button>
                   <el-button @click="restForm">重置</el-button>
@@ -24,7 +34,9 @@
 </template>
 
 <script>
+import vueRecaptcha from 'vue3-recaptcha2';
 export default {
+  components: { vueRecaptcha },
   data() {
     const validEmail = (rule, value, callback) => {
       const EmailReg = /^^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/
@@ -49,8 +61,15 @@ export default {
           nickname:[
               {required:true, min:2,  message: '昵称长度不能小于2位', trigger:'blur'}
           ]
-      }
+      },
+      okVerified: false
     };
+  },
+  setup() {
+    const v2Sitekey = '6LcqoRMpAAAAAIYDSZpLccz_w7axiDZ9EvUaFaqt';
+    return {
+      v2Sitekey
+    }
   },
   methods:{
     restForm(){
@@ -58,20 +77,41 @@ export default {
       this.$refs.userRegisterRef.resetFields()
     },
     register(){
-      this.$refs.userRegisterRef.validate(async valid => {
-        console.log(valid)
-        if(!valid) return 
-        const {data: res} = await this.$axios.post('/auth/register',this.$qs.stringify(this.userForm))
-        if(res.status ===200){
-          console.log(res)
-          this.$message.success(res.msg)
-          this.$router.push('/login')
-        }else{
-          console.log(res)
-          this.$message.error(res.msg);
-        }
-        
-      })
+      if(this.okVerified === true){
+        this.$refs.userRegisterRef.validate(async valid => {
+          console.log(valid)
+          if(!valid) return 
+          const {data: res} = await this.$axios.post('/auth/register',this.$qs.stringify(this.userForm))
+          if(res.status ===200){
+            console.log(res)
+            window.sessionStorage.setItem('email',this.userForm.email)
+            console.log(sessionStorage.getItem('email'))
+            this.$message.success(res.msg)
+            this.$router.push('/activate')
+          }else{
+            console.log(res)
+            this.$message.error(res.msg);
+          }
+        })
+      }else{
+        alert("人机验证未成功！")
+      }
+      
+    },
+    // 回传一组 token，并把 token 传给后端验证
+    recaptchaVerified(res){
+      console.log(res)
+      this.okVerified = true
+	  },
+ 
+    recaptchaExpired(){
+      // 过期后执行动作
+      this.okVerified = false
+    },
+ 
+    recaptchaFailed(){
+      // 失败执行动作
+      this.okVerified = false
     }
   }
 }
@@ -83,7 +123,7 @@ export default {
 }
 .login_box{
   width: 450px;
-  height: 300px;
+  height: 400px;
   border-radius: 5px;
   background-color: #ccc;
   position: absolute;

@@ -6,7 +6,7 @@
           </div>
           <el-form ref="userRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
               <el-form-item prop="email" >
-                  <el-input prefix-icon="User" v-model="userForm.email" placeholder="用户名"></el-input>
+                  <el-input prefix-icon="User" v-model="userForm.email" placeholder="邮箱"></el-input>
               </el-form-item>
               <el-form-item  prop="password">
                   <el-input show-password prefix-icon="Lock" v-model="userForm.password" placeholder="密码"></el-input>
@@ -50,13 +50,13 @@ export default{
       }
     };
   },
+  
   methods:{
     restForm(){
       // console.log(this)
       this.$refs.userRef.resetFields()
     },
     login(){
-      console.log(this.userForm)
       this.$refs.userRef.validate(async valid => {
         console.log(valid)
         if(!valid) return 
