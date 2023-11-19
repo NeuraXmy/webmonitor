@@ -9,5 +9,18 @@ module.exports= {
                 }
             }
         }
+    },
+    chainWebpack: config => {
+        config.plugin('html')
+          .tap(args => {
+            args[0].contentSecurityPolicy = {
+              useDefaults: true,
+              directives: {
+                defaultSrc: ["'self'"]
+                // 其他指令...
+              }
+            };
+            return args;
+        });
     }
 }
