@@ -27,11 +27,13 @@ def get_watch(user, watch_id):
         'create_time': watch.create_time,
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
         'time_between_check_weeks': watch.time_between_check_weeks,
         'time_between_check_days': watch.time_between_check_days,
         'time_between_check_hours': watch.time_between_check_hours,
         'time_between_check_minutes': watch.time_between_check_minutes,
         'time_between_check_seconds': watch.time_between_check_seconds,
+        'include_filters': watch.include_filters,
         'notification_email': watch.notification_email,
     }
     return make_response(200, data=ret)
@@ -48,32 +50,34 @@ def create_watch(user, space_id):
         return make_response(403, msg="无权访问")
     
     watch = models.Watch()
+
+    # 获取watch数据
     watch.name = request.form.get('name')
     watch.desc = request.form.get('desc')
     
     watch.url = request.form.get('url')
     if not watch.url:
         return make_response(400, msg="参数不完整")
-    # url需要http或者https开头
     if not watch.url.startswith('http://') and not watch.url.startswith('https://'):
         return make_response(400, msg="url参数不合法")
     
     watch.space_id = space_id
-    watch.time_between_check_weeks = int(request.form.get('time_between_check_weeks'))
-    watch.time_between_check_days = int(request.form.get('time_between_check_days'))
-    watch.time_between_check_hours = int(request.form.get('time_between_check_hours'))
-    watch.time_between_check_minutes = int(request.form.get('time_between_check_minutes'))
-    watch.time_between_check_seconds = int(request.form.get('time_between_check_seconds'))
-    watch.notification_email = request.form.get('notification_email')
-    watch.include_filters = request.form.get('include_filters')
+    for unit in ['weeks', 'days', 'hours', 'minutes', 'seconds']:
+        setattr(watch, f'time_between_check_{unit}', int(request.form.get(f'time_between_check_{unit}')))
+    watch.notification_email    = request.form.get('notification_email')
+    watch.include_filters       = request.form.get('include_filters')
     
     # 在changedetection.io上创建监控
-    watch.external_id = watch_utils.create_watch(watch.url)
-    
+    external_id = watch_utils.create_watch(watch)
+    watch.external_id = external_id
+
+    # 保存监控到数据库
     models.db.session.add(watch)
     models.db.session.commit()
-
-    # TODO 如果创建失败，需要删除changedetection.io上的监控
+    
+    # 创建成功，在cdio上更新监控id（这里是因为在保存到数据库之前不知道监控id）
+    watch_utils.update_watch(external_id, watch)
+    # TODO 如果创建失败需要删除changedetection.io上的监控
 
     return make_response(200)
 
@@ -97,6 +101,7 @@ def get_watch_list(user, space_id):
             'create_time': watch.create_time,
             'update_time': watch.update_time,
             'last_check_time': watch.last_check_time,
+            'last_check_state': watch.last_check_state,
         })
     return make_response(200, data=ret_watches)
 
@@ -115,6 +120,7 @@ def delete_watch(user, watch_id):
     external_id = watch.external_id
     models.db.session.delete(watch)
     models.db.session.commit()
+
     # 如果数据库更新成功，在changedetection.io上删除监控
     response = watch_utils.delete_watch(external_id)
 
@@ -132,65 +138,28 @@ def update_watch(user, watch_id):
     if space.owner_id != user.id:
         return make_response(403, msg="无权访问")
 
-    update_data = {}
-    # url必须有且不为空
-    url = request.form.get('url')
-    update_data["url"] = url
-    watch.url = url
-
-
-    if request.form.get('name'):
-        watch.name = request.form.get('name')
-    if request.form.get('desc'):
-        watch.desc = request.form.get('desc')
-    if request.form.get('notification_email'):
-        watch.notification_email = request.form.get('notification_email')
-
-
-    if request.form.get('time_between_check_weeks'):
-        watch.time_between_check_weeks = int(request.form.get('time_between_check_weeks'))
-        update_data["time_between_check_weeks"] = watch.time_between_check_weeks
-    if request.form.get('time_between_check_days'):
-        watch.time_between_check_days = int(request.form.get('time_between_check_days'))
-        update_data["time_between_check_days"] = watch.time_between_check_days
-    if request.form.get('time_between_check_hours'):
-        watch.time_between_check_hours = int(request.form.get('time_between_check_hours'))
-        update_data["time_between_check_hours"] = watch.time_between_check_hours
-    if request.form.get('time_between_check_minutes'):
-        watch.time_between_check_minutes = int(request.form.get('time_between_check_minutes'))
-        update_data["time_between_check_minutes"] = watch.time_between_check_minutes
-    if request.form.get('time_between_check_seconds'):
-        watch.time_between_check_seconds = int(request.form.get('time_between_check_seconds'))
-        update_data["time_between_check_seconds"] = watch.time_between_check_seconds
-
-    # 包含部分，支持xpath,jsonpath,css选择器
-    if request.form.get('include_filters'):
-        include_filters = request.form.get('include_filters')
-        include_filters = include_filters.split('\n')
-        update_data["include_filters"] = include_filters
-
-    # # 去除部分,如header,footer,nav等
-    # if request.form.get('subtractive_selectors'):
-    #     subtractive_selectors = request.form.get('subtractive_selectors')
-    #     subtractive_selectors = subtractive_selectors.split('\n')
-    #     update_data["subtractive_selectors"] = subtractive_selectors
-    #
-    # # 触发部分，有就提醒，支持正则表达式
-    # if request.form.get('trigger_text'):
-    #     trigger_text = request.form.get('trigger_text')
-    #     trigger_text = trigger_text.split('\n')
-    #     update_data["trigger_text"] = trigger_text
-    #
-    # # 忽略部分，支持正则表达式
-    # if request.form.get('ignore_text'):
-    #     ignore_text = request.form.get('ignore_text')
-    #     ignore_text = ignore_text.split('\n')
-    #     update_data["ignore_text"] = ignore_text
-
-
-    watch_utils.update_watch(watch.external_id, update_data)
+    # 获取watch数据
+    watch.name = request.form.get('name')
+    watch.desc = request.form.get('desc')
     
+    watch.url = request.form.get('url')
+    if not watch.url:
+        return make_response(400, msg="参数不完整")
+    if not watch.url.startswith('http://') and not watch.url.startswith('https://'):
+        return make_response(400, msg="url参数不合法")
+    
+    for unit in ['weeks', 'days', 'hours', 'minutes', 'seconds']:
+        setattr(watch, f'time_between_check_{unit}', int(request.form.get(f'time_between_check_{unit}')))
+    watch.notification_email    = request.form.get('notification_email')
+    watch.include_filters       = request.form.get('include_filters')
+
+    # 更新数据到cdio
+    watch_utils.update_watch(watch.external_id, watch)
+
+    # 更新到数据库
     models.db.session.commit()
+    # 这里假设数据库操作成功
+
     return make_response(200)
 
 
@@ -205,71 +174,59 @@ def check_watch(user, watch_id):
     if space.owner_id != user.id:
         return make_response(403, msg="无权访问")
     
-    # 查询最近一次快照
-    last_snapshot = watch_utils.get_latest_snapshot(watch.external_id)
-    
-    # 在changedetection.io上立刻刷新监控
+    # 尝试在changedetection.io上立刻刷新监控
     watch_utils.update_watch_state(watch.external_id, recheck=True)
-
-    # # 延迟等待changedetection.io刷新监控
-    # import time
-    # time.sleep(10)
-
-    # # 查询历史进行比对，如果有变更则发送邮件
-    # snapshot = watch_utils.get_latest_snapshot(watch.external_id)
-    # if snapshot != last_snapshot:
-    #     import difflib
-    #     diff = difflib.HtmlDiff().make_file(last_snapshot.splitlines(), snapshot.splitlines())
-    #     # 发送邮件通知
-    #     if watch.notification_email:
-    #         send_email(watch.notification_email, 
-    #                 'webmonitor-监控项变更通知', 
-    #                 'email/notification.html', 
-    #                 watch=watch, diff=diff)
         
-    # 更新监控的最后检查时间
-    watch.last_check_time = models.datetime.now()
-    models.db.session.commit()
-
     return make_response(200)
 
 
+# 接受changedetection.io的更新通知
 @watch_bp.route('/cdio/notification/change', methods=['POST'])
-def send_notification():
-    state = request.values.get('state') # False, True
-    watch_uuid = str(request.values.get('watch_uuid'))
-    print('watch_uuid', watch_uuid)
-    msg = request.values.get('msg')
-    second_last_snapshot = watch_utils.get_second_latest_snapshot(watch_uuid)
+def process_change():
+    state         = request.values.get('state')
+    watch_uuid    = str(request.values.get('watch_uuid'))
+    msg           = request.values.get('msg')
+
     watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
+    state_msg = ""
 
     # 更新失败发送失败通知
     if state == 'False':
-        if msg == " ":
-            message = 'Sorry, We met an error when checking your watch'
-        else:
-            message = 'We met an error when checking your watch. Something below may help you:\n\n' + msg
-
+        if msg == " ": msg = '未知错误'
+        notification_msg = '监控检查失败:\n\n' + msg
+        state_msg        = '检查失败: ' + msg
         if watch.notification_email:
             send_email(watch.notification_email, 
                 'webmonitor-监控项获取失败通知', 
                 'email/notification_fail.html', 
-                watch=watch, message=message)
-            print(message)
-
-    # 更新成功则在当前快照数大于1时发送变更通知
-    elif second_last_snapshot:
-        # watch_uuid is not primary ley
-        last_snapshot = watch_utils.get_latest_snapshot(watch_uuid)
+                watch=watch, message=notification_msg)
+            
+    # 更新成功则在当前快照数大于1时检查变更
+    else:
         second_last_snapshot = watch_utils.get_second_latest_snapshot(watch_uuid)
+        if second_last_snapshot:
+            last_snapshot = watch_utils.get_latest_snapshot(watch_uuid)
 
-        if second_last_snapshot != last_snapshot:
-            import difflib
-            diff = difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())
-            if watch.notification_email:
-                send_email(watch.notification_email, 
-                    'webmonitor-监控项变更通知', 
-                    'email/notification_success.html', 
-                    watch=watch, diff=diff)
+            if second_last_snapshot != last_snapshot:
+                # 有变更发送通知
+                state_msg = '检查成功: 通知已发送'
+                import difflib
+                diff = difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())
+                if watch.notification_email:
+                    send_email(watch.notification_email, 
+                        'webmonitor-监控项变更通知', 
+                        'email/notification_success.html', 
+                        watch=watch, diff=diff)
+            else:
+                state_msg = '检查成功: 无变更'
+        
+        else:
+            state_msg = '检查成功: 初次检查'
+        
+    # 更新状态
+    from datetime import datetime
+    watch.last_check_time = datetime.now()
+    watch.last_check_state = state_msg
+    models.db.session.commit()
                 
     return make_response(200)

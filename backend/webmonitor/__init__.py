@@ -34,8 +34,13 @@ def register_blueprints(app):
 
 def register_plugin(app):
     apply_cors(app)
+    apply_json_provider(app)
 
 
 def apply_cors(app):
     cors = CORS()
     cors.init_app(app, resources={"/*": {"origins": "*"}})
+
+def apply_json_provider(app):
+    from webmonitor.utils.json_provider import CustomJSONProvider
+    app.json = CustomJSONProvider(app)
