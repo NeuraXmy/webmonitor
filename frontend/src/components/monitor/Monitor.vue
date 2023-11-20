@@ -35,8 +35,8 @@
           <el-row>
               <el-table v-loading="loading" :data="MonitorSpaceList" style="width: 100%">
                   <el-table-column prop="id" label="ID" width="100" />
-                  <el-table-column prop="name" label="昵称" width="200" />
-                  <el-table-column prop="create_time" label="创建时间" width="350" />
+                  <el-table-column prop="name" label="空间名" width="200" />
+                  <!-- <el-table-column prop="create_time" label="创建时间" width="350" /> -->
                   <el-table-column prop="update_time" label="更新时间" width="350" />
                   <el-table-column prop="edit" label="Edit" width="200">
                       <template #default="scope">
@@ -149,11 +149,11 @@
           <el-row>
               <el-table v-loading="loading" :data="MonitorList" style="width: 100%">
                   <el-table-column prop="id" label="ID" width="50" />
-                  <el-table-column prop="name" label="昵称" width="80" />
+                  <el-table-column prop="name" label="监控名" width="80" />
                   <el-table-column prop="url" label="网址" width="270" />
-                  <el-table-column prop="create_time" label="创建时间" width="200" />
-                  <el-table-column prop="update_time" label="更新时间" width="200" />
+                  <!-- <el-table-column prop="update_time" label="更新时间" width="200" /> -->
                   <el-table-column prop="last_check_time" label="检查时间" width="200" />
+                  <el-table-column prop="last_check_state" label="检查状态" width="200" />
                   <el-table-column prop="edit" label="Edit" width="240">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
@@ -386,7 +386,7 @@
                       {required:true, message: '请输入昵称', trigger:'blur'},
                   ],
                   desc:[
-                      {required:true, message: '请输入描述', trigger:'blur'}
+                      {message: '请输入描述', trigger:'blur'}
                   ]
               },
               okEditSpace:false,
@@ -411,7 +411,7 @@
                       {required:true, message: '请输入昵称', trigger:'blur'},
                   ],
                   desc:[
-                      {required:true, message: '请输入描述', trigger:'blur'}
+                      {message: '请输入描述', trigger:'blur'}
                   ],
                   url:[
                     //   {required:true, message: '请输入网址', trigger:'blur'}
@@ -474,6 +474,7 @@
               this.$message.success(res.msg)
               this.loading = false
               this.MonitorList = res.data
+              console.log(res.data)
           },
           //刷新监控列表
           async RefreshMonitorManage(val){
