@@ -53,56 +53,44 @@ def update_watch_state(id, recheck=None, paused=None, muted=None):
     return response.json()
 
 
-# 创建一个watch 返回watch的id
-def create_watch(watch_url):
+# 从watch的models中提取出需要的数据
+def extract_watch_data(watch):
+    data = {}
+    # 标签
+    data['tag'] = 'webmonitor'
+    # 标题
+    data['title'] = f'[{watch.id}] {watch.name} | {watch.url}'
+    # 地址
+    data['url'] = watch.url
+    # 更新时间
+    time_between_check = {}
+    for unit in ['weeks', 'days', 'hours', 'minutes', 'seconds']:
+        time_between_check[unit] = getattr(watch, f'time_between_check_{unit}')
+    data['time_between_check'] = time_between_check
+    # 过滤器
+    if watch.include_filters:
+        data['include_filters'] = watch.include_filters.split('\n')
+    else:
+        data['include_filters'] = []
+
+    return data
+
+
+# 创建一个watch
+def create_watch(watch_model):
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, "Content-Type": "application/json" }   
-    data = {
-        "url": watch_url,
-        "tag": "webmonitor",
-    }
-    response = requests.post(url + "/watch", headers=headers, json=data)
-    print(response.json())
+    response = requests.post(url + "/watch", headers=headers, json=extract_watch_data(watch_model))
     return response.json()['uuid']
 
 
 # 修改一个watch
-def update_watch(id, update_data):
+def update_watch(id, watch_model):
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, "Content-Type": "application/json" }   
-    data = {
-        "url": update_data['url']
-    }
-    time_between_check = {}
-
-    # 如果有time_between_check的任何一个字段有值，就更新time_between_check
-    if 'time_between_check_weeks' in update_data and update_data['time_between_check_weeks']:
-        time_between_check['weeks'] = update_data['time_between_check_weeks']
-    if 'time_between_check_days' in update_data and update_data['time_between_check_days']:
-        time_between_check['days'] = update_data['time_between_check_days']
-    if 'time_between_check_hours' in update_data and update_data['time_between_check_hours']:
-        time_between_check['hours'] = update_data['time_between_check_hours']
-    if 'time_between_check_minutes' in update_data and update_data['time_between_check_minutes']:
-        time_between_check['minutes'] = update_data['time_between_check_minutes']
-    if 'time_between_check_seconds' in update_data and update_data['time_between_check_seconds']:
-        time_between_check['seconds'] = update_data['time_between_check_seconds']
-
-    if time_between_check:
-        data['time_between_check'] = time_between_check
-    if 'include_filters' in update_data and update_data['include_filters']:
-        data['include_filters'] = update_data['include_filters']
-    # if update_data['subtractive_selectors']:
-    #     data['subtractive_selectors'] = update_data['subtractive_selectors']
-    # if update_data['ignore_text']:
-    #     data['ignore_text'] = update_data['ignore_text']
-    # if update_data['trigger_text']:
-    #     data['trigger_text'] = update_data['trigger_text']
-
-    print(data)
-    response = requests.put(url + f"/watch/{id}", headers=headers, json=data)
-    print(response)
+    response = requests.put(url + f"/watch/{id}", headers=headers, json=extract_watch_data(watch_model))
     return response
 
 

@@ -57,7 +57,7 @@ class Watch(BaseModel):
 
     url     = db.Column(db.String(256), nullable=False)
 
-    external_id = db.Column(db.String(64), nullable=True)   # changedetection.io的watch id
+    external_id = db.Column(db.String(64), nullable=True)   # changedetection.io的id
 
     time_between_check_weeks    = db.Column(db.Integer, nullable=False, default=0)
     time_between_check_days     = db.Column(db.Integer, nullable=False, default=0)
@@ -66,8 +66,10 @@ class Watch(BaseModel):
     time_between_check_seconds  = db.Column(db.Integer, nullable=False, default=0)
     include_filters             = db.Column(db.String(256), nullable=True)
 
-    last_check_time = db.Column(db.DateTime, nullable=True)
-    notification_email = db.Column(db.String(64), nullable=True)
+    last_check_time  = db.Column(db.DateTime, nullable=True)         # 上次检查的时间
+    last_check_state = db.Column(db.String(256), nullable=True)      # 上次检查的状态
+
+    notification_email = db.Column(db.String(64), nullable=True)    
 
     space_id    = db.Column(db.Integer, db.ForeignKey('t_space.id'), nullable=False)
 
