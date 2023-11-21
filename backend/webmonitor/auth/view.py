@@ -1,12 +1,8 @@
 from webmonitor.auth import auth_bp
 from webmonitor import models
 from flask import render_template, request, current_app, redirect, url_for
-from flask_restful import Resource
-from webmonitor.utils.response import make_response
+from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Email, EqualTo
 from webmonitor.utils.email import send_email
 
 
@@ -17,19 +13,19 @@ def register():
     password    = request.form.get('password')
     nickname    = request.form.get('nickname')
     if not all([email, password, nickname]):
-        return make_response(400, msg="参数不完整")
+        abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
     if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
-        return make_response(400, msg="邮箱格式错误")
+        abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
     if len(password) < 4:
-        return make_response(400, msg="密码长度不能小于4位")
+        abort(ErrorCode.PARAMS_INVALID, msg="密码长度不能小于4")
     if len(nickname) < 2:
-        return make_response(400, msg="昵称长度不能小于2位")
+        abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
 
     user = models.User.query.filter_by(email=email).first()
-    # 用户已激活
+    # 用户已经存在并且已经激活
     if user and user.activated:
-        return make_response(400, msg="用户已存在")
+        abort(ErrorCode.USER_ALREADY_EXISTS)
     # 如果用户不存在则创建
     if not user:
         user = models.User(email=email, password=password, nickname=nickname)
@@ -47,7 +43,7 @@ def register():
     activation_link = base_url + '/auth/activate?token=' + activation_token
     # 发送验证邮件
     send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
-    return make_response(200)
+    return ok()
     
 
 # 用户激活
@@ -57,27 +53,23 @@ def activate():
 
     user_id = verify_token(token, 3600)
     if not user_id:
-        return make_response(401, msg="token无效")
+        return abort(ErrorCode.TOKEN_INVALID)
     
     user = models.User.query.get(user_id)
     if not user:
-        return make_response(401, msg="用户不存在")
+        return abort(ErrorCode.USER_NOT_FOUND)
     if user.activated:
-        return make_response(401, msg="用户已激活")
+        return abort(ErrorCode.USER_ALREADY_ACTIVATED)
     
-    try:
-        # 激活用户
-        user.activated = True
-        user.activated_on = models.datetime.now()
+    # 激活用户
+    user.activated = True
+    user.activated_on = models.datetime.now()
 
-        # 创建默认空间
-        space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)
-        models.db.session.add(space)
+    # 创建默认空间
+    space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)
+    models.db.session.add(space)
 
-        models.db.session.commit()
-
-    except Exception as e:
-        return make_response(500)
+    models.db.session.commit()
     
     url = current_app.config['FRONTEND_BASE_URL'] + '/activate_success'
     return redirect(url)
@@ -89,22 +81,22 @@ def login():
     email    = request.form.get('email')
     password = request.form.get('password')
     if not all([email, password]):
-        return make_response(400, msg="参数不完整")
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
     if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
-        return make_response(400, msg="邮箱格式错误")
+        return abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
 
     user = models.User.query.filter_by(email=email).first()
     # 用户不存在
     if not user:
-        return make_response(400, msg="用户不存在")
+        return abort(ErrorCode.USER_NOT_FOUND)
     # 密码错误
     if not user.check_password(password):
-        return make_response(400, msg="密码错误")
+        return abort(ErrorCode.PASSWORD_ERROR)
     # 用户未激活
     if not user.activated:
-        return make_response(400, msg="用户未激活")
+        return abort(ErrorCode.USER_NOT_FOUND)
     
     token = generate_token(user.id)
-    return make_response(200, data={'token': token})
+    return ok(data={'token': token})
 
