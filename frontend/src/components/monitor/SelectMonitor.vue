@@ -197,9 +197,9 @@ export default{
         }
     },
     created(){
-        // this.fullscreenLoading = true
-        this.verify_authenticity_token = sessionStorage.getItem('token')
-        this.getMonitorSpaceList();
+        this.fullscreenLoading = true
+        // this.verify_authenticity_token = sessionStorage.getItem('token')
+        // this.getMonitorSpaceList();
     },
     mounted(){
         window.addEventListener("message", (e) => {
