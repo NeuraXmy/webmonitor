@@ -1,7 +1,6 @@
 javascript:(function() {
   var verify_authenticity_token = "####token####";
   var base_url = "####base_url####";
-  var Email = "####Email####";
 
   var currentURL = window.location.href;
   if (currentURL.indexOf(base_url) >= 0) {
@@ -28,7 +27,7 @@ javascript:(function() {
 
   function postMessage() {
       var targetWindow = document.getElementById('iframe').contentWindow;
-      targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token, Email: Email, baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
+      targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token, baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
   }
 
 
@@ -64,7 +63,7 @@ javascript:(function() {
           console.log(xpath);
           console.log(selector);
           var targetWindow = document.getElementById('iframe').contentWindow;
-          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI, verify_authenticity_token: verify_authenticity_token, Email: Email}, base_url + '/select_monitor');
+          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI, verify_authenticity_token: verify_authenticity_token}, base_url + '/select_monitor');
       }
       
   });

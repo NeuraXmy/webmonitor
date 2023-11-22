@@ -215,13 +215,14 @@ export default{
             console.log(e.data.baseURI);
             this.verify_authenticity_token = e.data.verify_authenticity_token;
             
-            this.addMonitorForm.notification_email = e.data.Email;
+            // this.addMonitorForm.notification_email = e.data.Email;
             // this.fullscreenLoading = false
 
             this.Element = e.data;
             this.addMonitorForm.url = e.data.baseURI;
             this.SelectText = e.data.selectText;
             if(e.data.xpath === ''){
+                this.getUser();
                 this.getMonitorSpaceList();
                 // this.value='XPath';
                 // this.addMonitorForm.include_filters="xpath:" + e.data.xpath + '\n';
@@ -305,6 +306,23 @@ export default{
             this.addMonitorForm.time_between_check_weeks = ''
             console.log(res.data)
         //   this.space_names = res.data
+        },
+        async getUser(){
+            if(this.verify_authenticity_token === '') return ;
+            const {data: res} = await this.$axios.get('/user',
+            {
+                headers : {
+                    'token': this.verify_authenticity_token
+                }
+            })
+            if(res.status !== 200){
+                this.okLogin = true
+                this.fullscreenLoading = false
+                return this.$message.error(res.msg)
+            }
+            this.addMonitorForm.notification_email = res.data.email
+            this.fullscreenLoading = false
+            this.$message.success(res.msg)
         },
         async test(){
             const {data: res} = await this.$axios.get('/bookmark/inject.js',

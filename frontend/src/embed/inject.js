@@ -3,8 +3,6 @@ javascript:(function() {
 
   var base_url = "http://127.0.0.1:5173";
 
-  var Email = "2968035007@qq.com";
-
   var currentURL = window.location.href;
   if (currentURL.indexOf(base_url) >= 0) {
     alert('请拖拽书签到浏览器导航栏.');
@@ -30,7 +28,7 @@ javascript:(function() {
 
   function postMessage() {
       var targetWindow = document.getElementById('iframe').contentWindow;
-      targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token, Email: Email, baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
+      targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token,  baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
   }
 
 
@@ -66,7 +64,7 @@ javascript:(function() {
           console.log(xpath);
           console.log(selector);
           var targetWindow = document.getElementById('iframe').contentWindow;
-          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI, verify_authenticity_token: verify_authenticity_token, Email: Email}, base_url + '/select_monitor');
+          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI, verify_authenticity_token: verify_authenticity_token}, base_url + '/select_monitor');
       }
       
   });
