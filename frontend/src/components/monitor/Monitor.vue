@@ -457,7 +457,7 @@
               this.$message.success(res.msg)
               
               console.log(res.data)
-              this.MonitorSpaceList = res.data
+              this.MonitorSpaceList = res.data.items
               this.loading = false
               console.log(this.MonitorSpaceList)
           },
@@ -475,7 +475,7 @@
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.$message.success(res.msg)
               this.loading = false
-              this.MonitorList = res.data
+              this.MonitorList = res.data.items
               console.log(res.data)
           },
           //刷新监控列表
