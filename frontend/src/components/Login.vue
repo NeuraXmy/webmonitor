@@ -50,7 +50,6 @@ export default{
       }
     };
   },
-  
   methods:{
     restForm(){
       // console.log(this)
@@ -124,8 +123,6 @@ export default{
   text-decoration: none;
 }
 
-
-@import '@/assets/css/login.css';
  
 .login-info {
     margin-top: 10px;

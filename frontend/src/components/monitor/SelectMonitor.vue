@@ -1,6 +1,6 @@
 <template>
     <div class="common-layout iframe_style">
-        <el-container>
+        <el-container v-loading.fullscreen.lock="fullscreenLoading">
         <el-aside width="800px">
             <div class="form_style">
                 <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
@@ -45,7 +45,7 @@
                             </el-select>
                         </el-col>
                         <el-col :span="20">
-                            <el-input type="textarea" :rows="6" v-model="addMonitorForm.include_filters"></el-input>
+                            <el-input type="textarea" :rows="6" v-model="addMonitorForm.include_filters"  placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
                         </el-col>
                     </el-form-item>
                     <el-form-item label="刷新时间">
@@ -72,13 +72,45 @@
                         </el-col>
                     </el-form-item>
                 </el-form>
-                <el-button type="primary" @click="confirm_monitor">确定</el-button>
+                <el-button type="success" @click="confirm_monitor">添加</el-button>
+                <el-button type="primary" @click="RemoveIframe">退出</el-button>
             </div>
         </el-aside>
         <el-main>
             <el-input type="textarea" :rows="20"  v-model="SelectText"></el-input>
         </el-main>
         </el-container>
+        <el-dialog
+            v-model="okLogin"
+            width="30%"
+            align-center
+            >
+            <span>用户未登录或上次登录状态过期，请重新拖动书签至浏览器导航栏</span>
+            <template #footer>
+                <span class="dialog-footer">
+                <el-button type="primary" @click="RemoveIframe">
+                    确定
+                </el-button>
+                </span>
+            </template>
+        </el-dialog>
+        <el-dialog
+            v-model="okAddMonitor"
+            width="30%"
+            align-center
+            >
+            <span>添加成功</span>
+            <template #footer>
+                <span class="dialog-footer">
+                <el-button type="success" @click="this.okAddMonitor = false">
+                    继续
+                </el-button>
+                <el-button type="primary" @click="RemoveIframe">
+                    退出
+                </el-button>
+                </span>
+            </template>
+        </el-dialog>
     </div>
     
 </template>
@@ -158,20 +190,30 @@ export default{
                       {required:true, message: '请输入密码', trigger:'blur'}
                   ]
             },
+            verify_authenticity_token:'',
+            fullscreenLoading: false,
+            okLogin: false,
+            okAddMonitor: false
         }
     },
     created(){
-        this.getMonitorSpaceList();
+        this.fullscreenLoading = true
+        // this.getMonitorSpaceList();
     },
     mounted(){
         window.addEventListener("message", (e) => {
-            console.log(e.data.selectText);
+            console.log(e.data)
+            console.log(e.data.baseURI);
+            this.verify_authenticity_token = e.data.verify_authenticity_token;
+            this.getMonitorSpaceList();
+            // this.fullscreenLoading = false
+
             this.Element = e.data;
-            this.addMonitorForm.url = e.origin;
+            this.addMonitorForm.url = e.data.baseURI;
             this.SelectText = e.data.selectText;
             if(this.value === ''){
-                this.value='XPath';
-                this.addMonitorForm.include_filters="xpath:" + e.data.xpath + '\n';
+                // this.value='XPath';
+                // this.addMonitorForm.include_filters="xpath:" + e.data.xpath + '\n';
             }else if(this.value=== 'XPath'){
                 this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "xpath:" + e.data.xpath + '\n';
             }else if(this.value === 'CssSelector'){
@@ -179,7 +221,6 @@ export default{
             }else if(this.value === 'JSONPath'){
                 // this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "json:" + e.data.jsonPath + '\n' ;
             }
-            // console.log(e);
         });
     },
     methods:{
@@ -197,45 +238,61 @@ export default{
                 console.log(this.space_id)
                 console.log(valid)
                 if(!valid) return 
+                this.fullscreenLoading = true
                 let data = this.$qs.stringify(this.addMonitorForm)
                 const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
                 {
                     headers : {
-                        'token': sessionStorage.getItem('token')
+                        'token': this.verify_authenticity_token
                     }
                 })
                 if(res.status !== 200) return  this.$message.error(res.msg)
+                this.fullscreenLoading = false
+                this.okAddMonitor = true
             })
-
-            // let data = this.$qs.stringify(this.addMonitorForm)
-            // const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
-            // {
-            //     headers : {
-            //         'token': sessionStorage.getItem('token')
-            //     }
-            // })
-            // if(res.status !== 200) return  this.$message.error(res.msg)
-            
         },
         async getMonitorSpaceList(){
-              const {data: res} = await this.$axios.get('/spaces',
-              {
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
-              this.$message.success(res.msg)
-              for(let i = 0; i < res.data.length; i ++){
-                console.log(res.data[i].id)
-                this.space_names.push({
-                    value: res.data[i].id,
-                    label: res.data[i].name
-                })
-              }
-              console.log(res.data)
-            //   this.space_names = res.data
-          },
+            console.log("???")
+            if(this.verify_authenticity_token === '') return ;
+            const {data: res} = await this.$axios.get('/spaces',
+            {
+                headers : {
+                    'token': this.verify_authenticity_token
+                }
+            })
+            if(res.status !== 200){
+                this.okLogin = true
+                this.fullscreenLoading = false
+                return this.$message.error(res.msg)
+            }
+            this.fullscreenLoading = false
+            this.$message.success(res.msg)
+            for(let i = 0; i < res.data.length; i ++){
+            console.log(res.data[i].id)
+            this.space_names.push({
+                value: res.data[i].id,
+                label: res.data[i].name
+            })
+            }
+            console.log(res.data)
+        //   this.space_names = res.data
+        },
+        async test(){
+            const {data: res} = await this.$axios.get('/bookmark/inject.js',
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            console.log(res.data)
+        //   this.space_names = res.data
+        },
+        RemoveIframe(){
+            window.parent.postMessage(JSON.stringify({
+                okRemove: true
+            }), '*');
+        }
+          
     }
 }
 </script>

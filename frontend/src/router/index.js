@@ -71,7 +71,7 @@ const router = createRouter({
 export default router;
 
 router.beforeEach((to, from, next) => {
-    if(to.path === '/login' || to.path === '/register' || to.path === '/activate' || to.path === '/activate_success') return next()
+    if(to.path === '/login' || to.path === '/register' || to.path === '/activate' || to.path === '/activate_success' || to.path === '/select_monitor') return next()
     const tokenStr = window.sessionStorage.getItem('token')
     if(!tokenStr) return next('/login')
     next()

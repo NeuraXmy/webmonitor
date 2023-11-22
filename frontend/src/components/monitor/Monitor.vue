@@ -28,7 +28,7 @@
               </el-col>
               <el-col :span="2">
                   <div>
-                      <a href="javascript:(function() {  var currentURL = window.location.href;  if (currentURL.indexOf('http://192.227.148.27:23457') >= 0) {    alert('请拖拽书签到浏览器导航栏.');    return false;  }    var iframe = document.createElement('iframe');  iframe.src = 'http://192.227.148.27:23457/select_monitor';  iframe.style.position = 'fixed';  iframe.style.top = '70%';  iframe.style.right = '0';  iframe.style.width = '100%';  iframe.style.height = '30%';  iframe.style.zIndex = 2147483647;  iframe.id = 'iframe';    var container = document.body;  container.appendChild(iframe);  var getcssSelector = function(path) {    console.log(path.length);    return path[path.length-1];  };  var cssPath = function(el) {      var path = [];      while (        (el.nodeName.toLowerCase() != 'body') &&          (el = el.parentNode) &&          path.unshift(el.nodeName.toLowerCase() +            (el.id ? %27#' + el.id : '') +              (el.className ? '.' + el.className.replace(/\s+/g, '.') : ''))      );      return path;  };  window.addEventListener('click', function(evt) {      console.log(evt);      console.log(evt.target.baseURI);      console.log(evt.target.innerText);      var x = evt.clientX;      var y = evt.clientY;      var el = document.elementFromPoint(x, y);      var selector = cssPath(el);        var element = evt.target;      var xpath = getXPath(element);      selector = getcssSelector(selector);            console.log(xpath);      console.log(selector);      var targetWindow = document.getElementById('iframe').contentWindow;      targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText}, 'http://192.227.148.27:23457/select_monitor');  });  function mouse_over(event) {    var element = event.target;    element.style.border = '1px solid red';  }  function mouse_out(event) {    var element = event.target;    element.style.border = '';  }  function getXPath(element) {    if (element.id !== '') {      return '//*[@id=' + '%22' + element.id + '%22' + ']';    }    if (element === document.body) {      return '/html/body';    }      var index = 1;    const childNodes = element.parentNode ? element.parentNode.childNodes : [];    var siblings = childNodes;      for (var i = 0; i < siblings.length; i++) {      var sibling = siblings[i];      if (sibling === element) {        return (          getXPath(element.parentNode) +          '/' +          element.tagName.toLowerCase() +          '[' +          index +          ']'        );      }      if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {        index++;      }    }  }  document.addEventListener('mouseover', mouse_over);  document.addEventListener('mouseout', mouse_out);    var links = document.getElementsByTagName('a');    for (var i = 0; i < links.length; i++) {      links[i].addEventListener('click', function(event) {      event.preventDefault();      event.stopPropagation();    });  }  })();" title="将我拖动到书签栏">小书签</a>
+                      <a :href="iframe_url" title="将我拖动到书签栏">小书签</a>
                   </div>
               </el-col>
           </el-row>
@@ -370,7 +370,7 @@
               value:'',
               options:[
                   {
-                      value: '1',label: 'None',
+                      value: '1',label: 'All',
                   },
                   {
                       value: '2',label: 'XPath/CssSelector',
@@ -436,11 +436,13 @@
               DeleteWatchID:'',
               okReflashWatch:false,
               okDisabled:false,
-              loading:false
+              loading:false,
+              iframe_url:''
           }
       },
       created(){
           this.getMonitorSpaceList()
+          this.getBookmark()
       },
       methods:{
           async getMonitorSpaceList(){
@@ -561,6 +563,13 @@
               this.EditMonitor=true;
               this.loading = false
               this.addMonitorForm = res.data
+              if(this.addMonitorForm.include_filters === ''){
+                this.value = 'All';
+                this.okDisabled = true
+              }else{
+                this.value = 'XPath/CssSelector';
+                this.okDisabled = false
+              }
           },
           //用户修改监控
           WatchEditConfirm(){
@@ -609,6 +618,7 @@
             console.log(this.value)
             if(this.value === '1'){
                 this.okDisabled = true
+                this.addMonitorForm.include_filters = ""
             }else if(this.value === '2'){
                 this.okDisabled = false
             }else if(this.value === 'JSONPath'){
@@ -695,7 +705,18 @@
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.getMonitorSpaceList();
             this.loading = false
-          }
+          },
+          async getBookmark(){
+            const {data: res} = await this.$axios.get('/bookmark/inject.js',
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            console.log(res.data)
+            this.iframe_url = res.data
+            console.log(this.iframe_url)
+        }
       }
   }
   

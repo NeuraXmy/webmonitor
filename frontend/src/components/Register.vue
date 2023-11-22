@@ -150,8 +150,6 @@ export default {
   box-sizing: border-box;
 
 }
-@import '@/assets/css/login.css';
- 
 .login-info {
     margin-top: 10px;
 }
