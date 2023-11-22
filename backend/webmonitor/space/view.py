@@ -7,21 +7,21 @@ from webmonitor.utils.token import generate_token, verify_token
 from webmonitor.utils.email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
+from webmonitor.utils.page import paginate
 
 
 # 用户获取自己空间列表
 @space_bp.route('/spaces', methods=['GET'])
 @login_required
 def get_space_list(user):
-    ret_spaces = []
-    for space in user.spaces:
-        ret_spaces.append({
-            'id': space.id,
-            'name': space.name,
-            'create_time': space.create_time,
-            'update_time': space.update_time,
-        })
-    return ok(data=ret_spaces)
+    ret = paginate(models.Space.query.filter_by(owner_id=user.id))
+    ret.items = [{
+        'id': space.id,
+        'name': space.name,
+        'create_time': space.create_time,
+        'update_time': space.update_time,
+    } for space in ret.items]
+    return ok(data=ret)
 
 
 # 用户获取某个空间详细信息

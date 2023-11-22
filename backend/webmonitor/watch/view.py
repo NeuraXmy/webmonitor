@@ -7,6 +7,7 @@ from webmonitor.utils.token import generate_token, verify_token
 from webmonitor.utils.email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
+from webmonitor.utils.page import paginate
 
 
 # 用户获取某个监控详细信息
@@ -92,18 +93,18 @@ def get_watch_list(user, space_id):
     if space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
-    ret_watches = []
-    for watch in space.watches:
-        ret_watches.append({
-            'id': watch.id,
-            'name': watch.name,
-            'url': watch.url,
-            'create_time': watch.create_time,
-            'update_time': watch.update_time,
-            'last_check_time': watch.last_check_time,
-            'last_check_state': watch.last_check_state,
-        })
-    return ok(data=ret_watches)
+    # 获取监控列表
+    ret = paginate(models.Watch.query.filter_by(space_id=space_id))
+    ret.items = [{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+    } for watch in ret.items]
+    return ok(data=ret)
 
 
 # 用户删除监控
