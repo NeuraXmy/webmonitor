@@ -1,7 +1,7 @@
 javascript:(function() {
   var verify_authenticity_token = "NQ.ZVx3uQ.Ik7dfsWB4JiQX0mldyt5Adx4jik";
 
-  var base_url = "https://app.changenotify.net/";
+  var base_url = "http://127.0.0.1:5173";
 
   var currentURL = window.location.href;
   if (currentURL.indexOf(base_url) >= 0) {

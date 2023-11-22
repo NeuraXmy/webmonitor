@@ -197,8 +197,9 @@ export default{
         }
     },
     created(){
-        this.fullscreenLoading = true
-        // this.getMonitorSpaceList();
+        // this.fullscreenLoading = true
+        this.verify_authenticity_token = sessionStorage.getItem('token')
+        this.getMonitorSpaceList();
     },
     mounted(){
         window.addEventListener("message", (e) => {
@@ -267,12 +268,13 @@ export default{
             }
             this.fullscreenLoading = false
             this.$message.success(res.msg)
-            for(let i = 0; i < res.data.length; i ++){
-            console.log(res.data[i].id)
-            this.space_names.push({
-                value: res.data[i].id,
-                label: res.data[i].name
-            })
+            console.log(res.data)
+            for(let i = 0; i < res.data.items.length; i ++){
+                console.log(res.data.items[i].id)
+                this.space_names.push({
+                    value: res.data.items[i].id,
+                    label: res.data.items[i].name
+                })
             }
             console.log(res.data)
         //   this.space_names = res.data
