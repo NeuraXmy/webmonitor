@@ -1,5 +1,5 @@
 javascript:(function() {
-    var verify_authenticity_token = "NQ.ZV2orQ.CgWBUK4b_jUtl27_h8B6tJCNK6e";
+    var verify_authenticity_token = "NQ.ZV2orQ.CgWBUK4b_jUtl27_h8B6tJCNK6E";
   
     var base_url = "http://127.0.0.1:5173";
   

@@ -113,17 +113,7 @@ javascript:(function() {
   document.addEventListener('mouseover', mouse_over);
   document.addEventListener('mouseout', mouse_out);
   
-  var links = document.getElementsByTagName('a');
-  for (var i = 0; i < links.length; i++) {
-      links[i].addEventListener('click', function(event) {
-          event.preventDefault();
-          event.stopPropagation();
-      });
-  }
   window.addEventListener('message', function(evt) {
-      console.log(evt);
-      console.log(evt.data.msg);
-      
       if(evt.data.msg === "start"){
           postMessage();
       }else if(evt.data.msg === "Remove"){
