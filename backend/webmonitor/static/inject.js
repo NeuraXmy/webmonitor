@@ -17,9 +17,22 @@ javascript:(function() {
   iframe.style.height = '30%';
   iframe.style.zIndex = 2147483647;
   iframe.id = 'iframe';
-  
+
+
   var container = document.body;
   container.appendChild(iframe);
+  window.okRemoveIframe = true;
+
+
+  var intervalID = setInterval(postMessage, 1000);
+
+  function postMessage() {
+      var targetWindow = document.getElementById('iframe').contentWindow;
+      targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token }, base_url + '/select_monitor');
+      clearInterval(intervalID);
+  }
+
+
   var getcssSelector = function(path) {
     console.log(path.length);
     return path[path.length-1];
@@ -36,30 +49,38 @@ javascript:(function() {
       return path;
   };
   window.addEventListener('click', function(evt) {
-      console.log(evt);
-      console.log(evt.target.baseURI);
-      console.log(evt.target.innerText);
-      var x = evt.clientX;
-      var y = evt.clientY;
-      var el = document.elementFromPoint(x, y);
-      var selector = cssPath(el);
-  
-      var element = evt.target;
-      var xpath = getXPath(element);
-      selector = getcssSelector(selector);
+      if(window.okRemoveIframe === true){
+          console.log(evt);
+          console.log(evt.target.baseURI);
+          console.log(evt.target.innerText);
+          var x = evt.clientX;
+          var y = evt.clientY;
+          var el = document.elementFromPoint(x, y);
+          var selector = cssPath(el);
       
-      console.log(xpath);
-      console.log(selector);
-      var targetWindow = document.getElementById('iframe').contentWindow;
-      targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText}, base_url + '/select_monitor');
+          var element = evt.target;
+          var xpath = getXPath(element);
+          selector = getcssSelector(selector);
+          
+          console.log(xpath);
+          console.log(selector);
+          var targetWindow = document.getElementById('iframe').contentWindow;
+          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI, verify_authenticity_token: verify_authenticity_token}, base_url + '/select_monitor');
+      }
+      
   });
   function mouse_over(event) {
-    var element = event.target;
-    element.style.border = '1px solid red';
+      if(window.okRemoveIframe === true){
+          var element = event.target;
+          element.style.border = '1px solid red';
+      }
+    
   }
   function mouse_out(event) {
-    var element = event.target;
-    element.style.border = '';
+      if(window.okRemoveIframe === true){
+          var element = event.target;
+          element.style.border = '';
+      }
   }
   function getXPath(element) {
     if (element.id !== '') {
@@ -94,11 +115,19 @@ javascript:(function() {
   document.addEventListener('mouseout', mouse_out);
   
   var links = document.getElementsByTagName('a');
-  
   for (var i = 0; i < links.length; i++) {
       links[i].addEventListener('click', function(event) {
-      event.preventDefault();
-      event.stopPropagation();
-    });
+          event.preventDefault();
+          event.stopPropagation();
+      });
   }
-  })();
+
+  window.addEventListener('message', function(evt) {
+      console.log(evt.data);
+      console.log(evt.data.okRemove);
+      iframe.parentNode.removeChild(iframe);
+      window.okRemoveIframe = false;
+      console.log(window.okRemoveIframe);
+      
+  });
+})();
