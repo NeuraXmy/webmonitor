@@ -7,7 +7,7 @@
                     <el-form-item label="选择空间">
                         <el-col :span="20">
                             <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
-                            <el-select v-model="space_id" placeholder="Select" size="large" @change="ChangeElement">
+                            <el-select v-model="space_name" placeholder="Select" size="large" @change="ChangeSpace">
                                 <el-option
                                 v-for="item in space_names"
                                 :key="item.value"
@@ -107,7 +107,7 @@
             <span>添加成功</span>
             <template #footer>
                 <span class="dialog-footer">
-                <el-button type="success" @click="this.okAddMonitor = false">
+                <el-button type="success" @click="keepSelect">
                     继续
                 </el-button>
                 <el-button type="primary" @click="RemoveIframe">
@@ -203,6 +203,7 @@ export default{
         }
     },
     created(){
+        this.value = 'XPath'
         this.fullscreenLoading = true
         window.parent.postMessage({msg: "start"}, '*');
         // this.verify_authenticity_token = sessionStorage.getItem('token')
@@ -213,13 +214,15 @@ export default{
             console.log(e.data)
             console.log(e.data.baseURI);
             this.verify_authenticity_token = e.data.verify_authenticity_token;
-            this.getMonitorSpaceList();
+            
+            this.addMonitorForm.notification_email = e.data.Email;
             // this.fullscreenLoading = false
 
             this.Element = e.data;
             this.addMonitorForm.url = e.data.baseURI;
             this.SelectText = e.data.selectText;
-            if(this.value === ''){
+            if(e.data.xpath === ''){
+                this.getMonitorSpaceList();
                 // this.value='XPath';
                 // this.addMonitorForm.include_filters="xpath:" + e.data.xpath + '\n';
             }else if(this.value=== 'XPath'){
@@ -232,6 +235,16 @@ export default{
         });
     },
     methods:{
+        ChangeSpace(){
+            // console.log(this.space_name)
+            // for(let i = 0; i < this.space_names.length; i++){
+            //     if(this.space_names[i].label === this.space_name){
+            //         this.space_id = this.space_names[i].value;
+            //     }
+            // }
+            this.space_id = this.space_name
+            console.log(this.space_id)
+        },
         ChangeElement(){
             if(this.value === 'XPath'){
                 // this.addMonitorForm.include_filters=this.Element.xpath;
@@ -283,6 +296,13 @@ export default{
                     label: res.data.items[i].name
                 })
             }
+            this.space_name = res.data.items[0].id
+            this.space_id = res.data.items[0].id
+            this.addMonitorForm.time_between_check_days = '1'
+            this.addMonitorForm.time_between_check_hours = '0'
+            this.addMonitorForm.time_between_check_minutes = '0'
+            this.addMonitorForm.time_between_check_seconds = '0'
+            this.addMonitorForm.time_between_check_weeks = ''
             console.log(res.data)
         //   this.space_names = res.data
         },
@@ -298,6 +318,14 @@ export default{
         },
         RemoveIframe(){
             window.parent.postMessage({msg: "Remove"}, '*');
+        },
+        keepSelect(){
+            this.okAddMonitor = false, this.addMonitorForm.des =''
+            this.addMonitorForm.desc = ''
+            this.addMonitorForm.name = ''
+            this.addMonitorForm.include_filters =''
+            this.addMonitorForm.trigger_text =''
+            this.SelectText = ''
         }
           
     }
