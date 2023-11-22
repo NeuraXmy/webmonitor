@@ -24,12 +24,10 @@ javascript:(function() {
   window.okRemoveIframe = true;
 
 
-  var intervalID = setInterval(postMessage, 1000);
 
   function postMessage() {
       var targetWindow = document.getElementById('iframe').contentWindow;
       targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token }, base_url + '/select_monitor');
-      clearInterval(intervalID);
   }
 
 
@@ -121,13 +119,16 @@ javascript:(function() {
           event.stopPropagation();
       });
   }
-
   window.addEventListener('message', function(evt) {
-      console.log(evt.data);
-      console.log(evt.data.okRemove);
-      iframe.parentNode.removeChild(iframe);
-      window.okRemoveIframe = false;
-      console.log(window.okRemoveIframe);
+      console.log(evt);
+      console.log(evt.data.msg);
       
+      if(evt.data.msg === "start"){
+          postMessage();
+      }else if(evt.data.msg === "Remove"){
+          iframe.parentNode.removeChild(iframe);
+          window.okRemoveIframe = false;
+          console.log(window.okRemoveIframe);
+      }
   });
 })();

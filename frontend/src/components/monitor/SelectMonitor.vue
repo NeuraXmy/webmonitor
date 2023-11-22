@@ -32,6 +32,11 @@
                             <el-input v-model="addMonitorForm.url" placeholder="请输入网址"></el-input>
                         </el-col>
                     </el-form-item> 
+                    <el-form-item label="关键词">
+                      <el-col :span="20">
+                          <el-input v-model="addMonitorForm.trigger_text" placeholder="请输入监控关键词"></el-input>
+                      </el-col>
+                  </el-form-item>
                     <el-form-item label="监控元素">
                         <el-col :span="20">
                             <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
@@ -165,7 +170,8 @@ export default{
                 time_between_check_minutes:'',
                 time_between_check_seconds:'',
                 notification_email:'',
-                include_filters:''
+                include_filters:'',
+                trigger_text:''
             },
             Element:'',
             MonitorRules:{
@@ -198,6 +204,7 @@ export default{
     },
     created(){
         this.fullscreenLoading = true
+        window.parent.postMessage({msg: "start"}, '*');
         // this.verify_authenticity_token = sessionStorage.getItem('token')
         // this.getMonitorSpaceList();
     },
@@ -290,9 +297,7 @@ export default{
         //   this.space_names = res.data
         },
         RemoveIframe(){
-            window.parent.postMessage(JSON.stringify({
-                okRemove: true
-            }), '*');
+            window.parent.postMessage({msg: "Remove"}, '*');
         }
           
     }

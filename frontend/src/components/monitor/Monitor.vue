@@ -55,6 +55,15 @@
                       </template>
                   </el-table-column>
               </el-table>
+              <el-pagination
+                    v-model:current-page="queryPage.page"
+                    v-model:page-size="queryPage.size"
+                    :page-sizes="[5, 10, 20, 50]"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="TotalPages"
+                    @size-change="handleSizeSpaceChange"
+                    @current-change="handleCurrentSpaceChange"
+                    />
           </el-row>
       </el-card>
       <el-dialog
@@ -174,6 +183,15 @@
                       </template>
                   </el-table-column>
               </el-table>
+              <el-pagination
+                    v-model:current-page="queryPage.page"
+                    v-model:page-size="queryPage.size"
+                    :page-sizes="[5, 10, 20, 50]"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="TotalPages"
+                    @size-change="handleSizeMonitorChange"
+                    @current-change="handleCurrentMonitorChange"
+                    />
           </el-row>
         </el-card>
         <el-dialog
@@ -195,6 +213,11 @@
                   <el-form-item label="网址" prop="url">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.url" placeholder="请输入网址（http://或https://开头）"></el-input>
+                      </el-col>
+                  </el-form-item>
+                  <el-form-item label="关键词">
+                      <el-col :span="20">
+                          <el-input v-model="addMonitorForm.trigger_text" placeholder="请输入监控关键词"></el-input>
                       </el-col>
                   </el-form-item>
                   <el-form-item label="监控元素">
@@ -237,9 +260,9 @@
               <!-- <span>....</span> -->
               <template #footer>
               <span class="dialog-footer">
-                  <el-button @click="addMonitor = false">Cancel</el-button>
+                  <el-button @click="addMonitor = false">取消</el-button>
                   <el-button type="primary" @click="addMonitorList">
-                  Confirm
+                  确定
                   </el-button>
               </span>
               </template>
@@ -263,6 +286,11 @@
                   <el-form-item label="网址" prop="url">
                       <el-col :span="20">
                           <el-input v-model="addMonitorForm.url" placeholder="请输入网址（http://或https://开头）"></el-input>
+                      </el-col>
+                  </el-form-item>
+                  <el-form-item label="关键词">
+                      <el-col :span="20">
+                          <el-input v-model="addMonitorForm.trigger_text" placeholder="请输入监控关键词"></el-input>
                       </el-col>
                   </el-form-item>
                   <el-form-item label="监控元素">
@@ -303,9 +331,9 @@
               </el-form>
               <template #footer>
               <span class="dialog-footer">
-                  <el-button @click="EditMonitor = false">Cancel</el-button>
+                  <el-button @click="EditMonitor = false">取消</el-button>
                   <el-button type="primary" @click="WatchEditConfirm">
-                  Confirm
+                  确定
                   </el-button>
               </span>
               </template>
@@ -404,7 +432,8 @@
                   time_between_check_minutes:'',
                   time_between_check_seconds:'',
                   notification_email:'',
-                  include_filters:''
+                  include_filters:'',
+                  trigger_text:''
               },
               MonitorRules:{
                   name:[
@@ -428,16 +457,21 @@
                       {required:true, message: '请输入密码', trigger:'blur'}
                   ]
               },
-              space_id:1,
-              watch_id:1,
-              EditMonitor:false,
-              generateUrl:'',
-              okDeleteWatch:false,
-              DeleteWatchID:'',
-              okReflashWatch:false,
-              okDisabled:false,
-              loading:false,
-              iframe_url:''
+              space_id: 1,
+              watch_id: 1,
+              EditMonitor: false,
+              generateUrl: '',
+              okDeleteWatch: false,
+              DeleteWatchID: '',
+              okReflashWatch: false,
+              okDisabled: false,
+              loading: false,
+              iframe_url: '',
+              TotalPages: 10,
+              queryPage: {
+                page:1,
+                size:5
+              }
           }
       },
       created(){
@@ -449,13 +483,14 @@
               this.loading = true
               const {data: res} = await this.$axios.get('/spaces',
               {
+                  params: this.queryPage,
                   headers : {
                       'token': sessionStorage.getItem('token')
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.$message.success(res.msg)
-              
+              this.TotalPages = res.data.total
               console.log(res.data)
               this.MonitorSpaceList = res.data.items
               this.loading = false
@@ -466,8 +501,10 @@
               this.space_id=val.id
               this.loading = true
               this.okMonitor=false
+              console.log("11111")
               const {data: res} = await this.$axios.get('/space/'+val.id+'/watches',
               {
+                  params: this.queryPage,
                   headers : {
                       'token': sessionStorage.getItem('token')
                   }
@@ -475,23 +512,25 @@
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.$message.success(res.msg)
               this.loading = false
+              this.TotalPages = res.data.total
               this.MonitorList = res.data.items
               console.log(res.data)
           },
           //刷新监控列表
           async RefreshMonitorManage(val){
               this.space_id = val
-            //   this.loading = true
-              // this.okMonitor=false
+              console.log("22222")
+            //   console.log(this.queryPage)
               const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
               {
+                  params: this.queryPage,
                   headers : {
                       'token': sessionStorage.getItem('token')
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
-            //   this.loading = false
-              this.MonitorList = res.data
+              this.TotalPages = res.data.total
+              this.MonitorList = res.data.items
           },
           //用户在某个space下创建监控
           addMonitorList(){
@@ -522,6 +561,7 @@
               this.addMonitorForm.include_filters = ''
               this.addMonitorForm.notification_email = ''
               this.addMonitorForm.url = ''
+              this.addMonitorForm.trigger_text = ''
               this.addMonitorForm.name = ''
               this.addMonitorForm.time_between_check_days = '1'
               this.addMonitorForm.time_between_check_hours = '0'
@@ -570,6 +610,7 @@
                 this.value = 'XPath/CssSelector';
                 this.okDisabled = false
               }
+              console.log(res.data);
           },
           //用户修改监控
           WatchEditConfirm(){
@@ -713,9 +754,25 @@
                     'token': sessionStorage.getItem('token')
                 }
             })
-            console.log(res.data)
+            // console.log(res.data)
             this.iframe_url = res.data
-            console.log(this.iframe_url)
+            // console.log(this.iframe_url)
+        },
+        handleCurrentSpaceChange(val){
+            this.queryPage.page = val
+            this.getMonitorSpaceList()
+        },
+        handleSizeSpaceChange(val){
+            this.queryPage.size = val
+            this.getMonitorSpaceList()
+        },
+        handleCurrentMonitorChange(val){
+            this.queryPage.page = val
+            this.RefreshMonitorManage(this.space_id)
+        },
+        handleSizeMonitorChange(val){
+            this.queryPage.size = val
+            this.RefreshMonitorManage(this.space_id)
         }
       }
   }

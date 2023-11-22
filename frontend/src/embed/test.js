@@ -1,5 +1,5 @@
 javascript:(function() {
-    var verify_authenticity_token = "NQ.ZVx3uQ.Ik7dfsWB4JiQX0mldyt5Adx4jik";
+    var verify_authenticity_token = "NQ.ZV2orQ.CgWBUK4b_jUtl27_h8B6tJCNK6e";
   
     var base_url = "http://127.0.0.1:5173";
   
@@ -25,14 +25,12 @@ javascript:(function() {
     window.okRemoveIframe = true;
   
   
-    var intervalID = setInterval(postMessage, 1000);
-
+  
     function postMessage() {
         var targetWindow = document.getElementById('iframe').contentWindow;
         targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token }, base_url + '/select_monitor');
-        clearInterval(intervalID);
     }
-
+  
   
     var getcssSelector = function(path) {
       console.log(path.length);
@@ -122,13 +120,16 @@ javascript:(function() {
             event.stopPropagation();
         });
     }
-
     window.addEventListener('message', function(evt) {
-        console.log(evt.data);
-        console.log(evt.data.okRemove);
-        iframe.parentNode.removeChild(iframe);
-        window.okRemoveIframe = false;
-        console.log(window.okRemoveIframe);
+        console.log(evt);
+        console.log(evt.data.msg);
         
+        if(evt.data.msg === "start"){
+            postMessage();
+        }else if(evt.data.msg === "Remove"){
+            iframe.parentNode.removeChild(iframe);
+            window.okRemoveIframe = false;
+            console.log(window.okRemoveIframe);
+        }
     });
-})();
+  })();
