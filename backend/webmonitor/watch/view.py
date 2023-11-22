@@ -35,6 +35,7 @@ def get_watch(user, watch_id):
         'time_between_check_minutes': watch.time_between_check_minutes,
         'time_between_check_seconds': watch.time_between_check_seconds,
         'include_filters': watch.include_filters,
+        'trigger_text': watch.trigger_text,
         'notification_email': watch.notification_email,
     }
     return ok(data=ret)
@@ -67,6 +68,7 @@ def create_watch(user, space_id):
         setattr(watch, f'time_between_check_{unit}', int(request.form.get(f'time_between_check_{unit}')))
     watch.notification_email    = request.form.get('notification_email')
     watch.include_filters       = request.form.get('include_filters')
+    watch.trigger_text          = request.form.get('trigger_text')
     
     # 在changedetection.io上创建监控
     external_id = watch_utils.create_watch(watch)
@@ -152,6 +154,7 @@ def update_watch(user, watch_id):
         setattr(watch, f'time_between_check_{unit}', int(request.form.get(f'time_between_check_{unit}')))
     watch.notification_email    = request.form.get('notification_email')
     watch.include_filters       = request.form.get('include_filters')
+    watch.trigger_text          = request.form.get('trigger_text')
 
     # 更新数据到cdio
     watch_utils.update_watch(watch.external_id, watch)

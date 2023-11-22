@@ -73,7 +73,12 @@ def extract_watch_data(watch):
         data['include_filters'] = filters
     else:
         data['include_filters'] = []
-
+    # 触发文本
+    if watch.trigger_text:
+        trigger_text = [f.strip() for f in watch.trigger_text.split('\n') if f.strip()]
+        data['trigger_text'] = trigger_text
+    else:
+        data['trigger_text'] = []
     return data
 
 
