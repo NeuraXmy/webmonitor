@@ -3,6 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import current_app, render_template
+from webmonitor.utils.error import ErrorCode, abort
 
 def send_email(to, subject, template, **kwargs):
     html = render_template(template, **kwargs)
@@ -32,4 +33,4 @@ def send_email_thread(to, subject, html, config):
             server.send_message(msg)
             server.quit()
     except Exception as e:
-        print(f"Error occurred while sending email: {e}")
+        abort(ErrorCode.INTERNAL_ERROR, msg=f"邮件发送失败: {e}")

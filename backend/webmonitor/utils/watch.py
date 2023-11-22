@@ -69,7 +69,8 @@ def extract_watch_data(watch):
     data['time_between_check'] = time_between_check
     # 过滤器
     if watch.include_filters:
-        data['include_filters'] = watch.include_filters.split('\n')
+        filters = [f.strip() for f in watch.include_filters.split('\n') if f.strip()]
+        data['include_filters'] = filters
     else:
         data['include_filters'] = []
 

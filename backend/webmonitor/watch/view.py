@@ -2,11 +2,12 @@ from webmonitor.watch import watch_bp
 from webmonitor import models
 from flask import render_template, request
 from flask_restful import Resource
-from webmonitor.utils.response import make_response
+from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
 from webmonitor.utils.email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
+from webmonitor.utils.page import paginate
 
 
 # 用户获取某个监控详细信息
@@ -16,9 +17,9 @@ def get_watch(user, watch_id):
     watch = models.Watch.query.get(watch_id)
     space = models.Space.query.get(watch.space_id)
     if not watch:
-        return make_response(404, msg="监控不存在")
+        return abort(ErrorCode.NOT_FOUND)
     if space.owner_id != user.id:
-        return make_response(403, msg="无权访问")
+        return abort(ErrorCode.FORBIDDEN)
     ret = {
         'id': watch.id,
         'name': watch.name,
@@ -36,7 +37,7 @@ def get_watch(user, watch_id):
         'include_filters': watch.include_filters,
         'notification_email': watch.notification_email,
     }
-    return make_response(200, data=ret)
+    return ok(data=ret)
 
 
 # 用户在某个空间下创建监控
@@ -45,9 +46,9 @@ def get_watch(user, watch_id):
 def create_watch(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
-        return make_response(404, msg="空间不存在")
+        return abort(ErrorCode.NOT_FOUND)
     if space.owner_id != user.id:
-        return make_response(403, msg="无权访问")
+        return abort(ErrorCode.FORBIDDEN)
     
     watch = models.Watch()
 
@@ -57,9 +58,9 @@ def create_watch(user, space_id):
     
     watch.url = request.form.get('url')
     if not watch.url:
-        return make_response(400, msg="参数不完整")
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
     if not watch.url.startswith('http://') and not watch.url.startswith('https://'):
-        return make_response(400, msg="url参数不合法")
+        return abort(ErrorCode.PARAMS_INVALID, msg="url不合法")
     
     watch.space_id = space_id
     for unit in ['weeks', 'days', 'hours', 'minutes', 'seconds']:
@@ -79,7 +80,7 @@ def create_watch(user, space_id):
     watch_utils.update_watch(external_id, watch)
     # TODO 如果创建失败需要删除changedetection.io上的监控
 
-    return make_response(200)
+    return ok()
 
 
 # 用户获取某个空间的监控列表
@@ -88,22 +89,22 @@ def create_watch(user, space_id):
 def get_watch_list(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
-        return make_response(404, msg="空间不存在")
+        return abort(ErrorCode.NOT_FOUND)
     if space.owner_id != user.id:
-        return make_response(403, msg="无权访问")
+        return abort(ErrorCode.FORBIDDEN)
     
-    ret_watches = []
-    for watch in space.watches:
-        ret_watches.append({
-            'id': watch.id,
-            'name': watch.name,
-            'url': watch.url,
-            'create_time': watch.create_time,
-            'update_time': watch.update_time,
-            'last_check_time': watch.last_check_time,
-            'last_check_state': watch.last_check_state,
-        })
-    return make_response(200, data=ret_watches)
+    # 获取监控列表
+    ret = paginate(models.Watch.query.filter_by(space_id=space_id))
+    ret.items = [{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+    } for watch in ret.items]
+    return ok(data=ret)
 
 
 # 用户删除监控
@@ -112,10 +113,10 @@ def get_watch_list(user, space_id):
 def delete_watch(user, watch_id):
     watch = models.Watch.query.get(watch_id)
     if not watch:
-        return make_response(404, msg="监控不存在")
+        return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
     if space.owner_id != user.id:
-        return make_response(403, msg="无权访问")
+        return abort(ErrorCode.FORBIDDEN)
     
     external_id = watch.external_id
     models.db.session.delete(watch)
@@ -123,8 +124,7 @@ def delete_watch(user, watch_id):
 
     # 如果数据库更新成功，在changedetection.io上删除监控
     response = watch_utils.delete_watch(external_id)
-
-    return make_response(200)
+    return ok()
 
 
 # 用户修改监控
@@ -133,10 +133,10 @@ def delete_watch(user, watch_id):
 def update_watch(user, watch_id):
     watch = models.Watch.query.get(watch_id)
     if not watch:
-        return make_response(404, msg="监控不存在")
+        return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
     if space.owner_id != user.id:
-        return make_response(403, msg="无权访问")
+        return abort(ErrorCode.FORBIDDEN)
 
     # 获取watch数据
     watch.name = request.form.get('name')
@@ -144,9 +144,9 @@ def update_watch(user, watch_id):
     
     watch.url = request.form.get('url')
     if not watch.url:
-        return make_response(400, msg="参数不完整")
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
     if not watch.url.startswith('http://') and not watch.url.startswith('https://'):
-        return make_response(400, msg="url参数不合法")
+        return abort(ErrorCode.PARAMS_INVALID, msg="url不合法")
     
     for unit in ['weeks', 'days', 'hours', 'minutes', 'seconds']:
         setattr(watch, f'time_between_check_{unit}', int(request.form.get(f'time_between_check_{unit}')))
@@ -158,9 +158,7 @@ def update_watch(user, watch_id):
 
     # 更新到数据库
     models.db.session.commit()
-    # 这里假设数据库操作成功
-
-    return make_response(200)
+    return ok()
 
 
 # 用户立刻刷新监控
@@ -169,15 +167,14 @@ def update_watch(user, watch_id):
 def check_watch(user, watch_id):
     watch = models.Watch.query.get(watch_id)
     if not watch:
-        return make_response(404, msg="监控不存在")
+        return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
     if space.owner_id != user.id:
-        return make_response(403, msg="无权访问")
+        return abort(ErrorCode.FORBIDDEN)
     
     # 尝试在changedetection.io上立刻刷新监控
     watch_utils.update_watch_state(watch.external_id, recheck=True)
-        
-    return make_response(200)
+    return ok()
 
 
 # 接受changedetection.io的更新通知
@@ -228,5 +225,4 @@ def process_change():
     watch.last_check_time = datetime.now()
     watch.last_check_state = state_msg
     models.db.session.commit()
-                
-    return make_response(200)
+    return ok()
