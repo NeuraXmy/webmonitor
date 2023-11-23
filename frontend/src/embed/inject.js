@@ -1,5 +1,4 @@
 javascript:(function() {
-  var verify_authenticity_token = "NQ.ZV2orQ.CgWBUK4b_jUtl27_h8B6tJCNK6E";
 
   var base_url = "http://127.0.0.1:5173";
 
@@ -24,11 +23,9 @@ javascript:(function() {
   container.appendChild(iframe);
   window.okRemoveIframe = true;
 
-
-
   function postMessage() {
       var targetWindow = document.getElementById('iframe').contentWindow;
-      targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token,  baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
+      targetWindow.postMessage({baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
   }
 
 
@@ -64,7 +61,7 @@ javascript:(function() {
           console.log(xpath);
           console.log(selector);
           var targetWindow = document.getElementById('iframe').contentWindow;
-          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI, verify_authenticity_token: verify_authenticity_token}, base_url + '/select_monitor');
+          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI}, base_url + '/select_monitor');
       }
       
   });
@@ -120,6 +117,7 @@ javascript:(function() {
           iframe.parentNode.removeChild(iframe);
           window.okRemoveIframe = false;
           console.log(window.okRemoveIframe);
+          window.open(base_url);
       }
   });
 })();

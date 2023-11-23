@@ -1,7 +1,5 @@
 javascript:(function() {
-  var verify_authenticity_token = "####token####";
   var base_url = "####base_url####";
-
   var currentURL = window.location.href;
   if (currentURL.indexOf(base_url) >= 0) {
     alert('请拖拽书签到浏览器导航栏.');
@@ -23,11 +21,9 @@ javascript:(function() {
   container.appendChild(iframe);
   window.okRemoveIframe = true;
 
-
-
   function postMessage() {
       var targetWindow = document.getElementById('iframe').contentWindow;
-      targetWindow.postMessage({ verify_authenticity_token: verify_authenticity_token, baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
+      targetWindow.postMessage({baseURI: window.location.href, xpath:'' }, base_url + '/select_monitor');
   }
 
 
@@ -63,7 +59,7 @@ javascript:(function() {
           console.log(xpath);
           console.log(selector);
           var targetWindow = document.getElementById('iframe').contentWindow;
-          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI, verify_authenticity_token: verify_authenticity_token}, base_url + '/select_monitor');
+          targetWindow.postMessage({xpath:xpath, selector:selector,  selectText:evt.target.innerText, baseURI: evt.target.baseURI}, base_url + '/select_monitor');
       }
       
   });
@@ -119,6 +115,7 @@ javascript:(function() {
           iframe.parentNode.removeChild(iframe);
           window.okRemoveIframe = false;
           console.log(window.okRemoveIframe);
+          window.open(base_url);
       }
   });
 })();

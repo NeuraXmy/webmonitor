@@ -90,7 +90,7 @@
             width="30%"
             align-center
             >
-            <span>用户未登录或上次登录状态过期，请重新拖动书签至浏览器导航栏</span>
+            <span>用户未登录或上次登录状态过期，请重新登录。</span>
             <template #footer>
                 <span class="dialog-footer">
                 <el-button type="primary" @click="RemoveIframe">
@@ -121,21 +121,20 @@
 </template>
   
 <script>
+// import '../../embed/chromeExtension';
+// import Cookies from 'universal-cookie';
 export default{
     data(){
         const vaildateEmail = (rule, value, callback) => {
             let EmailReg = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
-            console.log("++++")
             if(EmailReg.test(value)){
                 return callback()
             } 
             return callback(new Error('请输入有效的邮箱'))
         }
         const vaildateUrl = (rule, value, callback) => {
-            // let UrlReg = /^(https|http|ftp)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(:[0-9]{1,5})?(\/[\S]*)?$/
-            
             let UrlReg = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i
-            console.log("++++")
+
             if(UrlReg.test(value)){
                 return callback()
             } 
@@ -206,26 +205,28 @@ export default{
         this.value = 'XPath'
         this.fullscreenLoading = true
         window.parent.postMessage({msg: "start"}, '*');
-        // this.verify_authenticity_token = sessionStorage.getItem('token')
-        // this.getMonitorSpaceList();
     },
     mounted(){
         window.addEventListener("message", (e) => {
             console.log(e.data)
             console.log(e.data.baseURI);
-            this.verify_authenticity_token = e.data.verify_authenticity_token;
-            
-            // this.addMonitorForm.notification_email = e.data.Email;
-            // this.fullscreenLoading = false
+            // this.verify_authenticity_token = e.data.verify_authenticity_token;
+            this.verify_authenticity_token = this.getCookie('verify_authenticity_token')
 
+            if(this.verify_authenticity_token === ""){
+                this.okLogin = true
+                this.fullscreenLoading = false
+            }
+            // console.log("-----")
+            // console.log(this.verify_authenticity_token);
+            // console.log(document)
+            
             this.Element = e.data;
             this.addMonitorForm.url = e.data.baseURI;
             this.SelectText = e.data.selectText;
             if(e.data.xpath === ''){
                 this.getUser();
                 this.getMonitorSpaceList();
-                // this.value='XPath';
-                // this.addMonitorForm.include_filters="xpath:" + e.data.xpath + '\n';
             }else if(this.value=== 'XPath'){
                 this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "xpath:" + e.data.xpath + '\n';
             }else if(this.value === 'CssSelector'){
@@ -236,13 +237,18 @@ export default{
         });
     },
     methods:{
+        //获取token
+        getCookie(name){
+            console.log(document.cookie)
+            var arr = document.cookie.split(";")
+            for(var i = 0 ; i < arr.length ; i++){
+                var arr2 = arr[i].split("=")
+                if(arr2[0].trim() === name){
+                    return arr2[1]
+                }
+            }
+        },
         ChangeSpace(){
-            // console.log(this.space_name)
-            // for(let i = 0; i < this.space_names.length; i++){
-            //     if(this.space_names[i].label === this.space_name){
-            //         this.space_id = this.space_names[i].value;
-            //     }
-            // }
             this.space_id = this.space_name
             console.log(this.space_id)
         },
@@ -256,10 +262,12 @@ export default{
             }
         },
         async confirm_monitor(){
+            console.log(document.cookie)
             this.$refs.MonitorRef.validate(async valid => {
                 console.log(this.space_id)
                 console.log(valid)
                 if(!valid) return 
+                console.log(this.addMonitorForm)
                 this.fullscreenLoading = true
                 let data = this.$qs.stringify(this.addMonitorForm)
                 const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
@@ -307,6 +315,7 @@ export default{
             console.log(res.data)
         //   this.space_names = res.data
         },
+        //获取用户邮箱
         async getUser(){
             if(this.verify_authenticity_token === '') return ;
             const {data: res} = await this.$axios.get('/user',
@@ -334,9 +343,11 @@ export default{
             console.log(res.data)
         //   this.space_names = res.data
         },
+        //移除iframe
         RemoveIframe(){
             window.parent.postMessage({msg: "Remove"}, '*');
         },
+        //点击“继续”，初始化
         keepSelect(){
             this.okAddMonitor = false, this.addMonitorForm.des =''
             this.addMonitorForm.desc = ''

@@ -14,6 +14,7 @@
     "element-plus": "^2.4.1",
     "less": "^4.2.0",
     "qs": "^6.11.2",
+    "universal-cookie": "^6.1.1",
     "vue": "^3.3.4",
     "vue-router": "^4.0.13",
     "vue3-recaptcha2": "^1.8.0",
@@ -23,5 +24,10 @@
     "@vitejs/plugin-vue": "^4.3.4",
     "sass": "^1.69.4",
     "vite": "^4.4.9"
-  }
+  },
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+  ]
 }

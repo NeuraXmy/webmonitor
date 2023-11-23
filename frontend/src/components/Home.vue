@@ -36,6 +36,7 @@
 
 <script>
 import { Menu,Compass } from '@element-plus/icons-vue'
+import Cookies from 'universal-cookie';
 
 export default{
     components: { Menu,Compass },
@@ -43,6 +44,19 @@ export default{
         logout(){
             window.sessionStorage.clear()
             this.$router.push('/login')
+            this.setCookie("verify_authenticity_token", "")
+        },
+        setCookie(name , value){
+            // var date= new Date(); 
+            // date.setDate(date.getDate()+time); 
+            // document.cookie = name + "=" + value + ";expires=" + date; 
+            // console.log(document.cookie)
+            const cookies = new Cookies();
+                const options = {
+                secure: true,
+                sameSite: 'none',
+                };
+            cookies.set(name, value, options);
         }
     }
 }

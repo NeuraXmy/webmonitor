@@ -23,6 +23,7 @@
 
 <script>
 import { User,Lock } from '@element-plus/icons-vue'
+import Cookies from 'universal-cookie';
 
 export default{
   components: { User,Lock },
@@ -62,8 +63,11 @@ export default{
         const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
         if(res.status ===200){
           window.sessionStorage.setItem('token',res.data.token)
+          window.localStorage.setItem('token',res.data.token)
           this.$message.success(res.msg)
           this.$router.push('/home')
+          this.setCookie('verify_authenticity_token' , res.data.token);
+
         }else{
           this.$message.error(res.msg);
         }
@@ -75,7 +79,45 @@ export default{
     },
     forgetPassword(){
 
+    },
+    //添加cookie
+    setCookie(name , value){
+      // var date= new Date(); 
+      // date.setDate(date.getDate()+time); 
+      // document.cookie = name + "=" + value + ";expires=" + date; 
+      // console.log(document.cookie)
+      const cookies = new Cookies();
+        const options = {
+          secure: true,
+          sameSite: 'none',
+        };
+      cookies.set(name, value, options);
+    },
+    //获得cookie
+    getCookie(name){
+      console.log(document.cookie)
+      var arr = document.cookie.split(";")
+      for(var i = 0 ; i < arr.length ; i++){
+        var arr2 = arr[i].split("=")
+        if(arr2[0].trim() === name){
+          return arr2[1]
+        }
+      }
+    },
+    //删除cookie
+    removeCookie(name){
+      setCookie(name,"")
+    },
+    test(){
+        const cookies = new Cookies();
+        const options = {
+          secure: true,
+          sameSite: 'none',
+        };
+        cookies.set('access_token', 'c212e015-d66e-460f-97ab-55fab8e19bed', options);
+        console.log(this.getCookie('access_token'))
     }
+
   }
 }
 </script>
