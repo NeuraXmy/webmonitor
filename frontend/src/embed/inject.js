@@ -116,6 +116,9 @@ javascript:(function() {
       }else if(evt.data.msg === "Remove"){
           iframe.parentNode.removeChild(iframe);
           window.okRemoveIframe = false;
+      }else if(evt.data.msg === "Remove_Login"){
+          iframe.parentNode.removeChild(iframe);
+          window.okRemoveIframe = false;
           console.log(window.okRemoveIframe);
           window.open(base_url);
       }

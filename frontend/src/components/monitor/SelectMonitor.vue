@@ -93,7 +93,7 @@
             <span>用户未登录或上次登录状态过期，请重新登录。</span>
             <template #footer>
                 <span class="dialog-footer">
-                <el-button type="primary" @click="RemoveIframe">
+                <el-button type="primary" @click="RemoveIframe_Login">
                     确定
                 </el-button>
                 </span>
@@ -293,10 +293,10 @@ export default{
             if(res.status !== 200){
                 this.okLogin = true
                 this.fullscreenLoading = false
-                return this.$message.error(res.msg)
+                // return this.$message.error(res.msg)
             }
             this.fullscreenLoading = false
-            this.$message.success(res.msg)
+            // this.$message.success(res.msg)
             console.log(res.data)
             for(let i = 0; i < res.data.items.length; i ++){
                 console.log(res.data.items[i].id)
@@ -346,6 +346,10 @@ export default{
         //移除iframe
         RemoveIframe(){
             window.parent.postMessage({msg: "Remove"}, '*');
+        },
+        //移除iframe并跳转登录
+        RemoveIframe_Login(){
+            window.parent.postMessage({msg: "Remove_Login"}, '*');
         },
         //点击“继续”，初始化
         keepSelect(){
