@@ -378,8 +378,6 @@
             return callback(new Error('请输入有效的邮箱'))
           }
           const vaildateUrl = (rule, value, callback) => {
-            // let UrlReg = /^(https|http|ftp)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(:[0-9]{1,5})?(\/[\S]*)?$/
-            
             let UrlReg = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i
             console.log("++++")
             if(UrlReg.test(value)){
@@ -443,14 +441,12 @@
                       {message: '请输入描述', trigger:'blur'}
                   ],
                   url:[
-                    //   {required:true, message: '请输入网址', trigger:'blur'}
                       {required:true, validator: vaildateUrl, trigger:'blur'}
                   ],
                   element:[
                       {required:true, message: '请输入元素', trigger:'blur'}
                   ],
                   notification_email:[
-                    //   {required:true, message: '请输入元素', trigger:'blur'}
                       {required:true, validator: vaildateEmail, trigger:'blur'}
                   ],
                   include_filters:[
@@ -758,18 +754,22 @@
             this.iframe_url = res.data
             // console.log(this.iframe_url)
         },
+        //获得空间页号
         handleCurrentSpaceChange(val){
             this.queryPage.page = val
             this.getMonitorSpaceList()
         },
+        //获得空间页数
         handleSizeSpaceChange(val){
             this.queryPage.size = val
             this.getMonitorSpaceList()
         },
+        //获得监控页号
         handleCurrentMonitorChange(val){
             this.queryPage.page = val
             this.RefreshMonitorManage(this.space_id)
         },
+        //获得监控页数
         handleSizeMonitorChange(val){
             this.queryPage.size = val
             this.RefreshMonitorManage(this.space_id)
