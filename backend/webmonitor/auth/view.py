@@ -103,6 +103,7 @@ def login():
     token = generate_token(user.id)
     return ok(data={'token': token})
 
+# 管理员登录
 @auth_bp.route('/admin/login', methods=['POST'])
 def login():
     email    = request.form.get('email')
