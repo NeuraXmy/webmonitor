@@ -1,243 +1,191 @@
-<!-- <template>
-    <el-container class="home-container">
-      <el-header>
-        <div>
-            <span>多模态信息舆论监控</span>
-        </div>
-        <el-button type="primary" plain @click="logout">退出</el-button>
-      </el-header>
-      <el-container>
-        <el-aside width="200px">
-            <el-menu
-                active-text-color="#ffd04b"
-                background-color="#545c64"
-                class="el-menu-vertical-demo"
-                default-active="2"
-                text-color="#fff"
-                @open="handleOpen"
-                @close="handleClose"
-            >
-                <el-sub-menu index="1">
-                <template #title>
-                    <el-icon><location /></el-icon>
-                    <span>用户管理</span>
-                </template>
-                    <el-menu-item index="1-4-1">用户列表</el-menu-item>
-                </el-sub-menu>
-                <el-sub-menu index="2">
-                <template #title>
-                    <el-icon><location /></el-icon>
-                    <span>权限管理</span>
-                </template>
-                    <el-menu-item index="1-4-2">角色列表</el-menu-item>
-                    <el-menu-item index="1-4-3">权限列表</el-menu-item>
-                </el-sub-menu>
-            </el-menu>
-        </el-aside>
-        <el-main>Main</el-main>
-      </el-container>
-    </el-container>
-</template>
-
-
-<script>
-export default{
-    methods:{
-        logout(){
-            window.sessionStorage.clear()
-            this.$router.push('/login')
-        }
-    }
-}
-
-</script>
-<style less="less" scoped>
-.home-container{
-    height: 100%;
-}
-.el-header{
-    display: flex;
-    background-color: #409EFF;
-    align-items: center;
-    justify-content: space-between;
-    color: #fff;
-    font-size: 20px;
-    /* div{
-        display: flex;
-        align-items: center;
-    } */
-}
-.el-aside{
-    background-color: #303133;
-
-}
-.el-main{
-    background-color: #E4E7ED;
-}
-
-</style> -->
 <template>
-    <div>
-        <el-container class="home-container">
-            <!-- header -->
-            <el-header>
-                <el-row>
-                    <el-col :span="4">
-                        <p class="system-name">多模态信息舆论监控</p>
-                    </el-col>
-                    <el-col :offset="12" :span="8" style="min-width: 150px">
-                        <el-dropdown style="float: right; margin: 20px 10px">
-                            <!-- <span class="el-dropdown-link" style="color: #fff; cursor: pointer">
-                                知否君 &nbsp;&nbsp; <el-icon class="el-icon--right">
-                                    <arrow-down />
-                                </el-icon>
-                            </span> -->
-                            <!-- <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item @click.native="logout">退出系统</el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template> -->
-                            <el-button type="primary" plain @click="logout">退出</el-button>
-                        </el-dropdown>
-                        <!-- <el-avatar shape="square" :src="avatar" style="margin: 10px; float: right"></el-avatar> -->
-                    </el-col>
-                </el-row>
-            </el-header>
-
-            <el-container style="overflow: auto">
-                <!-- 菜单 -->
-                <el-aside>
-                    <div class="toggle-button" @click="isCollapse = !isCollapse">
-                        <el-icon :size="20">
-                            <Expand v-if="isCollapse" />
-                            <Fold v-if="!isCollapse" />
-                        </el-icon>
-                    </div>
-                    <el-menu router :default-active="activePath" class="el-menu-vertical-demo" :collapse="isCollapse">
-                        <el-menu-item index="/index" @click="saveActiveNav('/index')">
-                            <el-icon>
-                                <house />
-                            </el-icon>
-                            <span>首页</span>
-                        </el-menu-item>
-                        <el-sub-menu index="1">
-                            <template #title>
-                                <el-icon>
-                                    <Setting />
-                                </el-icon>
-                                <span>系统设置</span>
-                            </template>
-                            <el-menu-item index="2-1">权限管理</el-menu-item>
-                        </el-sub-menu>
-                        <el-menu-item index="/user/list" @click="saveActiveNav('/user/list')">
-                            <el-icon>
-                                <user />
-                            </el-icon>
-                            <span>用户管理</span>
-                        </el-menu-item>
-                    </el-menu>
-                </el-aside>
-                <el-container>
-                    <el-main>
-                        <router-view></router-view>
-                    </el-main>
-                    <el-footer>Copyright © 2023</el-footer>
-                </el-container>
-            </el-container>
-        </el-container>
+    <div class="login-body">
+      <div class="login-container">
+        <div class="head">
+          <img class="logo" src="../../public/changenotify.png" />
+          <div class="name">
+            <div class="title">多模态信息舆情监控</div>
+          </div>
+        </div>
+        <el-form ref="userRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
+              <el-form-item prop="email" >
+                  <el-input prefix-icon="User" v-model="userForm.email" placeholder="邮箱"></el-input>
+              </el-form-item>
+              <el-form-item  prop="password">
+                  <el-input show-password prefix-icon="Lock" v-model="userForm.password" placeholder="密码"></el-input>
+              </el-form-item>
+              <el-form-item>
+                  <el-button type="primary" @click="login">登录</el-button>
+                  <el-button @click="restForm">重置</el-button>
+              </el-form-item>
+              <router-link to="/register">
+                <div style="margin-top: 5px">注册</div>
+            </router-link>
+          </el-form>
+      </div>
     </div>
-</template>
-<script setup>
-import { onBeforeMount, ref } from 'vue';
-// import avatar from "../assets/img/avator.jpg"
-import { useRouter } from 'vue-router'
-const router = useRouter();
-// 挂载 DOM 之前
-onBeforeMount(() => {
-    activePath.value = sessionStorage.getItem("activePath")
-        ? sessionStorage.getItem("activePath")
-        : "/index"
-})
-let isCollapse = ref(false);
-let activePath = ref("");
-// 保存链接的激活状态
-const saveActiveNav = (path) => {
-    sessionStorage.setItem("activePath", path);
-    activePath.value = path;
-}
-const logout = () => {
-    // 清除缓存
-    sessionStorage.clear();
-    router.push("/login");
+  </template>
+  
+<script>
+import { User,Lock } from '@element-plus/icons-vue'
+import Cookies from 'universal-cookie';
+
+export default{
+  components: { User,Lock },
+  data() {
+    const validEmail = (rule, value, callback) => {
+      const EmailReg = /^^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/
+      if(EmailReg.test(value)){
+        return callback()
+      }
+      return callback(new Error('请输入正确的邮箱'))
+    }
+    return {
+      userForm:{
+          email:'',
+          password:''
+      },
+      userRules:{
+          email:[
+              // {required:true, message: '请输入邮箱', trigger:'blur'},
+              {required:true, validator: validEmail, trigger:'blur'}
+          ],
+          password:[
+              {required:true, message: '请输入密码', trigger:'blur'}
+          ]
+      }
+    };
+  },
+  methods:{
+    restForm(){
+      // console.log(this)
+      this.$refs.userRef.resetFields()
+    },
+    login(){
+      this.$refs.userRef.validate(async valid => {
+        console.log(valid)
+        if(!valid) return 
+        const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
+        if(res.status ===200){
+          window.sessionStorage.setItem('token',res.data.token)
+          window.localStorage.setItem('token',res.data.token)
+          this.$message.success(res.msg)
+          this.$router.push('/home')
+          this.setCookie('verify_authenticity_token' , res.data.token);
+
+        }else{
+          this.$message.error(res.msg);
+        }
+        
+      })
+    },
+    register(){
+      this.$router.push('/register')
+    },
+    forgetPassword(){
+
+    },
+    //添加cookie
+    setCookie(name , value){
+      // var date= new Date(); 
+      // date.setDate(date.getDate()+time); 
+      // document.cookie = name + "=" + value + ";expires=" + date; 
+      // console.log(document.cookie)
+      const cookies = new Cookies();
+        const options = {
+          secure: true,
+          sameSite: 'none',
+        };
+      cookies.set(name, value, options);
+    },
+    //获得cookie
+    getCookie(name){
+      console.log(document.cookie)
+      var arr = document.cookie.split(";")
+      for(var i = 0 ; i < arr.length ; i++){
+        var arr2 = arr[i].split("=")
+        if(arr2[0].trim() === name){
+          return arr2[1]
+        }
+      }
+    },
+    //删除cookie
+    removeCookie(name){
+      setCookie(name,"")
+    },
+    test(){
+        const cookies = new Cookies();
+        const options = {
+          secure: true,
+          sameSite: 'none',
+        };
+        cookies.set('access_token', 'c212e015-d66e-460f-97ab-55fab8e19bed', options);
+        console.log(this.getCookie('access_token'))
+    }
+
+  }
 }
 </script>
-
+  
 <style scoped>
-.home-container {
-    position: absolute;
-    height: 100%;
-    top: 0px;
-    left: 0px;
+.login-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    background: #f2f3f5;
+    background-color: #fff;
 }
-
-.el-header {
-    background: #2661ef;
-    padding: 0 10px;
-    overflow: hidden;
+.login-container {
+    width: 420px;
+    height: 500px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0px 21px 41px 0px rgba(0, 0, 0, 0.2);
 }
-
-.system-name {
-    color: #fff;
-    font-size: 18px;
+.head {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0 20px 0;
 }
-
-.el-aside {
-    background: white;
-    width: auto !important;
+.head img {
+    width: 100px;
+    height: 100px;
+    margin-right: 20px;
 }
-
-.el-menu-vertical-demo:not(.el-menu--collapse) {
-    width: 200px;
-    min-height: 400px;
-}
-
-.el-footer {
-    color: #cccccc;
-    text-align: center;
-    line-height: 60px;
-}
-
-.el-footer:hover {
-    color: #2661ef;
-}
-
-.toggle-button {
-    background-color: #d9e0e7;
-    font-size: 18px;
-    line-height: 24px;
-    color: #fff;
-    text-align: center;
-    letter-spacing: 0.2em;
-    cursor: pointer;
-    color: black;
-}
-
-.el-menu-vertical-demo:not(.el-menu--collapse) {
-    width: 200px;
-    min-height: 400px;
-}
-
-.el-menu-item.is-active {
-    color: #fff !important;
-    font-size: 15px;
+.head .title {
+    font-size: 28px;
+    color: #1BAEAE;
     font-weight: bold;
-    background-color: #2661ef !important;
-    border-radius: 2px;
-    height: 50px;
-    line-height: 50px;
-    box-sizing: border-box;
-    margin: 2px 5px 0px 2px;
+}
+.head .tips {
+    font-size: 12px;
+    color: #999;
+}
+.login-form {
+    width: 70%;
+    margin: 0 auto;
+}
+.login-form >>> .el-form--label-top .el-form-item__label {
+    padding: 0;
+}
+.login-form >>> .el-form-item {
+    margin-bottom: 0;
+}
+.form_style{
+  bottom: 0;
+  width: 100%;
+  padding: 0 10%;
+  box-sizing: border-box;
+
+}
+.form__link {
+  /* color: #181818; */
+  font-size: 13px;
+  margin-top: 25px;
+  border-bottom: 1px solid #a0a5a8;
+  line-height: 2;
+  cursor: pointer;
+  text-decoration: none;
 }
 </style>

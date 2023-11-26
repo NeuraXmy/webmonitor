@@ -67,7 +67,7 @@ export default{
           this.$message.success(res.msg)
           this.$router.push('/home')
           this.setCookie('verify_authenticity_token' , res.data.token);
-
+          // console.log(this.getCookie('verify_authenticity_token'))
         }else{
           this.$message.error(res.msg);
         }
