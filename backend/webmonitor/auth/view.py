@@ -90,6 +90,9 @@ def login():
     # 用户不存在
     if not user:
         return abort(ErrorCode.USER_NOT_FOUND)
+    # 不是普通用户
+    if user.role != 0:
+        return abort(ErrorCode.USER_NOT_FOUND)
     # 密码错误
     if not user.check_password(password):
         return abort(ErrorCode.PASSWORD_ERROR)
@@ -100,3 +103,26 @@ def login():
     token = generate_token(user.id)
     return ok(data={'token': token})
 
+@auth_bp.route('/admin/login', methods=['POST'])
+def login():
+    email    = request.form.get('email')
+    password = request.form.get('password')
+    if not all([email, password]):
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+        return abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
+    
+    user = models.User.query.filter_by(email=email).first()
+    # 用户不存在
+    if not user:
+        return abort(ErrorCode.USER_NOT_FOUND)
+    # 密码错误
+    if not user.check_password(password):
+        return abort(ErrorCode.PASSWORD_ERROR)
+    # 不是管理员
+    if user.role != 1:
+        return abort(ErrorCode.USER_NOT_FOUND)
+    
+    token = generate_token(user.id)
+    return ok(data={'token': token})

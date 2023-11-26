@@ -20,6 +20,8 @@ def login_required(view_func):
             return abort(ErrorCode.TOKEN_INVALID, msg="身份认证token无效")
         
         user = User.query.get(user_id)
+        if user.role != 0: # 平台管理员
+            return abort(ErrorCode.USER_NOT_FOUND)
         if not user:
             return abort(ErrorCode.USER_NOT_FOUND)
         if not user.activated:
@@ -27,3 +29,29 @@ def login_required(view_func):
         
         return view_func(user, *args, **kwargs)
     return decorated_func
+
+# 验证管理员登录装饰器
+def admin_required(view_func):
+    @wraps(view_func)
+    def admin_decorated_func(*args, **kwargs):
+        try:
+            token = request.headers['token']
+        except Exception:
+            return abort(ErrorCode.TOKEN_INVALID, msg='缺少身份认证token')
+        
+        try:
+            user_id = verify_token(token, 7 * 24 * 3600)
+        except Exception:
+            return abort(ErrorCode.TOKEN_INVALID, msg='身份认证token无效')
+        
+        user = User.query.get(user_id)
+        if not user:
+            return abort(ErrorCode.USER_NOT_FOUND)
+        if user.role != 1:
+            return abort(ErrorCode.USER_NOT_FOUND)
+        
+        return view_func(user, *args, **kwargs)
+    return admin_decorated_func
+
+
+        ## 平台管理员不需要激活吧，后台自己设定好

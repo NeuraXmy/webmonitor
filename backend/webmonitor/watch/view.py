@@ -18,7 +18,8 @@ def get_watch(user, watch_id):
     space = models.Space.query.get(watch.space_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
-    if space.owner_id != user.id:
+    # manager or owner
+    if user.id != 1 and space.owner_id != user.id: 
         return abort(ErrorCode.FORBIDDEN)
     ret = {
         'id': watch.id,
@@ -48,7 +49,7 @@ def create_watch(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if space.owner_id != user.id:
+    if user.id !=1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     watch = models.Watch()
@@ -92,7 +93,7 @@ def get_watch_list(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if space.owner_id != user.id:
+    if user.id != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     # 获取监控列表
@@ -117,7 +118,7 @@ def delete_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
-    if space.owner_id != user.id:
+    if user.id != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     external_id = watch.external_id
@@ -137,7 +138,7 @@ def update_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
-    if space.owner_id != user.id:
+    if user.id != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
 
     # 获取watch数据
@@ -172,7 +173,7 @@ def check_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
-    if space.owner_id != user.id:
+    if user.id != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     # 尝试在changedetection.io上立刻刷新监控

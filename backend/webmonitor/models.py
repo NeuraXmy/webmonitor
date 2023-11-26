@@ -21,6 +21,8 @@ class User(BaseModel):
     email           = db.Column(db.String(64), nullable=False, unique=True)
     activated       = db.Column(db.Boolean, default=False)
     activated_on    = db.Column(db.DateTime, nullable=True)
+    # 0--->common user   1--->platform manager
+    role            = db.Column(db.Integer, nullable=False) 
 
     spaces = db.relationship('Space', backref='owner', lazy=True)
 
