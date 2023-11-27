@@ -126,4 +126,5 @@ def admin_login():
         return abort(ErrorCode.USER_NOT_FOUND)
     
     token = generate_token(user.id)
+    print(token)
     return ok(data={'token': token})

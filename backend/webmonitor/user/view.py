@@ -37,11 +37,15 @@ def get_user_info(user):
 @login_required
 def update_user_info(user):
     nickname = request.form.get('nickname')
-    if not nickname:
+    email    = request.form.get('email')
+    password = request.form.get('password')
+    if not all([nickname, email, password]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     if len(nickname) < 2:
         return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
     user.nickname = nickname
+    user.email    = email
+    user.password = password
     models.db.session.commit()
     return ok()
 
@@ -61,8 +65,8 @@ def get_all_users_info(user):
         'spaces': []
     } for user in ret.items]
     for user in ret.items:
-        spaces = models.Space.query.filter_by(owner_id=user.id).all()
-        for space in spaces:
+        # spaces = models.Space.query.filter_by(owner_id=user.id).all()
+        for space in user.spaces:
             user['spaces'].append({
                 'id': space.id,
                 'name': space.name,
@@ -89,8 +93,8 @@ def get_certain_user_info(user, user_id):
         'update_time': user.update_time,
         'spaces': []
     }
-    spaces = models.Space.query.filter_by(owner_id=user.id).all()
-    for space in spaces:
+    # spaces = models.Space.query.filter_by(owner_id=user.id).all()
+    for space in user.spaces:
         ret['spaces'].append({
             'id': space.id,
             'name': space.name,
