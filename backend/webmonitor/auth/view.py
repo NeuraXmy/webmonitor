@@ -105,7 +105,7 @@ def login():
 
 # 管理员登录
 @auth_bp.route('/admin/login', methods=['POST'])
-def login():
+def admin_login():
     email    = request.form.get('email')
     password = request.form.get('password')
     if not all([email, password]):

@@ -41,6 +41,7 @@ def admin_required(view_func):
         
         try:
             user_id = verify_token(token, 7 * 24 * 3600)
+            print(user_id)
         except Exception:
             return abort(ErrorCode.TOKEN_INVALID, msg='身份认证token无效')
         
@@ -49,7 +50,7 @@ def admin_required(view_func):
             return abort(ErrorCode.USER_NOT_FOUND)
         if user.role != 1:
             return abort(ErrorCode.USER_NOT_FOUND)
-        
+        print(user.role)
         return view_func(user, *args, **kwargs)
     return admin_decorated_func
 
