@@ -28,7 +28,7 @@ def register():
         abort(ErrorCode.USER_ALREADY_EXISTS)
     # 如果用户不存在则创建
     if not user:
-        user = models.User(email=email, password=password, nickname=nickname)
+        user = models.User(email=email, password=password, nickname=nickname, role=0)
         models.db.session.add(user)
         models.db.session.commit()
     # 如果用户存在则更新信息
