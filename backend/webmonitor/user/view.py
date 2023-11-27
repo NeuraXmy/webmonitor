@@ -53,6 +53,7 @@ def update_user_info(user):
 @user_bp.route('/users', methods=['GET'])
 @login_required
 def get_all_users_info(user):
+    print(user.id)
     if user.id != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.User.query.all())
