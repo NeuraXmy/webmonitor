@@ -62,18 +62,11 @@ def get_all_users_info(user):
         'nickname': user.nickname,
         'create_time': user.create_time,
         'update_time': user.update_time,
-        'spaces': []
+        'spaces': 1
     } for user in ret.items]
+    # spaces里是用户的空间数量
     for user in ret.items:
-        spaces = models.Space.query.filter_by(owner_id=user.id).all()
-        for space in spaces:
-            user['spaces'].append({
-                'id': space.id,
-                'name': space.name,
-                'desc': space.desc,
-                'create_time': space.create_time,
-                'update_time': space.update_time,
-            })
+        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
     return ok(data=ret)
 
 # 管理员获取某个用户信息
