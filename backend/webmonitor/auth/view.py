@@ -91,8 +91,8 @@ def login():
     if not user:
         return abort(ErrorCode.USER_NOT_FOUND)
     # 不是普通用户
-    if user.role != 0:
-        return abort(ErrorCode.USER_NOT_FOUND)
+    # if user.role != 0:
+    #     return abort(ErrorCode.USER_NOT_FOUND)
     # 密码错误
     if not user.check_password(password):
         return abort(ErrorCode.PASSWORD_ERROR)

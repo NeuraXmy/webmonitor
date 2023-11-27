@@ -55,7 +55,6 @@ def update_user_info(user):
 def get_all_users_info(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    print(models.User.query.all())
     ret = paginate(models.User.query.all())
     ret.items = [{
         'id': user.id,
