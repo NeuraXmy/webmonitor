@@ -6,6 +6,7 @@ from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
 from webmonitor.utils.email import send_email
 from webmonitor.utils.auth import login_required
+from webmonitor.utils.page import paginate
 
 
 # 用户获取自己信息
@@ -42,4 +43,134 @@ def update_user_info(user):
         return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
     user.nickname = nickname
     models.db.session.commit()
+    return ok()
+
+# 管理员获取所有用户信息
+@user_bp.route('/users', methods=['GET'])
+@login_required
+def get_all_users_info(user):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.User.query.all())
+    ret.items = [{
+        'id': user.id,
+        'email': user.email,
+        'nickname': user.nickname,
+        'create_time': user.create_time,
+        'update_time': user.update_time,
+        'spaces': []
+    } for user in ret.items]
+    for user in ret.items:
+        spaces = models.Space.query.filter_by(owner_id=user.id).all()
+        for space in spaces:
+            user['spaces'].append({
+                'id': space.id,
+                'name': space.name,
+                'desc': space.desc,
+                'create_time': space.create_time,
+                'update_time': space.update_time,
+            })
+    return ok(data=ret)
+
+# 管理员获取某个用户信息
+@user_bp.route('/user/<int:user_id>', methods=['GET'])
+@login_required
+def get_certain_user_info(user, user_id):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    user = models.User.query.get(user_id)
+    if not user:
+        return abort(ErrorCode.NOT_FOUND)
+    ret = {
+        'id': user.id,
+        'email': user.email,
+        'nickname': user.nickname,
+        'create_time': user.create_time,
+        'update_time': user.update_time,
+        'spaces': []
+    }
+    spaces = models.Space.query.filter_by(owner_id=user.id).all()
+    for space in spaces:
+        ret['spaces'].append({
+            'id': space.id,
+            'name': space.name,
+            'desc': space.desc,
+            'create_time': space.create_time,
+            'update_time': space.update_time,
+        })
+    return ok(data=ret)
+
+# 管理员修改某个用户信息
+@user_bp.route('/user/<int:user_id>', methods=['PUT'])
+@login_required
+def update_certain_user_info(user, user_id):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    user = models.User.query.get(user_id)
+    if not user:
+        return abort(ErrorCode.NOT_FOUND)
+    nickname = request.form.get('nickname')
+    email    = request.form.get('email')
+    if not nickname:
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    if not email:
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+        return abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
+    if len(nickname) < 2:
+        return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
+    user.nickname = nickname
+    user.email    = email
+    models.db.session.commit()
+    return ok()
+
+# 管理员删除某个用户
+@user_bp.route('/user/<int:user_id>', methods=['DELETE'])
+@login_required
+def delete_certain_user(user, user_id):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    user = models.User.query.get(user_id)
+    if not user:
+        return abort(ErrorCode.NOT_FOUND)
+    models.db.session.delete(user)
+    models.db.session.commit()
+    return ok()
+
+# 管理员增加某个用户 
+@user_bp.route('/user', methods=['POST'])
+@login_required
+def add_user(user):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    email    = request.form.get('email')
+    nickname = request.form.get('nickname')
+    password = request.form.get('password')
+    role     = request.form.get('role')
+    if not all([email, nickname, password, role]):
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+        return abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
+    if len(nickname) < 2:
+        return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
+    if len(password) < 6:
+        return abort(ErrorCode.PARAMS_INVALID, msg="密码长度不能小于6")
+    if models.User.query.filter_by(email=email).first():
+        return abort(ErrorCode.PARAMS_INVALID, msg="邮箱已被注册")
+    user = models.User(email=email, nickname=nickname, password=password, role=role)
+    
+    # 激活用户
+    user.activated = True
+    user.activated_on = models.datetime.now()
+
+    models.db.session.add(user)
+
+    # 创建默认空间
+    space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)
+    models.db.session.add(space)
+
+    models.db.session.commit()
+
     return ok()
