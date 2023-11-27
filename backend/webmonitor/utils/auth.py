@@ -31,8 +31,8 @@ def login_required(view_func):
     return decorated_func
 
 # 验证管理员登录装饰器
-def admin_required(view_func):
-    @wraps(view_func)
+def admin_required(admin_view_func):
+    @wraps(admin_view_func)
     def admin_decorated_func(*args, **kwargs):
         try:
             token = request.headers['token']
@@ -51,7 +51,7 @@ def admin_required(view_func):
         if user.role != 1:
             return abort(ErrorCode.USER_NOT_FOUND)
         print(user.role)
-        return view_func(user, *args, **kwargs)
+        return admin_view_func(user, *args, **kwargs)
     return admin_decorated_func
 
 
