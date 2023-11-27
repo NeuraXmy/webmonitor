@@ -53,8 +53,7 @@ def update_user_info(user):
 @user_bp.route('/users', methods=['GET'])
 @login_required
 def get_all_users_info(user):
-    print(user.id)
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.User.query.all())
     ret.items = [{
@@ -81,7 +80,7 @@ def get_all_users_info(user):
 @user_bp.route('/user/<int:user_id>', methods=['GET'])
 @login_required
 def get_certain_user_info(user, user_id):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     user = models.User.query.get(user_id)
     if not user:
@@ -109,7 +108,7 @@ def get_certain_user_info(user, user_id):
 @user_bp.route('/user/<int:user_id>', methods=['PUT'])
 @login_required
 def update_certain_user_info(user, user_id):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     user = models.User.query.get(user_id)
     if not user:
@@ -134,7 +133,7 @@ def update_certain_user_info(user, user_id):
 @user_bp.route('/user/<int:user_id>', methods=['DELETE'])
 @login_required
 def delete_certain_user(user, user_id):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     user = models.User.query.get(user_id)
     if not user:
@@ -147,7 +146,7 @@ def delete_certain_user(user, user_id):
 @user_bp.route('/user', methods=['POST'])
 @login_required
 def add_user(user):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     email    = request.form.get('email')
     nickname = request.form.get('nickname')

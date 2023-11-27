@@ -27,7 +27,7 @@ def get_space_list(user):
 @space_bp.route('/user/<int:user_id>/spaces', methods=['GET'])
 @login_required
 def get_space_list_by_user(user, user_id):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Space.query.filter_by(owner_id=user_id))
     ret.items = [{
@@ -45,7 +45,7 @@ def get_space(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if user.id != 1 and space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     return ok(data={
         'id': space.id,
@@ -79,7 +79,7 @@ def create_space(user):
 @space_bp.route('/user/<int:user_id>/space', methods=['POST'])
 @login_required
 def create_space_by_user(user, user_id):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     name = request.form.get('name')
     desc = request.form.get('desc')
@@ -102,7 +102,7 @@ def modify_space(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if user.id != 1 and space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
 
     name = request.form.get('name')
@@ -127,7 +127,7 @@ def delete_space(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if user.id != 1 and space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     # 先尝试删除空间下的所有监控，如果数据库操作成功，再从changedetection.io删除watch
