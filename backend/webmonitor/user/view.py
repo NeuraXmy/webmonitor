@@ -64,6 +64,7 @@ def get_all_users_info(user):
         'update_time': user.update_time,
         'spaces': []
     } for user in ret.items]
+    print('finish step 1')
     for user in ret.items:
         # spaces = models.Space.query.filter_by(owner_id=user.id).all()
         for space in user.spaces:
