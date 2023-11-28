@@ -128,9 +128,12 @@ def update_certain_user_info(user, user_id):
 def delete_certain_user(user, user_id):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    user = models.User.query.get(user_id)
+    user = models.User.query.get(user_id).first()
     if not user:
         return abort(ErrorCode.NOT_FOUND)
+    
+    # @TODO: 删除用户的空间和监控
+    
     models.db.session.delete(user)
     models.db.session.commit()
     return ok()

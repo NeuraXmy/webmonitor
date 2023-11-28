@@ -101,7 +101,10 @@ def login():
         return abort(ErrorCode.USER_NOT_FOUND)
     
     token = generate_token(user.id)
-    return ok(data={'token': token})
+    return ok(data={
+        'token': token,
+        'role': user.role
+        })
 
 # 管理员登录
 @auth_bp.route('/admin/login', methods=['POST'])
@@ -127,4 +130,7 @@ def admin_login():
     
     token = generate_token(user.id)
     print(token)
-    return ok(data={'token': token})
+    return ok(data={
+        'token': token,
+        'role': user.role
+        })
