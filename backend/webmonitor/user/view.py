@@ -154,15 +154,20 @@ def add_user(user):
     print(nickname)
     print(password)
     if not all([email, nickname, password, role]):
+        print("not all")
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
     if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+        print("not match")
         return abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
     if len(nickname) < 2:
+        print("len < 2")
         return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
     if len(password) < 6:
+        print("len < 6")
         return abort(ErrorCode.PARAMS_INVALID, msg="密码长度不能小于6")
     if models.User.query.filter_by(email=email).first():
+        print("email exists")
         return abort(ErrorCode.PARAMS_INVALID, msg="邮箱已被注册")
     user = models.User(email=email, nickname=nickname, password=password, role=role)
     
