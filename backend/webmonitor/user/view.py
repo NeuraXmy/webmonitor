@@ -147,7 +147,7 @@ def add_user(user):
     email    = request.form.get('email')
     nickname = request.form.get('nickname')
     password = request.form.get('password')
-    role     = request.form.get('role')
+    role     = int(request.form.get('role'))
     if not all([email, nickname, password, role]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
