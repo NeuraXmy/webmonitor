@@ -19,6 +19,7 @@ def get_user_info(user):
         'nickname': user.nickname,
         'create_time': user.create_time,
         'update_time': user.update_time,
+        'role': user.role,  # 0: 普通用户 1: 管理员
         'spaces': []
     }
     for space in user.spaces:
@@ -62,6 +63,7 @@ def get_all_users_info(user):
         'nickname': user.nickname,
         'create_time': user.create_time,
         'update_time': user.update_time,
+        'role': user.role,
         'spaces': 1
     } for user in ret.items]
     # spaces里是用户的空间数量
@@ -84,6 +86,7 @@ def get_certain_user_info(user, user_id):
         'nickname': user.nickname,
         'create_time': user.create_time,
         'update_time': user.update_time,
+        'role': user.role, 
         'spaces': []
     }
     # spaces = models.Space.query.filter_by(owner_id=user.id).all()
@@ -179,3 +182,40 @@ def add_user(user):
     models.db.session.commit()
 
     return ok()
+
+
+# 管理员根据email和nickname搜索用户
+@user_bp.route('/user/search', methods=['GET'])
+@login_required
+def search_user(user):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    email    = request.args.get('email')
+    nickname = request.args.get('nickname')
+    if not any([email, nickname]):
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    
+    if email:
+        if nickname:
+            ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')).filter(models.User.nickname.like(f'%{nickname}%')))
+        else:
+            ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')))
+    else:
+        ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%')))
+
+    ret.items = [{
+        'id': user.id,
+        'email': user.email,
+        'nickname': user.nickname,
+        'create_time': user.create_time,
+        'update_time': user.update_time,
+        'spaces': 1
+    } for user in ret.items]
+    # spaces里是用户的空间数量
+    for user in ret.items:
+        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
+    
+    return ok(data=ret)
+    
+    
+    
