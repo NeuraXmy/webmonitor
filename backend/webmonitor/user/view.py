@@ -109,7 +109,7 @@ def update_certain_user_info(user, user_id):
     nickname = request.form.get('nickname')
     email    = request.form.get('email')
     password = request.form.get('password')
-    if not all([nickname, email, password]):
+    if not all([nickname, email]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
     if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
@@ -118,7 +118,8 @@ def update_certain_user_info(user, user_id):
         return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
     user.nickname = nickname
     user.email    = email
-    user.password = password
+    if password is not None:
+        user.password = password
     models.db.session.commit()
     return ok()
 
