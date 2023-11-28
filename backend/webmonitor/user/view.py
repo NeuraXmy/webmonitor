@@ -171,7 +171,9 @@ def add_user(user):
     user.activated_on = models.datetime.now()
 
     models.db.session.add(user)
+    models.db.session.commit()
 
+    user = models.User.query.filter_by(email=email).first()
     # 创建默认空间
     space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)
     models.db.session.add(space)
