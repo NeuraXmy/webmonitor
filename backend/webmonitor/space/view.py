@@ -147,7 +147,7 @@ def delete_space(user, space_id):
 def search_spaces(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    name = request.args.get('name')
+    name = request.form.get('name')
     if not name:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%')))

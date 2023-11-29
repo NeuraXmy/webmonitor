@@ -197,7 +197,7 @@ def search_user(user):
     
     if email:
         if nickname:
-            ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')).filter(models.User.nickname.like(f'%{nickname}%')))
+            ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.nickname.like(f'%{nickname}%')))
         else:
             ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')))
     else:
