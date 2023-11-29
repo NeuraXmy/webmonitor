@@ -20,7 +20,7 @@ def paginate(query: Query):
         abort(ErrorCode.PARAMS_INVALID, "页码无效")
     if per_page < 1:
         abort(ErrorCode.PARAMS_INVALID, "每页数量无效")
-    print(query)
+    
     try:
         pagination = query.paginate(page=page, per_page=per_page, error_out=True)
     except Exception as e:
