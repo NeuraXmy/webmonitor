@@ -230,3 +230,49 @@ def process_change():
     watch.last_check_state = state_msg
     models.db.session.commit()
     return ok()
+
+# 管理员获取所有的watch列表
+@watch_bp.route('/watches', methods=['GET'])
+@login_required
+def get_all_watches(user):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.Watch.query)
+    ret.items=[{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+    } for watch in ret.items]
+    return ok(data=ret)
+
+# 管理员根据url或者name搜索watch
+@watch_bp.route('/watches/search', methods=['GET'])
+@login_required
+def search_watches(user):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    url = request.form.get('url')
+    name = request.form.get('name')
+    if not any[(url, name)]:
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    if url:
+        if name:
+            ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{url}%')).filter(models.Watch.name.like(f'%{name}%')))
+        else:
+            ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{url}%')))
+    else:
+        ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%')))
+    ret.items=[{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+    } for watch in ret.items]
+    return ok(data=ret)

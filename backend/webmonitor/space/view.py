@@ -141,23 +141,32 @@ def delete_space(user, space_id):
         response = watch_utils.delete_watch(id)
     return ok()
 
-# 管理员根据name和desc搜索空间
+# 管理员根据name搜索空间
 @space_bp.route('/spaces/search', methods=['GET'])
 @login_required
 def search_spaces(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     name = request.args.get('name')
-    desc = request.args.get('desc')
-    if not any([name, desc]):
+    if not name:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
-    if name:
-        if desc:
-            ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%'), models.Space.desc.like(f'%{desc}%')))
-        else:
-            ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%')))
-    else:
-        ret = paginate(models.Space.query.filter(models.Space.desc.like(f'%{desc}%')))
+    ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%')))
+    ret.items = [{
+        'id': space.id,
+        'name': space.name,
+        'desc': space.desc,
+        'create_time': space.create_time,
+        'update_time': space.update_time,
+    } for space in ret.items]
+    return ok(data=ret)
+
+# 管理员获取所有空间列表
+@space_bp.route('/spaces/all', methods=['GET'])
+@login_required
+def get_all_spaces(user):
+    if user.id != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.Space.query)
     ret.items = [{
         'id': space.id,
         'name': space.name,
