@@ -164,7 +164,7 @@ def search_spaces(user):
 @space_bp.route('/spaces/all', methods=['GET'])
 @login_required
 def get_all_spaces(user):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Space.query)
     ret.items = [{

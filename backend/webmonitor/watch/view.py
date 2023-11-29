@@ -235,7 +235,7 @@ def process_change():
 @watch_bp.route('/watches', methods=['GET'])
 @login_required
 def get_all_watches(user):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Watch.query)
     ret.items=[{
@@ -253,7 +253,7 @@ def get_all_watches(user):
 @watch_bp.route('/watches/search', methods=['GET'])
 @login_required
 def search_watches(user):
-    if user.id != 1:
+    if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     url = request.form.get('url')
     name = request.form.get('name')
