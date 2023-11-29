@@ -222,6 +222,14 @@ def process_change():
                 state_msg = '检查成功: 无变更'
         
         else:
+            # 初次检查，发送邮件
+            import difflib
+            diff = difflib.HtmlDiff().make_file(last_snapshot.splitlines())
+            if watch.notification_email:
+                    send_email(watch.notification_email, 
+                        'webmonitor-监控项创建通知', 
+                        'email/notification_success.html', 
+                        watch=watch, diff=diff)
             state_msg = '检查成功: 初次检查'
         
     # 更新状态
@@ -229,6 +237,19 @@ def process_change():
     watch.last_check_time = datetime.now()
     watch.last_check_state = state_msg
     models.db.session.commit()
+    return ok()
+
+# 接收changedetection.io的没有更新通知
+@watch_bp.route('/cdio/notification/nochange', methods=['POST'])
+def process_nochange():
+    watch_uuid = str(request.values.get('watch_uuid'))
+    watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
+    if watch:
+        state_msg = '检查成功: 无变更'
+        from datetime import datetime
+        watch.last_check_time = datetime.now()
+        watch.last_check_state = state_msg
+        models.db.session.commit()
     return ok()
 
 # 管理员获取所有的watch列表
