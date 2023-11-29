@@ -259,6 +259,8 @@ def search_watches(user):
     name = request.form.get('name')
     if not any[(url, name)]:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
+    print(url)
+    print(name)
     if url:
         if name:
             ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.name.like(f'%{name}%')))
