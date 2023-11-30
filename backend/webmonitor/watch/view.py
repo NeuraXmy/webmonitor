@@ -302,8 +302,8 @@ def get_all_watches(user):
 def search_watches(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    url = str(request.args.get('url'))
-    name = str(request.args.get('name'))
+    url = request.args.get('url')
+    name = request.args.get('name')
     print(url)
     print(name)
     if not any([url, name]):
