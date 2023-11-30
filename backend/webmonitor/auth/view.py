@@ -30,12 +30,10 @@ def register():
     if not user:
         user = models.User(email=email, password=password, nickname=nickname, role=0)
         models.db.session.add(user)
-        models.db.session.commit()
     # 如果用户存在则更新信息
     else:
         user.password = password
         user.nickname = nickname
-        models.db.session.commit()
 
     # 生成激活链接
     activation_token = generate_token(user.id)
@@ -43,6 +41,7 @@ def register():
     activation_link = base_url + '/auth/activate?token=' + activation_token
     # 发送验证邮件
     send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
+    models.db.session.commit()
     return ok()
     
 
