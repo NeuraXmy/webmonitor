@@ -133,7 +133,7 @@ def update_certain_user_info(user, user_id):
 def softdelete_certain_user(user, user_id):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    user = models.User.query.get(user_id).first()
+    user = models.User.query.filter_by(id=user_id).first()
     if not user:
         return abort(ErrorCode.NOT_FOUND)
     
@@ -147,7 +147,7 @@ def softdelete_certain_user(user, user_id):
 def restore_certain_user(user, user_id):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    user = models.User.query.get(user_id).first()
+    user = models.User.query.filter_by(id=user_id).first()
     if not user:
         return abort(ErrorCode.NOT_FOUND)
     
@@ -161,7 +161,7 @@ def restore_certain_user(user, user_id):
 def delete_certain_user(user, user_id):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    user = models.User.query.get(user_id).first()
+    user = models.User.query.filter_by(id=user_id).first()
     if not user:
         return abort(ErrorCode.NOT_FOUND)
     
