@@ -306,7 +306,7 @@ def search_watches(user):
     name = str(request.args.get('name'))
     if not any([url, name]):
         ret = paginate(models.Watch.query)
-        print(ret)
+        print(ret.items)
         ret.items=[{
             'id': watch.id,
             'name': watch.name,
@@ -326,7 +326,7 @@ def search_watches(user):
                 ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%')))
         else:
             ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%')))
-        print(ret)
+        print(ret.items)
         ret.items=[{
             'id': watch.id,
             'name': watch.name,

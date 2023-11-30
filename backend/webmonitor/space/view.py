@@ -148,7 +148,6 @@ def search_spaces(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     name = str(request.args.get('name'))
-    ret = []
     if not name:
         ret = paginate(models.Space.query)
         print(ret)
