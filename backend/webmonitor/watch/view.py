@@ -129,6 +129,31 @@ def delete_watch(user, watch_id):
     response = watch_utils.delete_watch(external_id)
     return ok()
 
+# 管理员软删除监控
+@watch_bp.route('/watch/<int:watch_id>/softdelete', methods=['PUT'])
+@login_required
+def soft_delete_watch(user, watch_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    watch = models.Watch.query.filter_by(id=watch_id).first()
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
+    watch.is_deleted = 1
+    models.db.session.commit()
+    return ok()
+
+# 管理员恢复监控
+@watch_bp.route('/watch/<int:watch_id>/restore', methods=['PUT'])
+@login_required
+def restore_watch(user, watch_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    watch = models.Watch.query.filter_by(id=watch_id).first()
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
+    watch.is_deleted = 0
+    models.db.session.commit()
+    return ok()
 
 # 用户修改监控
 @watch_bp.route('/watch/<int:watch_id>', methods=['PUT'])
@@ -280,14 +305,15 @@ def search_watches(user):
     url = str(request.args.get('url'))
     name = str(request.args.get('name'))
     if not any([url, name]):
-        return abort(ErrorCode.PARAMS_INCOMPLETE)
-    if url:
-        if name:
-            ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.name.like(f'%{name}%')))
-        else:
-            ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%')))
+        ret = paginate(models.Watch.query)
     else:
-        ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%')))
+        if url:
+            if name:
+                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.name.like(f'%{name}%')))
+            else:
+                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%')))
+        else:
+            ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%')))
     ret.items=[{
         'id': watch.id,
         'name': watch.name,

@@ -231,15 +231,15 @@ def search_user(user):
     email    = str(request.args.get('email'))
     nickname = str(request.args.get('nickname'))
     if not any([email, nickname]):
-        return abort(ErrorCode.PARAMS_INCOMPLETE)
-    
-    if email:
-        if nickname:
-            ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.nickname.like(f'%{nickname}%')))
-        else:
-            ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')))
+        ret = paginate(models.User.query)
     else:
-        ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%')))
+        if email:
+            if nickname:
+                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.nickname.like(f'%{nickname}%')))
+            else:
+                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')))
+        else:   
+            ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%')))
 
     ret.items = [{
         'id': user.id,

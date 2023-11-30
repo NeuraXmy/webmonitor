@@ -149,8 +149,9 @@ def search_spaces(user):
         return abort(ErrorCode.FORBIDDEN)
     name = str(request.args.get('name'))
     if not name:
-        return abort(ErrorCode.PARAMS_INCOMPLETE)
-    ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%')))
+        ret = paginate(models.Space.query)
+    else:
+        ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%')))
     ret.items = [{
         'id': space.id,
         'name': space.name,
@@ -189,3 +190,29 @@ def get_all_spaces(user):
     for space in ret.items:
         del space['owner_id']
     return ok(data=ret)
+
+# 管理员软删除空间
+@space_bp.route('/space/<int:space_id>/softdelete', methods=['PUT'])
+@login_required
+def soft_delete_space(user, space_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    space = models.Space.query.filter_by(id=space_id).first()
+    if not space:
+        return abort(ErrorCode.NOT_FOUND)
+    space.is_deleted = 1
+    models.db.session.commit()
+    return ok()
+
+# 管理员恢复软删除的空间
+@space_bp.route('/space/<int:space_id>/restore', methods=['PUT'])
+@login_required
+def restore_space(user, space_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    space = models.Space.query.filter_by(id=space_id).first()
+    if not space:
+        return abort(ErrorCode.NOT_FOUND)
+    space.is_deleted = 0
+    models.db.session.commit()
+    return ok()
