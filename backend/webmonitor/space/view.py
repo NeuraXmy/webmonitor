@@ -151,6 +151,7 @@ def search_spaces(user):
     ret = []
     if not name:
         ret = paginate(models.Space.query)
+        print(ret)
         ret.items = [{
             'id': space.id,
             'name': space.name,
@@ -168,6 +169,7 @@ def search_spaces(user):
         return ok(data=ret)
     else:
         ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%')))
+        print(ret)
         ret.items = [{
             'id': space.id,
             'name': space.name,

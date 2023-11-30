@@ -233,6 +233,7 @@ def search_user(user):
     ret = []
     if not any([email, nickname]):
         ret = paginate(models.User.query)
+        print(ret)
         ret.items = [{
             'id': user.id,
             'email': user.email,
@@ -253,6 +254,7 @@ def search_user(user):
                 ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')))
         else:   
             ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%')))
+        print(ret)
         ret.items = [{
             'id': user.id,
             'email': user.email,
