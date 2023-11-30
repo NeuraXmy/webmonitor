@@ -277,8 +277,8 @@ def get_all_watches(user):
 def search_watches(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    url = request.form.get('url')
-    name = request.form.get('name')
+    url = str(request.args.get('url'))
+    name = str(request.args.get('name'))
     if not any([url, name]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     if url:

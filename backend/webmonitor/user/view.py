@@ -228,8 +228,8 @@ def add_user(user):
 def search_user(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    email    = request.form.get('email')
-    nickname = request.form.get('nickname')
+    email    = str(request.args.get('email'))
+    nickname = str(request.args.get('nickname'))
     if not any([email, nickname]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     
