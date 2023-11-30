@@ -233,6 +233,18 @@ def search_user(user):
     ret = []
     if not any([email, nickname]):
         ret = paginate(models.User.query)
+        ret.items = [{
+            'id': user.id,
+            'email': user.email,
+            'nickname': user.nickname,
+            'create_time': user.create_time,
+            'update_time': user.update_time,
+            'spaces': 1
+        } for user in ret.items]
+        # spaces里是用户的空间数量
+        for user in ret.items:
+            user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
+        return ok(data=ret)
     else:
         if email:
             if nickname:
@@ -241,20 +253,20 @@ def search_user(user):
                 ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')))
         else:   
             ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%')))
+        ret.items = [{
+            'id': user.id,
+            'email': user.email,
+            'nickname': user.nickname,
+            'create_time': user.create_time,
+            'update_time': user.update_time,
+            'spaces': 1
+        } for user in ret.items]
+        # spaces里是用户的空间数量
+        for user in ret.items:
+            user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
+        return ok(data=ret)
 
-    ret.items = [{
-        'id': user.id,
-        'email': user.email,
-        'nickname': user.nickname,
-        'create_time': user.create_time,
-        'update_time': user.update_time,
-        'spaces': 1
-    } for user in ret.items]
-    # spaces里是用户的空间数量
-    for user in ret.items:
-        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
     
-    return ok(data=ret)
     
     
     
