@@ -304,22 +304,8 @@ def search_watches(user):
         return abort(ErrorCode.FORBIDDEN)
     url = request.args.get('url')
     name = request.args.get('name')
-    print(url)
-    print(name)
     if not any([url, name]):
         ret = paginate(models.Watch.query)
-        print(ret.items)
-        ret.items=[{
-            'id': watch.id,
-            'name': watch.name,
-            'url': watch.url,
-            'create_time': watch.create_time,
-            'update_time': watch.update_time,
-            'last_check_time': watch.last_check_time,
-            'last_check_state': watch.last_check_state,
-            'notification_email': watch.notification_email
-        } for watch in ret.items]
-        return ok(data=ret)
     else:
         if url:
             if name:
@@ -328,15 +314,15 @@ def search_watches(user):
                 ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%')))
         else:
             ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%')))
-        print(ret.items)
-        ret.items=[{
-            'id': watch.id,
-            'name': watch.name,
-            'url': watch.url,
-            'create_time': watch.create_time,
-            'update_time': watch.update_time,
-            'last_check_time': watch.last_check_time,
-            'last_check_state': watch.last_check_state,
-            'notification_email': watch.notification_email
-        } for watch in ret.items]
-        return ok(data=ret)
+    
+    ret.items=[{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+        'notification_email': watch.notification_email
+    }for watch in ret.items]
+    return ok(data=ret)
