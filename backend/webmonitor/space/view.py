@@ -147,7 +147,7 @@ def delete_space(user, space_id):
 def search_spaces(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    name = str(request.args.get('name'))
+    name = request.args.get('name')
     if not name:
         ret = paginate(models.Space.query)
     else:
