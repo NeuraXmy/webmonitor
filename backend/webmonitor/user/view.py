@@ -113,6 +113,7 @@ def update_certain_user_info(user, user_id):
     nickname = request.form.get('nickname')
     email    = request.form.get('email')
     password = request.form.get('password')
+    role     = int(request.form.get('role'))
     if not all([nickname, email]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
@@ -122,6 +123,7 @@ def update_certain_user_info(user, user_id):
         return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
     user.nickname = nickname
     user.email    = email
+    user.role     = role
     if password is not None:
         user.password = password
     models.db.session.commit()
@@ -246,6 +248,7 @@ def search_user(user):
         'nickname': user.nickname,
         'create_time': user.create_time,
         'update_time': user.update_time,
+        'role': user.role,  # 0: 普通用户 1: 管理员
         'spaces': 1
     } for user in ret.items]
     # spaces里是用户的空间数量
@@ -254,5 +257,24 @@ def search_user(user):
     return ok(data=ret)
     
     
-    
+# 管理员获取所有软删除的用户
+@user_bp.route('/users/softdelete', methods=['GET'])
+@login_required
+def get_users_softdeleted(user):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.User.query.filter_by(is_deleted=1))
+    ret.items = [{
+        'id': user.id,
+        'email': user.email,
+        'nickname': user.nickname,
+        'create_time': user.create_time,
+        'update_time': user.update_time,
+        'role': user.role,
+        'spaces': 1
+    } for user in ret.items]
+    # spaces里是用户的空间数量
+    for user in ret.items:
+        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
+    return ok(data=ret)
     

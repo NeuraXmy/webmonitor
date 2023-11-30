@@ -326,3 +326,22 @@ def search_watches(user):
         'notification_email': watch.notification_email
     }for watch in ret.items]
     return ok(data=ret)
+
+# 管理员获取所有软删除的watch
+@watch_bp.route('/watches/softdelete', methods=['GET'])
+@login_required
+def get_watches_softdeleted(user):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.Watch.query.filter_by(is_deleted=1))
+    ret.items=[{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+        'notification_email': watch.notification_email
+    }for watch in ret.items]
+    return ok(data=ret)

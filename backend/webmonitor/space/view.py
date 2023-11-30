@@ -218,3 +218,26 @@ def restore_space(user, space_id):
     space.is_deleted = 0
     models.db.session.commit()
     return ok()
+
+# 管理员获取软删除的空间列表
+@space_bp.route('/spaces/deleted', methods=['GET'])
+@login_required
+def get_spaces_softdeleted(user):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.Space.query.filter_by(is_deleted=1))
+    ret.items = [{
+        'id': space.id,
+        'name': space.name,
+        'desc': space.desc,
+        'create_time': space.create_time,
+        'update_time': space.update_time,
+        'owner_id': space.owner_id,
+        'owner_email': ''
+    } for space in ret.items]
+    for space in ret.items:
+        space['owner_email'] = models.User.query.get(space['owner_id']).email
+    # 删除owner_id字段
+    for space in ret.items:
+        del space['owner_id']
+    return ok(data=ret)
