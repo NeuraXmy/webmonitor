@@ -97,7 +97,7 @@ def get_watch_list(user, space_id):
         return abort(ErrorCode.FORBIDDEN)
     
     # 获取监控列表
-    ret = paginate(models.Watch.query.filter_by(space_id=space_id))
+    ret = paginate(models.Watch.query.filter_by(space_id=space_id, is_deleted=0))
     ret.items = [{
         'id': watch.id,
         'name': watch.name,
@@ -283,7 +283,7 @@ def process_nochange():
 def get_all_watches(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.Watch.query)
+    ret = paginate(models.Watch.query.filter_by(is_deleted=0))
     ret.items=[{
         'id': watch.id,
         'name': watch.name,
@@ -305,15 +305,15 @@ def search_watches(user):
     url = request.args.get('url')
     name = request.args.get('name')
     if not any([url, name]):
-        ret = paginate(models.Watch.query)
+        ret = paginate(models.Watch.query.filter_by(is_deleted=0))
     else:
         if url:
             if name:
-                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.name.like(f'%{name}%')))
+                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.name.like(f'%{name}%'), models.Watch.is_deleted==0))
             else:
-                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%')))
+                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.is_deleted==0))
         else:
-            ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%')))
+            ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%'), models.Watch.is_deleted==0))
     
     ret.items=[{
         'id': watch.id,

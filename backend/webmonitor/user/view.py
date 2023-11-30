@@ -57,7 +57,7 @@ def update_user_info(user):
 def get_all_users_info(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.User.query)
+    ret = paginate(models.User.query.filter_by(is_deleted=0))
     ret.items = [{
         'id': user.id,
         'email': user.email,
@@ -69,7 +69,7 @@ def get_all_users_info(user):
     } for user in ret.items]
     # spaces里是用户的空间数量
     for user in ret.items:
-        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
+        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id'], is_deleted=0).all())
     return ok(data=ret)
 
 # 管理员获取某个用户信息
@@ -140,6 +140,12 @@ def softdelete_certain_user(user, user_id):
         return abort(ErrorCode.NOT_FOUND)
     
     user.is_deleted = 1
+    # 软删除用户的所有空间、监视
+    for space in user.spaces:
+        for watch in space.watches:
+            watch.is_deleted = 1
+        space.is_deleted = 1
+            
     models.db.session.commit()
     return ok()
 
@@ -154,6 +160,12 @@ def restore_certain_user(user, user_id):
         return abort(ErrorCode.NOT_FOUND)
     
     user.is_deleted = 0
+    # 恢复用户的所有空间、监视
+    for space in user.spaces:
+        for watch in space.watches:
+            watch.is_deleted = 0
+        space.is_deleted = 0
+
     models.db.session.commit()
     return ok()
 
@@ -233,15 +245,15 @@ def search_user(user):
     email    = request.args.get('email')
     nickname = request.args.get('nickname')
     if not any([email, nickname]):
-        ret = paginate(models.User.query)
+        ret = paginate(models.User.query.filter_by(is_deleted=0))
     else:
         if email:
             if nickname:
-                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.nickname.like(f'%{nickname}%')))
+                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.nickname.like(f'%{nickname}%'), models.User.is_deleted==0))
             else:
-                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%')))
+                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.is_deleted==0))
         else:   
-            ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%')))
+            ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%'), models.User.is_deleted==0))
     ret.items = [{
         'id': user.id,
         'email': user.email,
@@ -253,7 +265,7 @@ def search_user(user):
     } for user in ret.items]
     # spaces里是用户的空间数量
     for user in ret.items:
-        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
+        user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id'], is_deleted = 0).all())
     return ok(data=ret)
     
     

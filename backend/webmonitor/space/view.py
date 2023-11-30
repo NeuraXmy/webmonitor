@@ -14,7 +14,7 @@ from webmonitor.utils.page import paginate
 @space_bp.route('/spaces', methods=['GET'])
 @login_required
 def get_space_list(user):
-    ret = paginate(models.Space.query.filter_by(owner_id=user.id))
+    ret = paginate(models.Space.query.filter_by(owner_id=user.id, is_deleted=0))
     ret.items = [{
         'id': space.id,
         'name': space.name,
@@ -29,7 +29,7 @@ def get_space_list(user):
 def get_space_list_by_user(user, user_id):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.Space.query.filter_by(owner_id=user_id))
+    ret = paginate(models.Space.query.filter_by(owner_id=user_id, is_deleted=0))
     ret.items = [{
         'id': space.id,
         'name': space.name,
@@ -151,7 +151,7 @@ def search_spaces(user):
     if not name:
         ret = paginate(models.Space.query)
     else:
-        ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%')))
+        ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%'), models.Space.is_deleted==0))
     
     ret.items = [{
         'id': space.id,
@@ -176,7 +176,7 @@ def search_spaces(user):
 def get_all_spaces(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.Space.query)
+    ret = paginate(models.Space.query.filter_by(is_deleted=0))
     ret.items = [{
         'id': space.id,
         'name': space.name,
@@ -203,6 +203,8 @@ def soft_delete_space(user, space_id):
     if not space:
         return abort(ErrorCode.NOT_FOUND)
     space.is_deleted = 1
+    for watch in space.watches:
+        watch.is_deleted = 1
     models.db.session.commit()
     return ok()
 
@@ -216,6 +218,8 @@ def restore_space(user, space_id):
     if not space:
         return abort(ErrorCode.NOT_FOUND)
     space.is_deleted = 0
+    for watch in space.watches:
+        watch.is_deleted = 0
     models.db.session.commit()
     return ok()
 
