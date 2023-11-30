@@ -220,7 +220,7 @@ def restore_space(user, space_id):
     return ok()
 
 # 管理员获取软删除的空间列表
-@space_bp.route('/spaces/deleted', methods=['GET'])
+@space_bp.route('/spaces/softdelete', methods=['GET'])
 @login_required
 def get_spaces_softdeleted(user):
     if user.role != 1:
