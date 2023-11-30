@@ -173,5 +173,12 @@ def get_all_spaces(user):
         'desc': space.desc,
         'create_time': space.create_time,
         'update_time': space.update_time,
+        'owner_id': space.owner_id,
+        'owner_email':''
     } for space in ret.items]
+    for space in ret.items:
+        space['owner_email'] = models.User.query.get(space['owner_id']).email
+    # 删除owner_id字段
+    for space in ret.items:
+        del space['owner_id']
     return ok(data=ret)

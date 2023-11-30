@@ -23,7 +23,8 @@ class User(BaseModel):
     activated_on    = db.Column(db.DateTime, nullable=True)
     # 0--->common user   1--->platform manager
     role            = db.Column(db.Integer, nullable=False) 
-
+    # 0--->not deleted   1--->deleted
+    is_deleted      = db.Column(db.Integer, nullable=False, default=0)
     spaces = db.relationship('Space', backref='owner', lazy=True)
 
     @property

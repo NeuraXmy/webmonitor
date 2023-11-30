@@ -6,6 +6,7 @@ from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
 from webmonitor.utils.email import send_email
 from webmonitor.utils.auth import login_required
+import webmonitor.utils.watch as watch_utils
 from webmonitor.utils.page import paginate
 
 
@@ -126,8 +127,36 @@ def update_certain_user_info(user, user_id):
     models.db.session.commit()
     return ok()
 
-# 管理员删除某个用户
-@user_bp.route('/user/<int:user_id>', methods=['DELETE'])
+# 管理员软删除某个用户
+@user_bp.route('/user/<int:user_id>/softdelete', methods=['PUT'])
+@login_required
+def softdelete_certain_user(user, user_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    user = models.User.query.get(user_id).first()
+    if not user:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    user.is_deleted = 1
+    models.db.session.commit()
+    return ok()
+
+# 管理员恢复某个用户
+@user_bp.route('/user/<int:user_id>/restore', methods=['PUT'])
+@login_required
+def restore_certain_user(user, user_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    user = models.User.query.get(user_id).first()
+    if not user:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    user.is_deleted = 0
+    models.db.session.commit()
+    return ok()
+
+# 管理员硬删除某个用户
+@user_bp.route('/user/<int:user_id>/delete', methods=['DELETE'])
 @login_required
 def delete_certain_user(user, user_id):
     if user.role != 1:
@@ -136,8 +165,17 @@ def delete_certain_user(user, user_id):
     if not user:
         return abort(ErrorCode.NOT_FOUND)
     
-    # @TODO: 删除用户的空间和监控
-    
+    # 删除用户的所有空间、监视
+    for space in user.spaces:
+        external_ids=[]
+        for watch in space.watches:
+            external_ids.append(watch.external_id)
+            models.db.session.delete(watch)
+        models.db.session.delete(space)
+        models.db.session.commit()
+        for id in external_ids:
+            response = watch_utils.delete_watch(id)
+
     models.db.session.delete(user)
     models.db.session.commit()
     return ok()
@@ -164,7 +202,7 @@ def add_user(user):
     if len(password) < 6:
         return abort(ErrorCode.PARAMS_INVALID, msg="密码长度不能小于6")
     if models.User.query.filter_by(email=email).first():
-        return abort(ErrorCode.PARAMS_INVALID, msg="邮箱已被注册")
+        return abort(ErrorCode.USER_ALREADY_EXISTS, msg="用户已存在")
     user = models.User(email=email, nickname=nickname, password=password, role=role)
     
     # 激活用户
