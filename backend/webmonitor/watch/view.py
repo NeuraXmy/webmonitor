@@ -296,5 +296,6 @@ def search_watches(user):
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
         'last_check_state': watch.last_check_state,
+        'notification_email': watch.notification_email
     } for watch in ret.items]
     return ok(data=ret)
