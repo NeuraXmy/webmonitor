@@ -230,6 +230,7 @@ def search_user(user):
         return abort(ErrorCode.FORBIDDEN)
     email    = str(request.args.get('email'))
     nickname = str(request.args.get('nickname'))
+    ret = []
     if not any([email, nickname]):
         ret = paginate(models.User.query)
     else:

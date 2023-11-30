@@ -304,6 +304,7 @@ def search_watches(user):
         return abort(ErrorCode.FORBIDDEN)
     url = str(request.args.get('url'))
     name = str(request.args.get('name'))
+    ret = []
     if not any([url, name]):
         ret = paginate(models.Watch.query)
     else:
