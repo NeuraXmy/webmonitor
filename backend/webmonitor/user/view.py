@@ -223,7 +223,7 @@ def add_user(user):
 
 
 # 管理员根据email和nickname搜索用户
-@user_bp.route('/user/search', methods=['GET'])
+@user_bp.route('/users/search', methods=['GET'])
 @login_required
 def search_user(user):
     if user.role != 1:
