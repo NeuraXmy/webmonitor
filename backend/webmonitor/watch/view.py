@@ -18,7 +18,8 @@ def get_watch(user, watch_id):
     space = models.Space.query.get(watch.space_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
-    if space.owner_id != user.id:
+    # manager or owner
+    if user.role != 1 and space.owner_id != user.id: 
         return abort(ErrorCode.FORBIDDEN)
     ret = {
         'id': watch.id,
@@ -48,7 +49,7 @@ def create_watch(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if space.owner_id != user.id:
+    if user.role !=1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     watch = models.Watch()
@@ -92,11 +93,11 @@ def get_watch_list(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     # 获取监控列表
-    ret = paginate(models.Watch.query.filter_by(space_id=space_id))
+    ret = paginate(models.Watch.query.filter_by(space_id=space_id, is_deleted=0))
     ret.items = [{
         'id': watch.id,
         'name': watch.name,
@@ -117,7 +118,7 @@ def delete_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
-    if space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     external_id = watch.external_id
@@ -128,6 +129,34 @@ def delete_watch(user, watch_id):
     response = watch_utils.delete_watch(external_id)
     return ok()
 
+# 管理员软删除监控
+@watch_bp.route('/watch/<int:watch_id>/softdelete', methods=['PUT'])
+@login_required
+def soft_delete_watch(user, watch_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    watch = models.Watch.query.filter_by(id=watch_id).first()
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
+    watch.is_deleted = 1
+    models.db.session.commit()
+    return ok()
+
+# 管理员恢复监控
+@watch_bp.route('/watch/<int:watch_id>/restore', methods=['PUT'])
+@login_required
+def restore_watch(user, watch_id):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    watch = models.Watch.query.filter_by(id=watch_id).first()
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
+    space = models.Space.query.get(watch.space_id)
+    if space.is_deleted == 1:
+        return abort(ErrorCode.WATCH_RESTORE_FAIL)
+    watch.is_deleted = 0
+    models.db.session.commit()
+    return ok()
 
 # 用户修改监控
 @watch_bp.route('/watch/<int:watch_id>', methods=['PUT'])
@@ -137,7 +166,7 @@ def update_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
-    if space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
 
     # 获取watch数据
@@ -172,7 +201,7 @@ def check_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     space = models.Space.query.get(watch.space_id)
-    if space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     # 尝试在changedetection.io上立刻刷新监控
@@ -221,6 +250,14 @@ def process_change():
                 state_msg = '检查成功: 无变更'
         
         else:
+            # 初次检查，发送邮件
+            import difflib
+            diff = difflib.HtmlDiff().make_file(last_snapshot.splitlines())
+            if watch.notification_email:
+                    send_email(watch.notification_email, 
+                        'webmonitor-监控项创建通知', 
+                        'email/notification_success.html', 
+                        watch=watch, diff=diff)
             state_msg = '检查成功: 初次检查'
         
     # 更新状态
@@ -229,3 +266,105 @@ def process_change():
     watch.last_check_state = state_msg
     models.db.session.commit()
     return ok()
+
+# 接收changedetection.io的没有更新通知
+@watch_bp.route('/cdio/notification/nochange', methods=['POST'])
+def process_nochange():
+    watch_uuid = str(request.values.get('watch_uuid'))
+    watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
+    if watch:
+        state_msg = '检查成功: 无变更'
+        from datetime import datetime
+        watch.last_check_time = datetime.now()
+        watch.last_check_state = state_msg
+        models.db.session.commit()
+    return ok()
+
+# 管理员获取所有的watch列表
+@watch_bp.route('/watches', methods=['GET'])
+@login_required
+def get_all_watches(user):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.Watch.query.filter_by(is_deleted=0))
+    ret.items=[{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+        'notification_email': watch.notification_email
+    } for watch in ret.items]
+    return ok(data=ret)
+
+# 管理员根据url或者name搜索watch
+@watch_bp.route('/watches/search', methods=['GET'])
+@login_required
+def search_watches(user):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    url = request.args.get('url')
+    name = request.args.get('name')
+    if not any([url, name]):
+        ret = paginate(models.Watch.query.filter_by(is_deleted=0))
+    else:
+        if url:
+            if name:
+                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.name.like(f'%{name}%'), models.Watch.is_deleted==0))
+            else:
+                ret = paginate(models.Watch.query.filter(models.Watch.url.like(f'%{url}%'), models.Watch.is_deleted==0))
+        else:
+            ret = paginate(models.Watch.query.filter(models.Watch.name.like(f'%{name}%'), models.Watch.is_deleted==0))
+    
+    ret.items=[{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+        'notification_email': watch.notification_email
+    }for watch in ret.items]
+    return ok(data=ret)
+
+# 管理员获取所有软删除的watch
+@watch_bp.route('/watches/softdelete', methods=['GET'])
+@login_required
+def get_watches_softdeleted(user):
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+    ret = paginate(models.Watch.query.filter_by(is_deleted=1))
+    ret.items=[{
+        'id': watch.id,
+        'name': watch.name,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_state,
+        'notification_email': watch.notification_email,
+        'space_id': watch.space_id
+    }for watch in ret.items]
+
+    i=0
+    while(i<len(ret.items)):
+        space = models.Space.query.get(ret.items[i]['space_id'])
+        if space.is_deleted == 1:
+            ret.items.remove(ret.items[i])
+        else:
+            i+=1
+    
+    for watch in ret.items:
+        del watch['space_id']
+    return ok(data=ret)
+
+# 获取watch的历史记录
+@watch_bp.route('/watch/<int:watch_id>/history', methods=['GET'])
+@login_required
+def get_watch_history(user, watch_id):
+    watch = models.Watch.query.get(watch_id)
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)

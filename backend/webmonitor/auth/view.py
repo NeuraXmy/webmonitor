@@ -28,14 +28,12 @@ def register():
         abort(ErrorCode.USER_ALREADY_EXISTS)
     # 如果用户不存在则创建
     if not user:
-        user = models.User(email=email, password=password, nickname=nickname)
+        user = models.User(email=email, password=password, nickname=nickname, role=0)
         models.db.session.add(user)
-        models.db.session.commit()
     # 如果用户存在则更新信息
     else:
         user.password = password
         user.nickname = nickname
-        models.db.session.commit()
 
     # 生成激活链接
     activation_token = generate_token(user.id)
@@ -43,6 +41,7 @@ def register():
     activation_link = base_url + '/auth/activate?token=' + activation_token
     # 发送验证邮件
     send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
+    models.db.session.commit()
     return ok()
     
 
@@ -90,6 +89,9 @@ def login():
     # 用户不存在
     if not user:
         return abort(ErrorCode.USER_NOT_FOUND)
+    # 不是普通用户
+    # if user.role != 0:
+    #     return abort(ErrorCode.USER_NOT_FOUND)
     # 密码错误
     if not user.check_password(password):
         return abort(ErrorCode.PASSWORD_ERROR)
@@ -98,5 +100,36 @@ def login():
         return abort(ErrorCode.USER_NOT_FOUND)
     
     token = generate_token(user.id)
-    return ok(data={'token': token})
+    return ok(data={
+        'token': token,
+        'role': user.role
+        })
 
+# 管理员登录
+@auth_bp.route('/admin/login', methods=['POST'])
+def admin_login():
+    email    = request.form.get('email')
+    password = request.form.get('password')
+    if not all([email, password]):
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+        return abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
+    
+    user = models.User.query.filter_by(email=email).first()
+    # 用户不存在
+    if not user:
+        return abort(ErrorCode.USER_NOT_FOUND)
+    # 密码错误
+    if not user.check_password(password):
+        return abort(ErrorCode.PASSWORD_ERROR)
+    # 不是管理员
+    if user.role != 1:
+        return abort(ErrorCode.USER_NOT_FOUND)
+    
+    token = generate_token(user.id)
+    print(token)
+    return ok(data={
+        'token': token,
+        'role': user.role
+        })

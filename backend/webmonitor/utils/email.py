@@ -33,4 +33,4 @@ def send_email_thread(to, subject, html, config):
             server.send_message(msg)
             server.quit()
     except Exception as e:
-        abort(ErrorCode.INTERNAL_ERROR, msg=f"邮件发送失败: {e}")
+        abort(ErrorCode.EMAIL_SEND_FAIL, msg=f"邮件发送失败: {e}")

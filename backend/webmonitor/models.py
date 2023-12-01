@@ -21,7 +21,10 @@ class User(BaseModel):
     email           = db.Column(db.String(64), nullable=False, unique=True)
     activated       = db.Column(db.Boolean, default=False)
     activated_on    = db.Column(db.DateTime, nullable=True)
-
+    # 0--->common user   1--->platform manager
+    role            = db.Column(db.Integer, nullable=False) 
+    # 0--->not deleted   1--->deleted
+    is_deleted      = db.Column(db.Integer, nullable=False, default=0)
     spaces = db.relationship('Space', backref='owner', lazy=True)
 
     @property
@@ -44,6 +47,7 @@ class Space(BaseModel):
     desc    = db.Column(db.String(256), nullable=True)
 
     owner_id    = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False)
+    is_deleted  = db.Column(db.Integer, nullable=False, default=0)
 
     watches = db.relationship('Watch', backref='space', lazy=True)
 
@@ -71,6 +75,7 @@ class Watch(BaseModel):
     last_check_state = db.Column(db.String(256), nullable=True)      # 上次检查的状态
 
     notification_email = db.Column(db.String(64), nullable=True)    
+    is_deleted         = db.Column(db.Integer, nullable=False, default=0)
 
     space_id    = db.Column(db.Integer, db.ForeignKey('t_space.id'), nullable=False)
 
