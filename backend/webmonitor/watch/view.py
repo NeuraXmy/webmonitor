@@ -151,6 +151,9 @@ def restore_watch(user, watch_id):
     watch = models.Watch.query.filter_by(id=watch_id).first()
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
+    space = models.Space.query.get(watch.space_id)
+    if space.is_deleted == 1:
+        return abort(ErrorCode.WATCH_RESTORE_FAIL)
     watch.is_deleted = 0
     models.db.session.commit()
     return ok()
@@ -344,4 +347,8 @@ def get_watches_softdeleted(user):
         'last_check_state': watch.last_check_state,
         'notification_email': watch.notification_email
     }for watch in ret.items]
+    for watch in ret.items:
+        space = models.Space.query.get(watch['space_id'])
+        if space.is_deleted == 1:
+            ret.items.remove(watch)
     return ok(data=ret)

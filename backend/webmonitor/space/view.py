@@ -217,6 +217,9 @@ def restore_space(user, space_id):
     space = models.Space.query.filter_by(id=space_id).first()
     if not space:
         return abort(ErrorCode.NOT_FOUND)
+    owner = models.User.query.get(space.owner_id)
+    if owner.is_deleted == 1:
+        return abort(ErrorCode.SAPCE_RESTORE_FAIL)
     space.is_deleted = 0
     for watch in space.watches:
         watch.is_deleted = 0
@@ -240,7 +243,10 @@ def get_spaces_softdeleted(user):
         'owner_email': ''
     } for space in ret.items]
     for space in ret.items:
-        space['owner_email'] = models.User.query.get(space['owner_id']).email
+        owner = models.User.query.get(space['owner_id'])
+        space['owner_email'] = owner.email
+        if owner.is_deleted == 1:
+            ret.items.remove(space)
     # 删除owner_id字段
     for space in ret.items:
         del space['owner_id']
