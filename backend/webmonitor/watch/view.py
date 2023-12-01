@@ -345,7 +345,7 @@ def get_watches_softdeleted(user):
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
         'last_check_state': watch.last_check_state,
-        'notification_email': watch.notification_email
+        'notification_email': watch.notification_email,
         'sapce_id': watch.space_id
     }for watch in ret.items]
     for watch in ret.items:
