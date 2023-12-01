@@ -1,23 +1,28 @@
 <template>
-  <div class="login_container">
-      <div class="login_box">
-          <div class="title">
-            多模态信息舆情监控
-          </div>
-          <el-form ref="userRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
-              <el-form-item prop="email" >
-                  <el-input prefix-icon="User" v-model="userForm.email" placeholder="邮箱"></el-input>
-              </el-form-item>
-              <el-form-item  prop="password">
-                  <el-input show-password prefix-icon="Lock" v-model="userForm.password" placeholder="密码"></el-input>
-              </el-form-item>
-                  <a class="form__link" @click="register">注册新账户</a>
-              <el-form-item>
-                  <el-button type="primary" @click="login">登录</el-button>
-                  <el-button @click="restForm">重置</el-button>
-              </el-form-item>
-          </el-form>
+  <div class="login-body">
+    <div class="login-container">
+      <div class="head">
+        <img class="logo" src="../../public/changenotify.png" />
+        <div class="name">
+          <div class="title">多模态信息舆情监控</div>
+        </div>
       </div>
+      <el-form ref="userRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
+            <el-form-item prop="email" >
+                <el-input prefix-icon="User" v-model="userForm.email" placeholder="邮箱"></el-input>
+            </el-form-item>
+            <el-form-item  prop="password">
+                <el-input show-password prefix-icon="Lock" v-model="userForm.password" placeholder="密码"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="login">登录</el-button>
+                <el-button @click="restForm">重置</el-button>
+            </el-form-item>
+            <router-link to="/register">
+              <div style="margin-top: 5px">注册</div>
+          </router-link>
+        </el-form>
+    </div>
   </div>
 </template>
 
@@ -63,9 +68,12 @@ export default{
         const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
         if(res.status ===200){
           window.sessionStorage.setItem('token',res.data.token)
-          window.localStorage.setItem('token',res.data.token)
+          window.sessionStorage.setItem('role',res.data.role)
+          // window.localStorage.setItem('token',res.data.token)
           this.$message.success(res.msg)
-          this.$router.push('/home')
+          console.log(res.data)
+          if(res.data.role === 0) this.$router.push('/home')
+          else this.$router.push('/admin')
           this.setCookie('verify_authenticity_token' , res.data.token);
           // console.log(this.getCookie('verify_authenticity_token'))
         }else{
@@ -121,34 +129,52 @@ export default{
   }
 }
 </script>
-<style lang='less' scoped>
-.login_container {
-  background-color:#f8fbfd;
-  height: 100%
+<style scoped>
+.login-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    background-color: #fff;
 }
-.login_box{
-  width: 450px;
-  height: 300px;
-  border-radius: 5px; 
-  background-color: #ccc;
-  position: absolute;
-  left: 50%;
-  top:50%;
-  transform: translate(-50%,-50%);
+.login-container {
+    width: 420px;
+    height: 500px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0px 21px 41px 0px rgba(0, 0, 0, 0.2);
 }
-  .title {
-  width: 350px;
-  // height: 100px;
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 3;
-  position: absolute;
-  left: 50%;
-  transform: translate(-50%,0%);
-  color: var(--text-color);
+.head {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0 20px 0;
+}
+.head img {
+    width: 100px;
+    height: 100px;
+    margin-right: 20px;
+}
+.head .title {
+    font-size: 28px;
+    color: #409EFF;
+    font-weight: bold;
+}
+.head .tips {
+    font-size: 12px;
+    color: #999;
+}
+.login-form {
+    width: 70%;
+    margin: 0 auto;
+}
+.login-form >>> .el-form--label-top .el-form-item__label {
+    padding: 0;
+}
+.login-form >>> .el-form-item {
+    margin-bottom: 0;
 }
 .form_style{
-  position: absolute;
   bottom: 0;
   width: 100%;
   padding: 0 10%;
@@ -157,16 +183,11 @@ export default{
 }
 .form__link {
   /* color: #181818; */
-  font-size: 15px;
+  font-size: 13px;
   margin-top: 25px;
   border-bottom: 1px solid #a0a5a8;
   line-height: 2;
   cursor: pointer;
   text-decoration: none;
-}
-
- 
-.login-info {
-    margin-top: 10px;
 }
 </style>

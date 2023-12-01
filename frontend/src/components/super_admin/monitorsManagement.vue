@@ -1,28 +1,50 @@
 <template>
     <div>
         <el-breadcrumb>
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>任务管理</el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/spaces' }">监控空间列表</el-breadcrumb-item>
-            <el-breadcrumb-item>空间监控管理</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>监控管理</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card>
           <el-row>
-              <el-col :span="2">
+            <el-col :span="10">
+                <el-input
+                    v-model="searchValue"
+                    placeholder="请输入"
+                    class="input-with-select"
+                    >
+                    <template #prepend>
+                        <el-select v-model="selectValue" placeholder="Select" style="width: 115px">
+                        <el-option label="监控名" value="1" />
+                        <el-option label="网址" value="2" />
+                        </el-select>
+                    </template>
+                    <template #append>
+                        <el-button @click="searchMonitor"><el-icon><Search /></el-icon></el-button>
+                    </template>
+                </el-input>
+              </el-col>
+              <!-- <el-col :span="2">
                   <div>
-                      <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>增加</el-button>
+                      <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>新增监控</el-button>
+                  </div>
+              </el-col> -->
+              <el-col :span="4">
+                  <div>
+                      <el-button type="danger" @click="DeleteMonitors"><el-icon><Delete /></el-icon>批量删除</el-button>
                   </div>
               </el-col>
           </el-row>
           <el-row>
-              <el-table v-loading="loading" :data="MonitorList" style="width: 100%">
+              <el-table v-loading="loading" :data="MonitorList" style="width: 100%" @selection-change="handleSelectionMonitorsChange">
+                  <el-table-column type="selection" width="50" />
                   <el-table-column prop="id" label="ID" width="50" />
-                  <el-table-column prop="name" label="监控名" width="80" />
-                  <el-table-column prop="url" label="网址" width="270" />
+                  <el-table-column prop="notification_email" label="邮箱" width="180" />
+                  <el-table-column prop="name" label="监控名" width="150" />
+                  <el-table-column prop="url" label="网址" width="220" />
                   <!-- <el-table-column prop="update_time" label="更新时间" width="200" /> -->
-                  <el-table-column prop="last_check_time" label="检查时间" width="200" />
+                  <el-table-column prop="last_check_time" label="检查时间" width="170" />
                   <el-table-column prop="last_check_state" label="检查状态" width="200" />
-                  <el-table-column prop="edit" label="Edit" width="240">
+                  <el-table-column prop="edit" label="Edit" width="200">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
                           >编辑</el-button
@@ -165,22 +187,22 @@
                           <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="刷新时间">
-                      <el-form-item prop="time_between_check_weeks" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_days" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_hours" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_minutes" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_seconds" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
-                      </el-form-item>
+                  <el-form-item label="刷新时间" prop="time">
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
+                      </el-col>
                   </el-form-item>
                   <el-form-item label="通知邮箱" prop="notification_email">
                       <el-col :span="20">
@@ -218,6 +240,22 @@
             align-center
             >
             <span>刷新监控成功</span>
+        </el-dialog>
+        <el-dialog
+            v-model="okDeleteMonitors"
+            width="30%"
+            align-center
+            title="温馨提示"
+            >
+            <span>你确定要删除选中项吗？</span>
+            <template #footer>
+                <span class="dialog-footer">
+                <el-button @click="okDeleteMonitors = false">取消</el-button>
+                <el-button type="primary" @click="ConfirmDeleteMonitors">
+                    确定
+                </el-button>
+                </span>
+            </template>
         </el-dialog>
       </div>
   </template>
@@ -317,26 +355,29 @@
               okReflashWatch: false,
               okDisabled: false,
               loading: false,
-              iframe_url: '',
               TotalPages: 10,
               queryPage: {
+                name:'',
+                url:'',
                 page:1,
                 size:5
-              }
+              },
+              selectMonitorsRows:'',
+              okDeleteMonitors:false,
+              selectValue:'',
+              searchValue:''
           }
       },
       created(){
           this.JumpMonitorManage()
-        //   this.getBookmark()
       },
       methods:{
           //获取某个space下的监控列表
           async JumpMonitorManage(){
-              this.space_id=sessionStorage.getItem('space_id')
+            //   this.space_id=sessionStorage.getItem('space_id')
               this.loading = true
             //   this.okMonitor=false
-              console.log("11111")
-              const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
+              const {data: res} = await this.$axios.get('/watches/search',
               {
                   params: this.queryPage,
                   headers : {
@@ -379,7 +420,8 @@
                     }
                 })
                 if(res.status ===200){
-                    this.RefreshMonitorManage(this.space_id)
+                    this.JumpMonitorManage()
+                    // this.RefreshMonitorManage(this.space_id)
                 }else{
                     this.$message.error(res.msg);
                 }
@@ -405,7 +447,8 @@
           async ConfirmDeleteWatch(){
               this.okDeleteWatch = false;
               this.loading = true
-              const {data: res} = await this.$axios.delete('/watch/'+this.DeleteWatchID,
+              let data = sessionStorage.getItem('token')
+              const {data: res} = await this.$axios.put('/watch/'+this.DeleteWatchID+'/softdelete',data,
               {
                   params:{id: this.DeleteWatchID},
                   headers : {
@@ -413,7 +456,8 @@
                   }
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
-              this.RefreshMonitorManage(this.space_id)
+            //   this.RefreshMonitorManage(this.space_id)
+              this.JumpMonitorManage()
               this.loading = false
           },
           DeleteWatch(row){
@@ -461,7 +505,8 @@
                 if(res.status ===200){
                     // this.EditMonitor=false
                     // this.loading = true
-                    this.RefreshMonitorManage(this.space_id)
+                    // this.RefreshMonitorManage(this.space_id)
+                    this.JumpMonitorManage()
                 }else{
                     this.$message.error(res.message);
                 }
@@ -482,7 +527,8 @@
               })
               if(res.status !== 200) return  this.$message.error(res.msg)
               
-              this.RefreshMonitorManage(this.space_id)
+            //   this.RefreshMonitorManage(this.space_id)
+              this.JumpMonitorManage()
               this.loading = false
               this.okReflashWatch = true
           },
@@ -498,26 +544,57 @@
                 // this.addMonitorForm.include_filters=this.Element.jsonPath;
             }
           },
-          async getBookmark(){
-            const {data: res} = await this.$axios.get('/bookmark/inject.js',
-            {
-                headers : {
-                    'token': sessionStorage.getItem('token')
-                }
-            })
-            // console.log(res.data)
-            this.iframe_url = res.data
-            // console.log(this.iframe_url)
+        handleSelectionMonitorsChange(row){
+            this.selectMonitorsRows = row
+        },
+        //触发批量删除监控按钮
+        DeleteMonitors(){
+            console.log(this.selectMonitorsRows.length)
+            if(this.selectMonitorsRows.length > 0){
+                this.okDeleteMonitors = true;
+            }
+        },
+        //确定批量删除多个监控
+        ConfirmDeleteMonitors(){
+            for(let i = 0; i < this.selectMonitorsRows.length; i++){
+                this.DeleteWatch(this.selectMonitorsRows[i])
+                this.ConfirmDeleteWatch()
+            }
+            // this.RefreshMonitorManage(this.space_id)
+            this.JumpMonitorManage()
+            this.okDeleteMonitors = false;
         },
         //获得监控页号
         handleCurrentMonitorChange(val){
             this.queryPage.page = val
-            this.RefreshMonitorManage(this.space_id)
+            this.JumpMonitorManage()
+            // this.RefreshMonitorManage(this.space_id)
         },
         //获得监控页数
         handleSizeMonitorChange(val){
             this.queryPage.size = val
-            this.RefreshMonitorManage(this.space_id)
+            this.JumpMonitorManage()
+            // this.RefreshMonitorManage(this.space_id)
+        },
+        async searchMonitor(){
+            if(this.searchValue !== '' && this.selectValue === ''){
+                alert("请先选择搜索项！");
+                return ;
+            }
+            console.log(this.selectValue)
+            if(this.selectValue === '2'){
+                this.queryPage.url = this.searchValue
+                this.queryPage.name = ''
+            }else if(this.selectValue === '1'){
+                this.queryPage.url = ''
+                this.queryPage.name = this.searchValue
+            }else{
+                this.queryPage.url = ''
+                this.queryPage.name = ''
+            }
+            this.queryPage.page = 1
+            this.queryPage.size = 5
+            this.JumpMonitorManage();
         }
       }
   }

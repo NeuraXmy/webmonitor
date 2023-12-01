@@ -4,6 +4,16 @@
         <div>
             <span>多模态信息舆论监控</span>
         </div>
+        <div v-if="this.okadmin == 1">
+            <el-switch
+                v-model="admin"
+                class="ml-2"
+                style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                active-text="用户模式"
+                inactive-text="管理员模式"
+                @change="swap_admin"
+            />
+        </div>
         <el-button type="primary" plain @click="logout">退出</el-button>
       </el-header>
       <el-container>
@@ -20,7 +30,7 @@
                 <template #title>
                     <span><el-icon><Menu /></el-icon>任务管理</span>
                 </template>
-                    <el-menu-item index="monitor_list">
+                    <el-menu-item index="spaces">
                         <span><el-icon><Compass /></el-icon>监控空间列表</span>
                     </el-menu-item>
                 </el-sub-menu>
@@ -40,6 +50,16 @@ import Cookies from 'universal-cookie';
 
 export default{
     components: { Menu,Compass },
+    data(){
+        return {
+            okadmin:1,
+            admin:false
+        }
+    },
+    created(){
+        this.okadmin = sessionStorage.getItem('role')
+        console.log(this.okadmin)
+    },
     methods:{
         logout(){
             window.sessionStorage.clear()
@@ -57,6 +77,9 @@ export default{
                 sameSite: 'none',
                 };
             cookies.set(name, value, options);
+        },
+        swap_admin(){
+            this.$router.push('/admin')
         }
     }
 }

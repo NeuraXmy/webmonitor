@@ -6,7 +6,7 @@
                     请检查你的邮箱({{email}})，并激活.
                 </div>
                 <div class="actived">
-                    激活后点击 <a href="http://127.0.0.1:5173/">链接</a> 跳转登录.
+                    激活后点击 <a href="https://app.changenotify.net">链接</a> 跳转登录.
                 </div>
             </span>
         <div style="flex: 1"></div>

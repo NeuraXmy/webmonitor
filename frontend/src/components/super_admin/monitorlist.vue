@@ -1,21 +1,27 @@
 <template>
     <div>
         <el-breadcrumb>
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>任务管理</el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/spaces' }">监控空间列表</el-breadcrumb-item>
-            <el-breadcrumb-item>空间监控管理</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/userlist' }">用户管理</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/spacelist' }">用户空间列表</el-breadcrumb-item>
+            <el-breadcrumb-item>用户监控列表</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card>
           <el-row>
               <el-col :span="2">
                   <div>
-                      <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>增加</el-button>
+                      <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>新增监控</el-button>
+                  </div>
+              </el-col>
+              <el-col :span="4">
+                  <div>
+                      <el-button type="danger" @click="DeleteMonitors"><el-icon><Delete /></el-icon>批量删除</el-button>
                   </div>
               </el-col>
           </el-row>
           <el-row>
-              <el-table v-loading="loading" :data="MonitorList" style="width: 100%">
+              <el-table v-loading="loading" :data="MonitorList" style="width: 100%" @selection-change="handleSelectionMonitorsChange">
+                  <el-table-column type="selection" width="55" />
                   <el-table-column prop="id" label="ID" width="50" />
                   <el-table-column prop="name" label="监控名" width="80" />
                   <el-table-column prop="url" label="网址" width="270" />
@@ -165,22 +171,22 @@
                           <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="刷新时间">
-                      <el-form-item prop="time_between_check_weeks" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_days" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_hours" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_minutes" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_seconds" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
-                      </el-form-item>
+                  <el-form-item label="刷新时间" prop="time">
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
+                      </el-col>
+                      <el-col :span="4">
+                          <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
+                      </el-col>
                   </el-form-item>
                   <el-form-item label="通知邮箱" prop="notification_email">
                       <el-col :span="20">
@@ -218,6 +224,22 @@
             align-center
             >
             <span>刷新监控成功</span>
+        </el-dialog>
+        <el-dialog
+            v-model="okDeleteMonitors"
+            width="30%"
+            align-center
+            title="温馨提示"
+            >
+            <span>你确定要删除选中项吗？</span>
+            <template #footer>
+                <span class="dialog-footer">
+                <el-button @click="okDeleteMonitors = false">取消</el-button>
+                <el-button type="primary" @click="ConfirmDeleteMonitors">
+                    确定
+                </el-button>
+                </span>
+            </template>
         </el-dialog>
       </div>
   </template>
@@ -322,7 +344,9 @@
               queryPage: {
                 page:1,
                 size:5
-              }
+              },
+              selectMonitorsRows:'',
+              okDeleteMonitors:false
           }
       },
       created(){
@@ -405,7 +429,8 @@
           async ConfirmDeleteWatch(){
               this.okDeleteWatch = false;
               this.loading = true
-              const {data: res} = await this.$axios.delete('/watch/'+this.DeleteWatchID,
+              let data = sessionStorage.getItem('token')
+              const {data: res} = await this.$axios.put('/watch/'+this.DeleteWatchID+'/softdelete',data,
               {
                   params:{id: this.DeleteWatchID},
                   headers : {
@@ -508,6 +533,25 @@
             // console.log(res.data)
             this.iframe_url = res.data
             // console.log(this.iframe_url)
+        },
+        handleSelectionMonitorsChange(row){
+            this.selectMonitorsRows = row
+        },
+        //触发批量删除监控按钮
+        DeleteMonitors(){
+            console.log(this.selectMonitorsRows.length)
+            if(this.selectMonitorsRows.length > 0){
+                this.okDeleteMonitors = true;
+            }
+        },
+        //确定批量删除多个监控
+        ConfirmDeleteMonitors(){
+            for(let i = 0; i < this.selectMonitorsRows.length; i++){
+                this.DeleteWatch(this.selectMonitorsRows[i])
+                this.ConfirmDeleteWatch()
+            }
+            this.RefreshMonitorManage(this.space_id)
+            this.okDeleteMonitors = false;
         },
         //获得监控页号
         handleCurrentMonitorChange(val){

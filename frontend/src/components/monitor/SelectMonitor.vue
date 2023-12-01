@@ -54,23 +54,22 @@
                         </el-col>
                     </el-form-item>
                     <el-form-item label="刷新时间">
-                        <el-col :span="4">
-                            <!-- <el-input v-model="addMonitorForm.update_time" disabled></el-input> -->
+                      <el-form-item prop="time_between_check_weeks" style="width:81px;">
                             <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
-                        </el-col>
-                        <el-col :span="4">
+                      </el-form-item>
+                      <el-form-item prop="time_between_check_days" style="width:81px;">
                             <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
-                        </el-col>
-                        <el-col :span="4">
+                      </el-form-item>
+                      <el-form-item prop="time_between_check_hours" style="width:81px;">
                             <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
-                        </el-col>
-                        <el-col :span="4">
+                      </el-form-item>
+                      <el-form-item prop="time_between_check_minutes" style="width:81px;">
                             <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
-                        </el-col>
-                        <el-col :span="4">
+                      </el-form-item>
+                      <el-form-item prop="time_between_check_seconds" style="width:81px;">
                             <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
-                        </el-col>
-                    </el-form-item>
+                      </el-form-item>
+                  </el-form-item>
                     <el-form-item label="通知邮箱" prop="notification_email">
                         <el-col :span="20">
                             <el-input v-model="addMonitorForm.notification_email"></el-input>
@@ -178,7 +177,7 @@ export default{
                       {required:true, message: '请输入昵称', trigger:'blur'},
                   ],
                   desc:[
-                      {required:true, message: '请输入描述', trigger:'blur'}
+                      {message: '请输入描述', trigger:'blur'}
                   ],
                   url:[
                     //   {required:true, message: '请输入网址', trigger:'blur'}
@@ -193,6 +192,21 @@ export default{
                   ],
                   include_filters:[
                       {required:true, message: '请输入密码', trigger:'blur'}
+                  ],
+                  time_between_check_weeks:[
+                      {required:true, message: '请输入时间', trigger:'blur'}
+                  ],
+                  time_between_check_days:[
+                      {required:true, message: '请输入时间', trigger:'blur'}
+                  ],
+                  time_between_check_hours:[
+                      {required:true, message: '请输入时间', trigger:'blur'}
+                  ],
+                  time_between_check_minutes:[
+                      {required:true, message: '请输入时间', trigger:'blur'}
+                  ],
+                  time_between_check_seconds:[
+                      {required:true, message: '请输入时间', trigger:'blur'}
                   ]
             },
             verify_authenticity_token:'',
@@ -228,9 +242,11 @@ export default{
                 this.getUser();
                 this.getMonitorSpaceList();
             }else if(this.value=== 'XPath'){
-                this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "xpath:" + e.data.xpath + '\n';
+                if(this.addMonitorForm.include_filters.indexOf(e.data.xpath) === -1)
+                    this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "xpath:" + e.data.xpath + '\n';
             }else if(this.value === 'CssSelector'){
-                this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "css:" + e.data.selector + '\n' ;
+                if(this.addMonitorForm.include_filters.indexOf(e.data.selector) === -1)
+                    this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "css:" + e.data.selector + '\n' ;
             }else if(this.value === 'JSONPath'){
                 // this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "json:" + e.data.jsonPath + '\n' ;
             }
