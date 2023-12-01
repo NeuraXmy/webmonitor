@@ -346,7 +346,7 @@ def get_watches_softdeleted(user):
         'last_check_time': watch.last_check_time,
         'last_check_state': watch.last_check_state,
         'notification_email': watch.notification_email,
-        'sapce_id': watch.space_id
+        'space_id': watch.space_id
     }for watch in ret.items]
     for watch in ret.items:
         space = models.Space.query.get(watch['space_id'])
