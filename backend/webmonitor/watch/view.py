@@ -349,9 +349,20 @@ def get_watches_softdeleted(user):
         'space_id': watch.space_id
     }for watch in ret.items]
     for watch in ret.items:
+        print(watch['id'])
+    for watch in ret.items:
+        print(watch['id'])
         space = models.Space.query.get(watch['space_id'])
         if space.is_deleted == 1:
             ret.items.remove(watch)
     for watch in ret.items:
         del watch['space_id']
     return ok(data=ret)
+
+# 获取watch的历史记录
+@watch_bp.route('/watch/<int:watch_id>/history', methods=['GET'])
+@login_required
+def get_watch_history(user, watch_id):
+    watch = models.Watch.query.get(watch_id)
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
