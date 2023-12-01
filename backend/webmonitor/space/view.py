@@ -242,11 +242,15 @@ def get_spaces_softdeleted(user):
         'owner_id': space.owner_id,
         'owner_email': ''
     } for space in ret.items]
-    for space in ret.items:
-        owner = models.User.query.get(space['owner_id'])
-        space['owner_email'] = owner.email
+    
+    i=0
+    while(i<len(ret.items)):
+        owner = models.User.query.get(ret.items[i]['owner_id'])
+        ret.items[i]['owner_email'] = owner.email
         if owner.is_deleted == 1:
-            ret.items.remove(space)
+            ret.items.remove(ret.items[i])
+        else:
+            i+=1
     # 删除owner_id字段
     for space in ret.items:
         del space['owner_id']

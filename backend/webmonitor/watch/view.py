@@ -348,13 +348,15 @@ def get_watches_softdeleted(user):
         'notification_email': watch.notification_email,
         'space_id': watch.space_id
     }for watch in ret.items]
-    for watch in ret.items:
-        print(watch['id'])
-    for watch in ret.items:
-        print(watch['id'])
-        space = models.Space.query.get(watch['space_id'])
+
+    i=0
+    while(i<len(ret.items)):
+        space = models.Space.query.get(ret.items[i]['space_id'])
         if space.is_deleted == 1:
-            ret.items.remove(watch)
+            ret.items.remove(ret.items[i])
+        else:
+            i+=1
+    
     for watch in ret.items:
         del watch['space_id']
     return ok(data=ret)
