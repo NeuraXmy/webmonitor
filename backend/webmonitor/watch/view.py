@@ -1,6 +1,6 @@
 from webmonitor.watch import watch_bp
 from webmonitor import models
-from flask import render_template, request
+from flask import render_template, request, current_app
 from flask_restful import Resource
 from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
@@ -8,6 +8,7 @@ from webmonitor.utils.email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
 from webmonitor.utils.page import paginate
+from datetime import datetime
 
 
 # 用户获取某个监控详细信息
@@ -49,7 +50,7 @@ def create_watch(user, space_id):
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
-    if user.role !=1 and space.owner_id != user.id:
+    if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
     watch = models.Watch()
@@ -121,6 +122,10 @@ def delete_watch(user, watch_id):
     if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
+    # 删除所有历史记录
+    for history in watch.watch_histories:
+        models.db.session.delete(history)
+    
     external_id = watch.external_id
     models.db.session.delete(watch)
     models.db.session.commit()
@@ -153,10 +158,13 @@ def restore_watch(user, watch_id):
     watch = models.Watch.query.filter_by(id=watch_id).first()
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
+    
     space = models.Space.query.get(watch.space_id)
     if space.is_deleted == 1:
         return abort(ErrorCode.WATCH_RESTORE_FAIL)
+    
     watch.is_deleted = 0
+
     models.db.session.commit()
     return ok()
 
@@ -212,76 +220,94 @@ def check_watch(user, watch_id):
     return ok()
 
 
-# 接受changedetection.io的更新通知
-@watch_bp.route('/cdio/notification/change', methods=['POST'])
-def process_change():
-    state         = request.values.get('state')
-    watch_uuid    = str(request.values.get('watch_uuid'))
-    msg           = request.values.get('msg')
-
+# 接受changedetection.io的刷新监控回调
+@watch_bp.route('/cdio/check/callback', methods=['POST'])
+def process_check_callback():
+    state         = request.get_json().get('state')
+    watch_uuid    = request.get_json().get('watch_uuid')
+    msg           = request.get_json().get('msg')
     watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
-    state_msg = ""
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    check_time = datetime.now()
+    check_state = ""
+    last_snapshot_path, second_last_snapshot_path = None, None
 
-    # 更新失败发送失败通知
-    if state == 'False':
+    # 无变更
+    if state == 0:
+        check_state = '检查成功: 无变更'
+
+    # 有变更
+    elif state == 1:
+        # 获取快照路径列表，读取最新的两个快照
+        snapshot_list = watch_utils.get_watch_snapshot_list(watch.external_id)
+        if len(snapshot_list) > 0:
+            last_snapshot_path = snapshot_list[-1]['file']
+            last_snapshot = watch_utils.load_snapshot(snapshot_list[-1])
+        if len(snapshot_list) > 1:
+            second_last_snapshot_path = snapshot_list[-2]['file']
+            second_last_snapshot = watch_utils.load_snapshot(snapshot_list[-2])
+        
+        if second_last_snapshot_path:
+            need_notification = True
+            if watch.trigger_text:
+                # 关键词检测
+                trigger_texts = watch.trigger_text.split(',')
+                if len(trigger_texts) > 0 and not any([trigger_text in last_snapshot for trigger_text in trigger_texts]):
+                    need_notification = False
+                    check_state = '检查成功: 未触发关键词'
+
+            if need_notification:
+                # 有变更发送通知
+                diff = watch_utils.compare_watch(last_snapshot, second_last_snapshot)
+                if watch.notification_email:
+                    send_email(watch.notification_email, 
+                        'webmonitor-监控项变更通知', 
+                        'email/notification_success.html', 
+                        watch=watch, diff=diff)
+                check_state = '检查成功: 通知已发送'
+        else:
+            # 初次检查，发送邮件
+            diff = watch_utils.compare_watch(last_snapshot)
+            if watch.notification_email:
+                    send_email(watch.notification_email, 
+                        'webmonitor-监控项初次更新通知', 
+                        'email/notification_create.html', 
+                        watch=watch, diff=diff, 
+                        first_check_time=check_time.strftime(current_app.config['TIME_FORMAT']))
+            check_state = '检查成功: 初次检查'
+
+    # 检查失败
+    elif state == 3:
         if msg == " ": msg = '未知错误'
         notification_msg = '监控检查失败:\n\n' + msg
-        state_msg        = '检查失败: ' + msg
+        check_state      = '检查失败: ' + msg
         if watch.notification_email:
             send_email(watch.notification_email, 
                 'webmonitor-监控项获取失败通知', 
                 'email/notification_fail.html', 
                 watch=watch, message=notification_msg)
             
-    # 更新成功则在当前快照数大于1时检查变更
+    # 未知状态
     else:
-        second_last_snapshot = watch_utils.get_second_latest_snapshot(watch_uuid)
-        if second_last_snapshot:
-            last_snapshot = watch_utils.get_latest_snapshot(watch_uuid)
+        return abort(ErrorCode.PARAMS_INVALID)
+            
+    # 更新最新状态
+    watch.last_check_time = check_time
+    watch.last_check_state = check_state
 
-            if second_last_snapshot != last_snapshot:
-                # 有变更发送通知
-                state_msg = '检查成功: 通知已发送'
-                import difflib
-                diff = difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())
-                if watch.notification_email:
-                    send_email(watch.notification_email, 
-                        'webmonitor-监控项变更通知', 
-                        'email/notification_success.html', 
-                        watch=watch, diff=diff)
-            else:
-                state_msg = '检查成功: 无变更'
-        
-        else:
-            # 初次检查，发送邮件
-            import difflib
-            diff = difflib.HtmlDiff().make_file(last_snapshot.splitlines())
-            if watch.notification_email:
-                    send_email(watch.notification_email, 
-                        'webmonitor-监控项创建通知', 
-                        'email/notification_success.html', 
-                        watch=watch, diff=diff)
-            state_msg = '检查成功: 初次检查'
-        
-    # 更新状态
-    from datetime import datetime
-    watch.last_check_time = datetime.now()
-    watch.last_check_state = state_msg
+    # 更新历史状态
+    history = models.WatchHistory()
+    history.watch_id = watch.id
+    history.check_state = check_state
+    history.check_time = check_time
+    history.last_snapshot_path = last_snapshot_path
+    history.second_last_snapshot_path = second_last_snapshot_path
+    models.db.session.add(history)
+
     models.db.session.commit()
-    return ok()
-
-
-# 接收changedetection.io的没有更新通知
-@watch_bp.route('/cdio/notification/nochange', methods=['POST'])
-def process_nochange():
-    watch_uuid = str(request.values.get('watch_uuid'))
-    watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
-    if watch:
-        state_msg = '检查成功: 无变更'
-        from datetime import datetime
-        watch.last_check_time = datetime.now()
-        watch.last_check_state = state_msg
-        models.db.session.commit()
+    
     return ok()
 
 
@@ -376,17 +402,17 @@ def get_watch_history(user, watch_id):
     watch = models.Watch.query.get(watch_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
-    if watch.space.owner_id != user.id:
+    if user.role != 1 and watch.space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
-    ret = paginate(models.WatchHistory.query.filter_by(watch_id=watch_id, is_deleted=0))
-    ret.items = [{
+    ret = models.WatchHistory.query.filter_by(watch_id=watch_id, is_deleted=0)
+    ret = [{
         'id': history.id,
         'create_time': history.create_time,
         'update_time': history.update_time,
         'check_time': history.check_time,
         'check_state': history.check_state,
-    } for history in ret.items]
+    } for history in ret]
 
     return ok(data=ret)
 
@@ -396,9 +422,9 @@ def get_watch_history(user, watch_id):
 @login_required
 def get_watch_history_detail(user, watch_id, history_id):
     watch = models.Watch.query.get(watch_id)
-    if not watch:  # TODO 软删除检查
+    if not watch:  
         return abort(ErrorCode.NOT_FOUND)
-    if watch.space.owner_id != user.id:
+    if user.role != 1 and watch.space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     history = models.WatchHistory.query.get(history_id)
     if not history:
@@ -415,24 +441,13 @@ def get_watch_history_detail(user, watch_id, history_id):
     }
 
     # 读取快照
-    last_snapshot, second_last_snapshot = None, None
     if history.last_snapshot_path:
-        last_snapshot = watch_utils.load_snapshot(history.last_snapshot_path)
-    if history.second_last_snapshot_path:
-        second_last_snapshot = watch_utils.load_snapshot(history.second_last_snapshot_path)
-
-    if second_last_snapshot:
-        # 有变更
-        import difflib
-        diff = difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())
+        last_snapshot, second_last_snapshot = None, None
+        last_snapshot = watch_utils.load_snapshot({ 'file': history.last_snapshot_path })
+        if history.second_last_snapshot_path:
+            second_last_snapshot = watch_utils.load_snapshot({ 'file': history.second_last_snapshot_path })
+        diff = watch_utils.compare_watch(last_snapshot, second_last_snapshot)
         ret['content'] = diff
-    elif last_snapshot:
-        # 无变更或初次检查
-        ret['content'] = last_snapshot
 
     return ok(data=ret)
-    
-
-
-
 

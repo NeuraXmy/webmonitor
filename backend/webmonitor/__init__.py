@@ -58,5 +58,8 @@ def apply_exception_handler(app):
         return ex.error_code.to_response(msg=ex.msg)
     @app.errorhandler(Exception)
     def handle_exception(ex):
+        print("Unhandled Exception Ocurred:")
+        import traceback
+        traceback.print_exception(type(ex), ex, ex.__traceback__)
         return ErrorCode.INTERNAL_SERVER_ERROR.to_response(msg=str(ex))
     
