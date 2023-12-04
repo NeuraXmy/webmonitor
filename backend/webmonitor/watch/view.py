@@ -413,8 +413,9 @@ def get_watch_history(user, watch_id):
         'check_time': history.check_time,
         'check_state': history.check_state,
     } for history in ret]
-
-    return ok(data=ret)
+    return ok(data={
+        "items": ret
+    })
 
 
 # 获取watch的历史记录详情
