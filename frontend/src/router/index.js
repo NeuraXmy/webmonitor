@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../components/Login.vue'
+import test from '../components/test.vue'
 import Home from '../components/Home.vue'
 import Register from '../components/Register.vue'
 import Admin from '../components/super_admin/Admin.vue'
@@ -7,6 +8,7 @@ import Welcome from '../components/Welcome.vue'
 import Monitor from '../components/monitor/Monitor.vue'
 import Space from '../components/monitor/space.vue'
 import SelectMonitor from '../components/monitor/SelectMonitor.vue'
+import CheckHistory from '../components/monitor/CheckHistory.vue'
 import Activate from '../components/activate/Activate.vue'
 import ActivateSuccess from '../components/activate/ActivateSuccess.vue'
 import UserList from '../components/super_admin/userlist.vue'
@@ -39,7 +41,8 @@ const routes = [
         children:[
             {path: '/welcome', component: Welcome },
             {path: '/monitor_list', component: Monitor },
-            {path: '/spaces', component: Space }
+            {path: '/spaces', component: Space },
+            {path: '/CheckHistory', component: CheckHistory }
             // ,
             // {path: '/select_monitor', component: SelectMonitor }
         ]
@@ -79,7 +82,12 @@ const routes = [
         path: '/activate_success',
         component: ActivateSuccess,
         hidden: true
-    }
+    },
+    { 
+        path: '/test',
+        component: test,
+        hidden: true
+    },
 ]
 
 const router = createRouter({

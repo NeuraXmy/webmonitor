@@ -22,7 +22,7 @@
                   <!-- <el-table-column prop="update_time" label="更新时间" width="200" /> -->
                   <el-table-column prop="last_check_time" label="检查时间" width="200" />
                   <el-table-column prop="last_check_state" label="检查状态" width="200" />
-                  <el-table-column prop="edit" label="Edit" width="240">
+                  <el-table-column prop="edit" label="Edit" width="340">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
                           >编辑</el-button
@@ -38,6 +38,12 @@
                           type="info"
                           @click="RefreshWatch(scope.row)"
                           >刷新</el-button
+                          >
+                          <el-button
+                          size="small"
+                          type="success"
+                          @click="WatchHistory(scope.row)"
+                          >检查记录</el-button
                           >
                       </template>
                   </el-table-column>
@@ -330,175 +336,175 @@
         //   this.getBookmark()
       },
       methods:{
-          //获取某个space下的监控列表
-          async JumpMonitorManage(){
-              this.space_id=sessionStorage.getItem('space_id')
-              this.loading = true
-            //   this.okMonitor=false
-              console.log("11111")
-              const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
-              {
-                  params: this.queryPage,
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
-              this.$message.success(res.msg)
-              this.loading = false
-              this.TotalPages = res.data.total
-              this.MonitorList = res.data.items
-              console.log(res.data)
-          },
-          //刷新监控列表
-          async RefreshMonitorManage(val){
-              this.space_id = val
-              const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
-              {
-                  params: this.queryPage,
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
-              this.TotalPages = res.data.total
-              this.MonitorList = res.data.items
-          },
-          //用户在某个space下创建监控
-          addMonitorList(){
-            this.$refs.MonitorRef.validate(async valid => {
-                console.log(valid)
-                if(!valid) return 
-                this.addMonitor=false
-                this.loading = true
-                let data = this.$qs.stringify(this.addMonitorForm)
-                const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
-                {
-                    headers : {
-                        'token': sessionStorage.getItem('token')
-                    }
-                })
-                if(res.status ===200){
-                    this.RefreshMonitorManage(this.space_id)
-                }else{
-                    this.$message.error(res.msg);
+        //获取某个space下的监控列表
+        async JumpMonitorManage(){
+            this.space_id=sessionStorage.getItem('space_id')
+            this.loading = true
+        //   this.okMonitor=false
+            console.log("11111")
+            const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
+            {
+                params: this.queryPage,
+                headers : {
+                    'token': sessionStorage.getItem('token')
                 }
-                this.loading = false
             })
-          },
-          addMonitorListener(){
-              this.addMonitor=true
-              this.addMonitorForm.desc = ''
-              this.addMonitorForm.element = ''
-              this.addMonitorForm.include_filters = ''
-              this.addMonitorForm.notification_email = ''
-              this.addMonitorForm.url = ''
-              this.addMonitorForm.trigger_text = ''
-              this.addMonitorForm.name = ''
-              this.addMonitorForm.time_between_check_days = '1'
-              this.addMonitorForm.time_between_check_hours = '0'
-              this.addMonitorForm.time_between_check_minutes = '0'
-              this.addMonitorForm.time_between_check_seconds = '0'
-              this.addMonitorForm.time_between_check_weeks = ''
-          },
-          //用户确定删除监控
-          async ConfirmDeleteWatch(){
-              this.okDeleteWatch = false;
-              this.loading = true
-              const {data: res} = await this.$axios.delete('/watch/'+this.DeleteWatchID,
-              {
-                  params:{id: this.DeleteWatchID},
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
-              this.RefreshMonitorManage(this.space_id)
-              this.loading = false
-          },
-          DeleteWatch(row){
-            this.okDeleteWatch = true;
-            this.DeleteWatchID = row.id;
-          },
-          //触发用户修改监控,保存watch_id并且获取监控信息
-          async WatchEdit(row){
-              this.loading = true
-            //   this.EditMonitor=true;
-              this.watch_id=row.id;
-              const {data: res} = await this.$axios.get('/watch/'+this.watch_id,
-              {
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
-              this.EditMonitor=true;
-              this.loading = false
-              this.addMonitorForm = res.data
-              if(this.addMonitorForm.include_filters === ''){
-                this.value = 'All';
-                this.okDisabled = true
-              }else{
-                this.value = 'XPath/CssSelector';
-                this.okDisabled = false
-              }
-              console.log(res.data);
-          },
-          //用户修改监控
-          WatchEditConfirm(){
-            this.$refs.MonitorRef.validate(async valid => {
-                console.log(valid)
-                if(!valid) return 
-                this.EditMonitor=false
-                this.loading = true
-                let data = this.$qs.stringify(this.addMonitorForm)
-                const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
-                {
-                    headers : {
-                        'token': sessionStorage.getItem('token')
-                    }
-                })
-                if(res.status ===200){
-                    // this.EditMonitor=false
-                    // this.loading = true
-                    this.RefreshMonitorManage(this.space_id)
-                }else{
-                    this.$message.error(res.message);
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            this.$message.success(res.msg)
+            this.loading = false
+            this.TotalPages = res.data.total
+            this.MonitorList = res.data.items
+            console.log(res.data)
+        },
+        //刷新监控列表
+        async RefreshMonitorManage(val){
+            this.space_id = val
+            const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
+            {
+                params: this.queryPage,
+                headers : {
+                    'token': sessionStorage.getItem('token')
                 }
-                this.loading = false
             })
-          },
-          //用户立刻刷新监控
-          async RefreshWatch(row){
-              this.loading = true
-              let data={
-                  'token': sessionStorage.getItem('token')
-              }
-              const {data: res} = await this.$axios.post('/watch/'+row.id+'/check',data,
-              {
-                  headers : {
-                      'token': sessionStorage.getItem('token')
-                  }
-              })
-              if(res.status !== 200) return  this.$message.error(res.msg)
-              
-              this.RefreshMonitorManage(this.space_id)
-              this.loading = false
-              this.okReflashWatch = true
-          },
-          //改变多选框
-          ChangeElement(){
-            console.log(this.value)
-            if(this.value === '1'){
-                this.okDisabled = true
-                this.addMonitorForm.include_filters = ""
-            }else if(this.value === '2'){
-                this.okDisabled = false
-            }else if(this.value === 'JSONPath'){
-                // this.addMonitorForm.include_filters=this.Element.jsonPath;
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            this.TotalPages = res.data.total
+            this.MonitorList = res.data.items
+        },
+        //用户在某个space下创建监控
+        addMonitorList(){
+        this.$refs.MonitorRef.validate(async valid => {
+            console.log(valid)
+            if(!valid) return 
+            this.addMonitor=false
+            this.loading = true
+            let data = this.$qs.stringify(this.addMonitorForm)
+            const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status ===200){
+                this.RefreshMonitorManage(this.space_id)
+            }else{
+                this.$message.error(res.msg);
             }
-          },
-          async getBookmark(){
+            this.loading = false
+        })
+        },
+        addMonitorListener(){
+            this.addMonitor=true
+            this.addMonitorForm.desc = ''
+            this.addMonitorForm.element = ''
+            this.addMonitorForm.include_filters = ''
+            this.addMonitorForm.notification_email = ''
+            this.addMonitorForm.url = ''
+            this.addMonitorForm.trigger_text = ''
+            this.addMonitorForm.name = ''
+            this.addMonitorForm.time_between_check_days = '1'
+            this.addMonitorForm.time_between_check_hours = '0'
+            this.addMonitorForm.time_between_check_minutes = '0'
+            this.addMonitorForm.time_between_check_seconds = '0'
+            this.addMonitorForm.time_between_check_weeks = ''
+        },
+        //用户确定删除监控
+        async ConfirmDeleteWatch(){
+            this.okDeleteWatch = false;
+            this.loading = true
+            const {data: res} = await this.$axios.delete('/watch/'+this.DeleteWatchID,
+            {
+                params:{id: this.DeleteWatchID},
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            this.RefreshMonitorManage(this.space_id)
+            this.loading = false
+        },
+        DeleteWatch(row){
+        this.okDeleteWatch = true;
+        this.DeleteWatchID = row.id;
+        },
+        //触发用户修改监控,保存watch_id并且获取监控信息
+        async WatchEdit(row){
+            this.loading = true
+        //   this.EditMonitor=true;
+            this.watch_id=row.id;
+            const {data: res} = await this.$axios.get('/watch/'+this.watch_id,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            this.EditMonitor=true;
+            this.loading = false
+            this.addMonitorForm = res.data
+            if(this.addMonitorForm.include_filters === ''){
+            this.value = 'All';
+            this.okDisabled = true
+            }else{
+            this.value = 'XPath/CssSelector';
+            this.okDisabled = false
+            }
+            console.log(res.data);
+        },
+        //用户修改监控
+        WatchEditConfirm(){
+        this.$refs.MonitorRef.validate(async valid => {
+            console.log(valid)
+            if(!valid) return 
+            this.EditMonitor=false
+            this.loading = true
+            let data = this.$qs.stringify(this.addMonitorForm)
+            const {data: res} = await this.$axios.put('/watch/'+this.watch_id,data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status ===200){
+                // this.EditMonitor=false
+                // this.loading = true
+                this.RefreshMonitorManage(this.space_id)
+            }else{
+                this.$message.error(res.message);
+            }
+            this.loading = false
+        })
+        },
+        //用户立刻刷新监控
+        async RefreshWatch(row){
+            this.loading = true
+            let data={
+                'token': sessionStorage.getItem('token')
+            }
+            const {data: res} = await this.$axios.post('/watch/'+row.id+'/check',data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            
+            this.RefreshMonitorManage(this.space_id)
+            this.loading = false
+            this.okReflashWatch = true
+        },
+        //改变多选框
+        ChangeElement(){
+        console.log(this.value)
+        if(this.value === '1'){
+            this.okDisabled = true
+            this.addMonitorForm.include_filters = ""
+        }else if(this.value === '2'){
+            this.okDisabled = false
+        }else if(this.value === 'JSONPath'){
+            // this.addMonitorForm.include_filters=this.Element.jsonPath;
+        }
+        },
+        async getBookmark(){
             const {data: res} = await this.$axios.get('/bookmark/inject.js',
             {
                 headers : {
@@ -518,6 +524,13 @@
         handleSizeMonitorChange(val){
             this.queryPage.size = val
             this.RefreshMonitorManage(this.space_id)
+        },
+        //点击检查记录按钮
+        WatchHistory(row){
+            console.log(row)
+            sessionStorage.setItem('watch_id',row.id);
+            sessionStorage.setItem('watch_url',row.url);
+            this.$router.push('/CheckHistory')
         }
       }
   }

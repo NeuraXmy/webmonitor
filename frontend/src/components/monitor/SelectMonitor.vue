@@ -231,10 +231,6 @@ export default{
                 this.okLogin = true
                 this.fullscreenLoading = false
             }
-            // console.log("-----")
-            // console.log(this.verify_authenticity_token);
-            // console.log(document)
-            
             this.Element = e.data;
             this.addMonitorForm.url = e.data.baseURI;
             this.SelectText = e.data.selectText;
@@ -357,7 +353,6 @@ export default{
                 }
             })
             console.log(res.data)
-        //   this.space_names = res.data
         },
         //移除iframe
         RemoveIframe(){
