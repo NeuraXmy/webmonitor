@@ -279,7 +279,7 @@ def process_check_callback():
             check_state = '检查成功: 初次检查'
 
     # 检查失败
-    elif state == 3:
+    elif state == 2:
         if msg == " ": msg = '未知错误'
         notification_msg = '监控检查失败:\n\n' + msg
         check_state      = '检查失败: ' + msg
