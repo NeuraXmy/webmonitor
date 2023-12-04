@@ -129,6 +129,7 @@ def delete_watch(user, watch_id):
     response = watch_utils.delete_watch(external_id)
     return ok()
 
+
 # 管理员软删除监控
 @watch_bp.route('/watch/<int:watch_id>/softdelete', methods=['PUT'])
 @login_required
@@ -141,6 +142,7 @@ def soft_delete_watch(user, watch_id):
     watch.is_deleted = 1
     models.db.session.commit()
     return ok()
+
 
 # 管理员恢复监控
 @watch_bp.route('/watch/<int:watch_id>/restore', methods=['PUT'])
@@ -157,6 +159,7 @@ def restore_watch(user, watch_id):
     watch.is_deleted = 0
     models.db.session.commit()
     return ok()
+
 
 # 用户修改监控
 @watch_bp.route('/watch/<int:watch_id>', methods=['PUT'])
@@ -267,6 +270,7 @@ def process_change():
     models.db.session.commit()
     return ok()
 
+
 # 接收changedetection.io的没有更新通知
 @watch_bp.route('/cdio/notification/nochange', methods=['POST'])
 def process_nochange():
@@ -279,6 +283,7 @@ def process_nochange():
         watch.last_check_state = state_msg
         models.db.session.commit()
     return ok()
+
 
 # 管理员获取所有的watch列表
 @watch_bp.route('/watches', methods=['GET'])
@@ -298,6 +303,7 @@ def get_all_watches(user):
         'notification_email': watch.notification_email
     } for watch in ret.items]
     return ok(data=ret)
+
 
 # 管理员根据url或者name搜索watch
 @watch_bp.route('/watches/search', methods=['GET'])
@@ -330,6 +336,7 @@ def search_watches(user):
     }for watch in ret.items]
     return ok(data=ret)
 
+
 # 管理员获取所有软删除的watch
 @watch_bp.route('/watches/softdelete', methods=['GET'])
 @login_required
@@ -361,10 +368,71 @@ def get_watches_softdeleted(user):
         del watch['space_id']
     return ok(data=ret)
 
-# 获取watch的历史记录
-@watch_bp.route('/watch/<int:watch_id>/history', methods=['GET'])
+
+# 获取watch的历史记录列表
+@watch_bp.route('/watch/<int:watch_id>/histories', methods=['GET'])
 @login_required
 def get_watch_history(user, watch_id):
     watch = models.Watch.query.get(watch_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
+    if watch.space.owner_id != user.id:
+        return abort(ErrorCode.FORBIDDEN)
+    
+    ret = paginate(models.WatchHistory.query.filter_by(watch_id=watch_id, is_deleted=0))
+    ret.items = [{
+        'id': history.id,
+        'create_time': history.create_time,
+        'update_time': history.update_time,
+        'check_time': history.check_time,
+        'check_state': history.check_state,
+    } for history in ret.items]
+
+    return ok(data=ret)
+
+
+# 获取watch的历史记录详情
+@watch_bp.route('/watch/<int:watch_id>/history/<int:history_id>', methods=['GET'])
+@login_required
+def get_watch_history_detail(user, watch_id, history_id):
+    watch = models.Watch.query.get(watch_id)
+    if not watch:  # TODO 软删除检查
+        return abort(ErrorCode.NOT_FOUND)
+    if watch.space.owner_id != user.id:
+        return abort(ErrorCode.FORBIDDEN)
+    history = models.WatchHistory.query.get(history_id)
+    if not history:
+        return abort(ErrorCode.NOT_FOUND)
+    if history.watch_id != watch_id:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    ret = {
+        'id': history.id,
+        'create_time': history.create_time,
+        'update_time': history.update_time,
+        'check_time': history.check_time,
+        'check_state': history.check_state,
+    }
+
+    # 读取快照
+    last_snapshot, second_last_snapshot = None, None
+    if history.last_snapshot_path:
+        last_snapshot = watch_utils.load_snapshot(history.last_snapshot_path)
+    if history.second_last_snapshot_path:
+        second_last_snapshot = watch_utils.load_snapshot(history.second_last_snapshot_path)
+
+    if second_last_snapshot:
+        # 有变更
+        import difflib
+        diff = difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())
+        ret['content'] = diff
+    elif last_snapshot:
+        # 无变更或初次检查
+        ret['content'] = last_snapshot
+
+    return ok(data=ret)
+    
+
+
+
+

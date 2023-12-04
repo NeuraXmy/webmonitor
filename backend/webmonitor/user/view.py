@@ -51,6 +51,7 @@ def update_user_info(user):
     models.db.session.commit()
     return ok()
 
+
 # 管理员获取所有用户信息
 @user_bp.route('/users', methods=['GET'])
 @login_required
@@ -71,6 +72,7 @@ def get_all_users_info(user):
     for user in ret.items:
         user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id'], is_deleted=0).all())
     return ok(data=ret)
+
 
 # 管理员获取某个用户信息
 @user_bp.route('/user/<int:user_id>', methods=['GET'])
@@ -101,6 +103,7 @@ def get_certain_user_info(user, user_id):
         })
     return ok(data=ret)
 
+
 # 管理员修改某个用户信息
 @user_bp.route('/user/<int:user_id>', methods=['PUT'])
 @login_required
@@ -129,6 +132,7 @@ def update_certain_user_info(user, user_id):
     models.db.session.commit()
     return ok()
 
+
 # 管理员软删除某个用户
 @user_bp.route('/user/<int:user_id>/softdelete', methods=['PUT'])
 @login_required
@@ -149,6 +153,7 @@ def softdelete_certain_user(user, user_id):
     models.db.session.commit()
     return ok()
 
+
 # 管理员恢复某个用户
 @user_bp.route('/user/<int:user_id>/restore', methods=['PUT'])
 @login_required
@@ -168,6 +173,7 @@ def restore_certain_user(user, user_id):
 
     models.db.session.commit()
     return ok()
+
 
 # 管理员硬删除某个用户
 @user_bp.route('/user/<int:user_id>/delete', methods=['DELETE'])
@@ -193,6 +199,7 @@ def delete_certain_user(user, user_id):
     models.db.session.delete(user)
     models.db.session.commit()
     return ok()
+
 
 # 管理员增加某个用户 
 @user_bp.route('/user', methods=['POST'])
