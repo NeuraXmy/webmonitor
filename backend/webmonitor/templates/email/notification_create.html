@@ -22,6 +22,9 @@
     <h1>{{subject}}</h1>
     <p>监控名：{{watch.name}}</p>
     <p>监控地址：{{watch.url}}</p>
-    <p>更新时间：{{watch.last_check_time}}</p>
+    <p>更新时间：{{first_check_time}}</p>
+    <div>
+        {{diff|safe}}
+    </div>
 </body>
 </html>

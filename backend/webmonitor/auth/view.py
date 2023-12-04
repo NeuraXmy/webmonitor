@@ -105,6 +105,7 @@ def login():
         'role': user.role
         })
 
+
 # 管理员登录
 @auth_bp.route('/admin/login', methods=['POST'])
 def admin_login():
@@ -125,11 +126,11 @@ def admin_login():
         return abort(ErrorCode.PASSWORD_ERROR)
     # 不是管理员
     if user.role != 1:
-        return abort(ErrorCode.USER_NOT_FOUND)
+        return abort(ErrorCode.FORBIDDEN)
     
     token = generate_token(user.id)
     print(token)
     return ok(data={
         'token': token,
         'role': user.role
-        })
+    })

@@ -23,6 +23,7 @@ def get_space_list(user):
     } for space in ret.items]
     return ok(data=ret)
 
+
 # 管理员使用，获取某个用户的空间列表
 @space_bp.route('/user/<int:user_id>/spaces', methods=['GET'])
 @login_required
@@ -37,6 +38,7 @@ def get_space_list_by_user(user, user_id):
         'update_time': space.update_time,
     } for space in ret.items]
     return ok(data=ret)
+
 
 # 用户获取某个空间详细信息
 @space_bp.route('/space/<int:space_id>', methods=['GET'])
@@ -95,6 +97,7 @@ def create_space_by_user(user, user_id):
     models.db.session.commit()
     return ok()
 
+
 # 用户修改空间
 @space_bp.route('/space/<int:space_id>', methods=['PUT'])
 @login_required
@@ -140,6 +143,7 @@ def delete_space(user, space_id):
     for id in external_ids:
         response = watch_utils.delete_watch(id)
     return ok()
+
 
 # 管理员根据name搜索空间
 @space_bp.route('/spaces/search', methods=['GET'])
@@ -193,6 +197,7 @@ def get_all_spaces(user):
         del space['owner_id']
     return ok(data=ret)
 
+
 # 管理员软删除空间
 @space_bp.route('/space/<int:space_id>/softdelete', methods=['PUT'])
 @login_required
@@ -207,6 +212,7 @@ def soft_delete_space(user, space_id):
         watch.is_deleted = 1
     models.db.session.commit()
     return ok()
+
 
 # 管理员恢复软删除的空间
 @space_bp.route('/space/<int:space_id>/restore', methods=['PUT'])
@@ -225,6 +231,7 @@ def restore_space(user, space_id):
         watch.is_deleted = 0
     models.db.session.commit()
     return ok()
+
 
 # 管理员获取软删除的空间列表
 @space_bp.route('/spaces/softdelete', methods=['GET'])

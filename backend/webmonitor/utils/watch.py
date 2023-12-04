@@ -74,11 +74,11 @@ def extract_watch_data(watch):
     else:
         data['include_filters'] = []
     # 触发文本
-    if watch.trigger_text:
-        trigger_text = [f.strip() for f in watch.trigger_text.split('\n') if f.strip()]
-        data['trigger_text'] = trigger_text
-    else:
-        data['trigger_text'] = []
+    # if watch.trigger_text:
+    #     trigger_text = [f.strip() for f in watch.trigger_text.split('\n') if f.strip()]
+    #     data['trigger_text'] = trigger_text
+    # else:
+    #     data['trigger_text'] = []
     return data
 
 
@@ -110,7 +110,7 @@ def delete_watch(id):
 
 
 # 查询一个watch的所有历史记录 返回按时间排序的历史记录列表
-def get_watch_history(id):
+def get_watch_snapshot_list(id):
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, }
@@ -134,16 +134,9 @@ def load_snapshot(snapshot):
     return data.decode('utf-8')
 
 
-# 获取某个watch的最新快照内容
-def get_latest_snapshot(id):
-    history_list = get_watch_history(id)
-    if len(history_list) == 0:
-        return None
-    return load_snapshot(history_list[-1])
-
-
-def get_second_latest_snapshot(id):
-    history_list = get_watch_history(id)
-    if len(history_list) < 2:
-        return None
-    return load_snapshot(history_list[-2])
+# 对两个历史进行比较，返回html格式的比较结果
+def compare_watch(last_snapshot, second_last_snapshot=None):
+    import difflib
+    if second_last_snapshot is None:
+        return difflib.HtmlDiff().make_file([], last_snapshot.splitlines())
+    return difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())

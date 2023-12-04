@@ -3,6 +3,8 @@ from flask import send_file, current_app, request
 from webmonitor.utils.auth import login_required
 from webmonitor.utils.error import ok
 
+
+# 返回书签注入脚本
 @bookmark_bp.route('/bookmark/inject.js', methods=['GET'])
 @login_required
 def get_inject(user):
