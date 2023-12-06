@@ -58,7 +58,7 @@ def update_user_info(user):
 def get_all_users_info(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.User.query.filter_by(is_deleted=0))
+    ret = paginate(models.User.query.filter_by(is_deleted=0).order_by(models.User.create_time.desc()))
     ret.items = [{
         'id': user.id,
         'email': user.email,
@@ -252,15 +252,15 @@ def search_user(user):
     email    = request.args.get('email')
     nickname = request.args.get('nickname')
     if not any([email, nickname]):
-        ret = paginate(models.User.query.filter_by(is_deleted=0))
+        ret = paginate(models.User.query.filter_by(is_deleted=0).order_by(models.User.create_time.desc()))
     else:
         if email:
             if nickname:
-                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.nickname.like(f'%{nickname}%'), models.User.is_deleted==0))
+                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.nickname.like(f'%{nickname}%'), models.User.is_deleted==0).order_by(models.User.create_time.desc()))
             else:
-                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.is_deleted==0))
+                ret = paginate(models.User.query.filter(models.User.email.like(f'%{email}%'), models.User.is_deleted==0).order_by(models.User.create_time.desc()))
         else:   
-            ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%'), models.User.is_deleted==0))
+            ret = paginate(models.User.query.filter(models.User.nickname.like(f'%{nickname}%'), models.User.is_deleted==0).order_by(models.User.create_time.desc()))
     ret.items = [{
         'id': user.id,
         'email': user.email,
@@ -282,7 +282,7 @@ def search_user(user):
 def get_users_softdeleted(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.User.query.filter_by(is_deleted=1))
+    ret = paginate(models.User.query.filter_by(is_deleted=1).order_by(models.User.create_time.desc()))
     ret.items = [{
         'id': user.id,
         'email': user.email,

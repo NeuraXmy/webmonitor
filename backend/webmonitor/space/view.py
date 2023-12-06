@@ -14,7 +14,7 @@ from webmonitor.utils.page import paginate
 @space_bp.route('/spaces', methods=['GET'])
 @login_required
 def get_space_list(user):
-    ret = paginate(models.Space.query.filter_by(owner_id=user.id, is_deleted=0))
+    ret = paginate(models.Space.query.filter_by(owner_id=user.id, is_deleted=0).order_by(models.Space.create_time.desc()))
     ret.items = [{
         'id': space.id,
         'name': space.name,
@@ -30,7 +30,7 @@ def get_space_list(user):
 def get_space_list_by_user(user, user_id):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.Space.query.filter_by(owner_id=user_id, is_deleted=0))
+    ret = paginate(models.Space.query.filter_by(owner_id=user_id, is_deleted=0).order_by(models.Space.create_time.desc()))
     ret.items = [{
         'id': space.id,
         'name': space.name,
@@ -153,9 +153,9 @@ def search_spaces(user):
         return abort(ErrorCode.FORBIDDEN)
     name = request.args.get('name')
     if not name:
-        ret = paginate(models.Space.query)
+        ret = paginate(models.Space.query.filter_by(is_deleted=0).order_by(models.Space.create_time.desc()))
     else:
-        ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%'), models.Space.is_deleted==0))
+        ret = paginate(models.Space.query.filter(models.Space.name.like(f'%{name}%'), models.Space.is_deleted==0).order_by(models.Space.create_time.desc()))
     
     ret.items = [{
         'id': space.id,
@@ -180,7 +180,7 @@ def search_spaces(user):
 def get_all_spaces(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.Space.query.filter_by(is_deleted=0))
+    ret = paginate(models.Space.query.filter_by(is_deleted=0).order_by(models.Space.create_time.desc()))
     ret.items = [{
         'id': space.id,
         'name': space.name,
@@ -239,7 +239,7 @@ def restore_space(user, space_id):
 def get_spaces_softdeleted(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    ret = paginate(models.Space.query.filter_by(is_deleted=1))
+    ret = paginate(models.Space.query.filter_by(is_deleted=1).order_by(models.Space.update_time.desc()))
     ret.items = [{
         'id': space.id,
         'name': space.name,
