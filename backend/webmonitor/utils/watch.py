@@ -132,11 +132,3 @@ def load_snapshot(snapshot):
     if file_path.endswith('.br'):
         data = brotli.decompress(data)
     return data.decode('utf-8')
-
-
-# 对两个历史进行比较，返回html格式的比较结果
-def compare_watch(last_snapshot, second_last_snapshot=None):
-    import difflib
-    if second_last_snapshot is None:
-        return difflib.HtmlDiff().make_file([], last_snapshot.splitlines())
-    return difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines())

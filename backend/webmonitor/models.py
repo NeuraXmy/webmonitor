@@ -86,6 +86,8 @@ class WatchHistory(BaseModel):
     check_state = db.Column(db.String(256), nullable=True)          # 检查的状态
     check_time  = db.Column(db.DateTime, nullable=True)             # 检查的时间
 
+    content = db.Column(db.Text, nullable=True) # 检查内容
+
     last_snapshot_path        = db.Column(db.String(256), nullable=True)    # 检查的快照路径
     second_last_snapshot_path = db.Column(db.String(256), nullable=True)    # 上次检查的快照路径
 
