@@ -67,8 +67,10 @@ export default{
         if(!valid) return 
         const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
         if(res.status ===200){
+          console.log(res.data )
           window.sessionStorage.setItem('token',res.data.token)
           window.sessionStorage.setItem('role',res.data.role)
+          window.sessionStorage.setItem('email',this.userForm.email)
           // window.localStorage.setItem('token',res.data.token)
           this.$message.success(res.msg)
           console.log(res.data)

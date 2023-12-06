@@ -26,14 +26,14 @@
                 text-color="#fff"
                 :router="true"
             >
-                <el-sub-menu index="1">
+                <!-- <el-sub-menu index="1">
                 <template #title>
                     <span><el-icon><Menu /></el-icon>任务管理</span>
-                </template>
+                </template> -->
                     <el-menu-item index="spaces">
-                        <span><el-icon><Compass /></el-icon>监控空间列表</span>
+                        <span><el-icon><Compass /></el-icon>监控空间</span>
                     </el-menu-item>
-                </el-sub-menu>
+                <!-- </el-sub-menu> -->
             </el-menu>
         </el-aside>
         <el-main>

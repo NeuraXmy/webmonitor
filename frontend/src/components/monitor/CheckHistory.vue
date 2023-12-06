@@ -1,12 +1,12 @@
 <template>
     <div>
-        <el-breadcrumb>
+        <!-- <el-breadcrumb>
             <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item>任务管理</el-breadcrumb-item>
             <el-breadcrumb-item :to="{ path: '/spaces' }">监控空间列表</el-breadcrumb-item>
             <el-breadcrumb-item :to="{ path: '/monitor_list' }">空间监控管理</el-breadcrumb-item>
             <el-breadcrumb-item>监控检查历史</el-breadcrumb-item>
-        </el-breadcrumb>
+        </el-breadcrumb> -->
         <el-card>
             <div class="common-layout">
                 <el-container>
@@ -34,9 +34,10 @@
                                 <el-card>
                                     <el-collapse v-model="activeNames" @change="handleChange">
                                         <el-collapse-item :title="activity.content" :name="activity.id">
-                                            <div>
-                                                <span v-html="activity.diff"></span>
-                                            </div>
+                                            <div style="width: '80%'" v-html="activity.diff"></div>
+                                            <!-- <div class="history-wrapper">
+                                                <div v-html="activity.diff" class="history"></div>
+                                            </div> -->
                                         </el-collapse-item>
                                     </el-collapse>
                                 </el-card>
@@ -99,24 +100,21 @@ export default{
 
             const {data: res} = await this.$axios.get('/watch/' + this.watch_id + '/histories',
             {
-                // params: this.queryPage,
                 headers : {
                     'token': sessionStorage.getItem('token')
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
-            // this.TotalPages = res.data.total
             
             // this.loading = true
             console.log(res.data.items)
             for(let i = 0; i < res.data.items.length; i++){
                 this.history_id = res.data.items[i].id
                 await this.getHistory()
-                console.log("----")
             }
-            // this.loading = false
-            console.log("++++")
+            
+            // console.log(this.loading)
             for(let i = 0; i < res.data.items.length; i++){
                 this.Histories.push({
                     content: res.data.items[i].check_state,
@@ -125,15 +123,16 @@ export default{
                     check_id: res.data.items[i].id,
                     diff: this.check_html[i].diff
                 })
+                console.log(this.check_html[i].diff)
                 console.log(this.Histories)
             }
+            // this.loading = false
+            // console.log(this.loading)
         },
-        //获取单个监控的监控信息
+        //获取所有单个监控的监控信息
         async getHistory(){
-            // console.log("-----")
             const {data: res} = await this.$axios.get('/watch/' + this.watch_id + '/history/' + this.history_id,
             {
-                // params: this.queryPage,
                 headers : {
                     'token': sessionStorage.getItem('token')
                 }
@@ -149,7 +148,7 @@ export default{
         },
         //返回监控页面
         back(){
-            this.$router.push('/monitor_list')
+            this.$router.push('/spaces')
         },
         handleChange(){
             // console.log(this.activeNames)
@@ -159,5 +158,11 @@ export default{
 </script>
 
 <style>
-
+.history-wrapper {
+    width: 80%;
+}
+.history{
+    width: 80% !important;
+    height: 100%;
+}
 </style>

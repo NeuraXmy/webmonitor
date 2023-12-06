@@ -19,7 +19,6 @@
                   <el-table-column prop="id" label="ID" width="50" />
                   <el-table-column prop="name" label="监控名" width="80" />
                   <el-table-column prop="url" label="网址" width="270" />
-                  <!-- <el-table-column prop="update_time" label="更新时间" width="200" /> -->
                   <el-table-column prop="last_check_time" label="检查时间" width="200" />
                   <el-table-column prop="last_check_state" label="检查状态" width="200" />
                   <el-table-column prop="edit" label="Edit" width="340">
@@ -97,23 +96,32 @@
                           </el-select>
                           <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
                       </el-col>
-                      
                   </el-form-item>
-                  <el-form-item label="刷新时间">
+                  <el-form-item label="刷新频率">
                       <el-form-item prop="time_between_check_weeks" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_weeks">
+                                <template #append>周</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_days" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_days">
+                                <template #append>天</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_hours" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_hours">
+                                <template #append>时</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_minutes" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_minutes">
+                                <template #append>分</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_seconds" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_seconds">
+                                <template #append>秒</template>
+                            </el-input>
                       </el-form-item>
                   </el-form-item>
                   <el-form-item label="通知邮箱" prop="notification_email">
@@ -171,21 +179,31 @@
                           <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
                       </el-col>
                   </el-form-item>
-                  <el-form-item label="刷新时间">
+                  <el-form-item label="刷新频率">
                       <el-form-item prop="time_between_check_weeks" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_weeks">
+                                <template #append>周</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_days" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_days">
+                                <template #append>天</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_hours" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_hours">
+                                <template #append>时</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_minutes" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_minutes">
+                                <template #append>分</template>
+                            </el-input>
                       </el-form-item>
                       <el-form-item prop="time_between_check_seconds" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
+                            <el-input v-model="addMonitorForm.time_between_check_seconds">
+                                <template #append>秒</template>
+                            </el-input>
                       </el-form-item>
                   </el-form-item>
                   <el-form-item label="通知邮箱" prop="notification_email">
@@ -401,11 +419,11 @@
             this.addMonitorForm.url = ''
             this.addMonitorForm.trigger_text = ''
             this.addMonitorForm.name = ''
-            this.addMonitorForm.time_between_check_days = '1'
-            this.addMonitorForm.time_between_check_hours = '0'
+            this.addMonitorForm.time_between_check_days = '0'
+            this.addMonitorForm.time_between_check_hours = '1'
             this.addMonitorForm.time_between_check_minutes = '0'
             this.addMonitorForm.time_between_check_seconds = '0'
-            this.addMonitorForm.time_between_check_weeks = ''
+            this.addMonitorForm.time_between_check_weeks = '0'
         },
         //用户确定删除监控
         async ConfirmDeleteWatch(){
@@ -536,14 +554,18 @@
   }
   
   </script>
-  <style>
-  .input-with-select .el-input-group__prepend {
+<style>
+.input-with-select .el-input-group__prepend {
     background-color: var(--el-fill-color-blank);
-  }
-  .el-table{
-      margin-top: 10px;
-  }
-  .el-pagination{
-      margin-top: 10px;
-  }
-  </style>
+}
+.el-table{
+    margin-top: 10px;
+}
+.el-pagination{
+    margin-top: 10px;
+}
+.el-input-group__append{
+    width: 1px; /* 这里可以根据你的需求设置宽度 */
+    background-color: #ffffff
+}
+</style>

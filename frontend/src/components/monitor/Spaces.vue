@@ -18,13 +18,12 @@
             :label="item.name"
             :name="item.index"
         >
+            <!-- <div class=""><button><el-icon :size="size" :color="color"><Edit /></el-icon></button></div> -->
+            
             <el-card>
                 <el-row>
-                    <el-col :span="2">
-                        <div>
-                            <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>新增监控</el-button>
-                        </div>
-                    </el-col>
+                    <el-button type="primary" @click="EditSpace(this.space_id)"><el-icon><Edit /></el-icon>编辑空间</el-button>
+                    <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>新增监控</el-button>
                 </el-row>
                 <el-row>
                     <el-table v-loading="loading" :data="MonitorList" style="width: 100%">
@@ -327,11 +326,11 @@
 </template>
 
 <script>
-import { Search,Plus,Delete } from '@element-plus/icons-vue'
+import { Search,Plus,Delete,Edit } from '@element-plus/icons-vue'
 // import { ref, computed } from 'vue';
 export default{
     
-    components: { Search,Plus,Delete },
+    components: { Search,Plus,Delete,Edit },
     data(){
         const vaildateEmail = (rule, value, callback) => {
             let EmailReg = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
@@ -463,7 +462,9 @@ export default{
         }
     },
     async created(){
-        this.spacesValue = 0
+        // console.log(sessionStorage.getItem('back_spacesValue'))
+        if(sessionStorage.getItem('back_spacesValue') === null) this.spacesValue = 0
+        else this.spacesValue = parseInt(sessionStorage.getItem('back_spacesValue'))
         await this.getMonitorSpaceList()
         this.space_id = this.spaces[this.spacesValue].id;
         this.JumpMonitorManage()
@@ -489,7 +490,7 @@ export default{
             this.loading = true
             const {data: res} = await this.$axios.get('/spaces',
             {
-                params: this.queryPage,
+                // params: this.queryPage,
                 headers : {
                     'token': sessionStorage.getItem('token')
                 }
@@ -497,7 +498,7 @@ export default{
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
             this.TotalPages = res.data.total
-            // console.log(res.data)
+            console.log(res.data)
             for(let i = 0; i < res.data.items.length; i++){
                 this.spaces.push({
                     name: res.data.items[i].name,
@@ -541,7 +542,7 @@ export default{
         },
         //触发编辑空间按钮
         async EditSpace(row){
-            this.EditSpaceID = row.id;
+            this.EditSpaceID = row;
             this.loading = true
 
             const {data: res} = await this.$axios.get('/space/'+this.EditSpaceID,
@@ -685,7 +686,7 @@ export default{
             this.addMonitorForm.desc = ''
             this.addMonitorForm.element = ''
             this.addMonitorForm.include_filters = ''
-            this.addMonitorForm.notification_email = ''
+            this.addMonitorForm.notification_email = sessionStorage.getItem('email')
             this.addMonitorForm.url = ''
             this.addMonitorForm.trigger_text = ''
             this.addMonitorForm.name = ''
@@ -807,6 +808,7 @@ export default{
             console.log(row)
             sessionStorage.setItem('watch_id',row.id);
             sessionStorage.setItem('watch_url',row.url);
+            sessionStorage.setItem('back_spacesValue',this.spacesValue)
             this.$router.push('/CheckHistory')
         }
     }
@@ -815,10 +817,10 @@ export default{
 
 <style>
 .demo-tabs > .el-tabs__content {
-  padding: 32px;
-  color: #6b778c;
-  font-size: 32px;
-  font-weight: 600;
+    padding: 32px;
+    color: #6b778c;
+    font-size: 32px;
+    font-weight: 600;
 }
 .demo-tabs{
     background-color: #ffffff;

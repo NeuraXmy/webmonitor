@@ -19,6 +19,7 @@ import MonitorsManagement from '../components/super_admin/monitorsManagement.vue
 import RecycleUsers from '../components/super_admin/recycleUsers.vue'
 import RecycleSpaces from '../components/super_admin/recycleSpaces.vue'
 import RecycleMonitors from '../components/super_admin/recycleMonitors.vue'
+import Spaces from '../components/monitor/Spaces.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -41,8 +42,9 @@ const routes = [
         children:[
             {path: '/welcome', component: Welcome },
             {path: '/monitor_list', component: Monitor },
-            {path: '/spaces', component: Space },
-            {path: '/CheckHistory', component: CheckHistory }
+            {path: '/space', component: Space },
+            {path: '/CheckHistory', component: CheckHistory },
+            {path: '/spaces', component: Spaces }
             // ,
             // {path: '/select_monitor', component: SelectMonitor }
         ]
