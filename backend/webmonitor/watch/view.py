@@ -237,6 +237,21 @@ def get_user_watch_list(user):
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
     } for watch in ret.items]
+
+    ret = {
+        "total": ret.total,
+        "page": ret.page,
+        "size": ret.size,
+        "pages": ret.pages,
+        "items": ret.items,
+        'today_check_count': user.today_check_count(),
+        'today_notification_count': user.today_notification_count(),
+        'yesterday_check_count': user.yesterday_check_count(),
+        'yesterday_notification_count': user.yesterday_notification_count(),
+        'this_month_check_count': user.this_month_check_count(),
+        'this_month_notification_count': user.this_month_notification_count(),
+    }
+
     return ok(data=ret)
 
 
