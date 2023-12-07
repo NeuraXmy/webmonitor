@@ -356,7 +356,7 @@ def process_check_callback():
     watch_uuid    = request.get_json().get('watch_uuid')
     msg           = request.get_json().get('msg')
     watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
-    if not watch:
+    if not watch or watch.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
     
     check_state = WatchCheckState.UNKNOWN
