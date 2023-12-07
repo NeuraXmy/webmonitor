@@ -13,6 +13,7 @@ def create_app():
     register_database(app)
     register_blueprints(app)
     register_plugin(app)
+
     return app
 
 

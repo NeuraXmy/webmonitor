@@ -57,6 +57,12 @@ def get_space(user, space_id):
         'desc': space.desc,
         'create_time': space.create_time,
         'update_time': space.update_time,
+        'today_check_count': space.today_check_count(),
+        'today_notification_count': space.today_notification_count(),
+        'yesterday_check_count': space.yesterday_check_count(),
+        'yesterday_notification_count': space.yesterday_notification_count(),
+        'this_month_check_count': space.this_month_check_count(),
+        'this_month_notification_count': space.this_month_notification_count(),
     })
 
 
