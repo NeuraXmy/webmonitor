@@ -1,5 +1,6 @@
 from webmonitor.watch import watch_bp
 from webmonitor import models
+from webmonitor.models import WatchCheckState
 from flask import render_template, request, current_app
 from flask_restful import Resource
 from webmonitor.utils.error import ErrorCode, abort, ok
@@ -11,19 +12,19 @@ from webmonitor.utils.page import paginate
 from datetime import datetime
 
 
-# 对两个历史进行比较，返回 是否需要通知，检查状态，比较内容
-def compare_watch(watch, last_snapshot, second_last_snapshot=None):
-    need_notification, check_state, content = True, None, None
+# 对两个历史进行比较，返回 是否需要通知，检查信息，比较内容
+def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
+    need_notification, check_message, html_diff = True, None, None
 
     # 进行比较，生成HTML文件
     import difflib
     if second_last_snapshot is None:
         html_diff = difflib.HtmlDiff().make_file([], last_snapshot.splitlines())
-        check_state = "创建成功：通知已发送"
+        check_message = "创建成功：通知已发送"
     else:
         html_diff = difflib.HtmlDiff().make_file(second_last_snapshot.splitlines(), last_snapshot.splitlines(), 
                                                  context=True, numlines=5)
-        check_state = "检查成功：通知已发送"
+        check_message = "检查成功：通知已发送"
 
     # 解析HTML文件获取变更内容
     add_lines, remove_lines, change_lines = [], [], []
@@ -51,12 +52,13 @@ def compare_watch(watch, last_snapshot, second_last_snapshot=None):
             remove_lines.append((index, text))
 
     # 判断关键词触发
-    if watch.trigger_text:
+    trigger_desc = ""
+    if trigger_text:
         trigger_words = [{
             'word': word.strip(),
             'count': 0,
             'indices': []
-        } for word in watch.trigger_text.split(',') if word.strip()]
+        } for word in trigger_text.split(',') if word.strip()]
 
         if len(trigger_words) > 0:
             # 统计触发每个关键词的行号和次数
@@ -71,15 +73,47 @@ def compare_watch(watch, last_snapshot, second_last_snapshot=None):
                         word['indices'].append(rindex)
         
             if not any([word['count'] > 0 for word in trigger_words]):
+                # 未触发的情况，修改状态和不需要通知
                 if second_last_snapshot is None:
-                    check_state = "创建成功：未触发关键词"
+                    check_message = "创建成功：未触发关键词"
                 else:
-                    check_state = "检查成功：未触发关键词"
+                    check_message = "检查成功：未触发关键词"
                 need_notification = False
             else:
-                pass
+                # 添加触发词的说明
+                for word in trigger_words:
+                    if word['count'] > 0:
+                        word['indices'] = sorted(word['indices'])
+                        trigger_desc += f"<p>关键词 \"{word['word']}\" 共出现 {word['count']} 次，出现位置: 第 {', '.join(word['indices'])} 行</p>"
+    
+        # 添加关键词高亮的style
+        TRIGGER_WORD_STYLE = "mark {background-color: brown; color: white;}"
+        soup.head.style.string = soup.head.style.text + TRIGGER_WORD_STYLE
+        # 添加关键词高亮的tag
+        # 防止转义
+        LEFT_MARK_STR, RIGHT_MARK_STR = "$lm$", "$rm$"
+        for row in rows:
+            _, lheader, left, _, rheader, right = row.find_all('td')
+            adds = right.find_all(class_='diff_add')
+            lchgs = left.find_all(class_='diff_chg')
+            rchgs = right.find_all(class_='diff_chg')
+            subs = left.find_all(class_='diff_sub')
+            for word in trigger_words:
+                for add in adds:
+                    if word['word'] in add.text:
+                        add.string = add.text.replace(word['word'], f"{LEFT_MARK_STR}{word['word']}{RIGHT_MARK_STR}")
+                for rchg in rchgs:
+                    if word['word'] in rchg.text:
+                        rchg.string = rchg.text.replace(word['word'], f"{LEFT_MARK_STR}{word['word']}{RIGHT_MARK_STR}")
+        # 重新生成html
+        html_diff = soup.prettify()
+        html_diff = html_diff.replace(LEFT_MARK_STR, "<mark>").replace(RIGHT_MARK_STR, "</mark>")
 
-    return need_notification, check_state, html_diff
+    final_content = render_template('diff/diff_content.html', 
+                                    trigger_desc=trigger_desc, 
+                                    diff_content=html_diff)
+
+    return need_notification, check_message, final_content
 
 
 # 用户获取某个监控详细信息
@@ -101,7 +135,7 @@ def get_watch(user, watch_id):
         'create_time': watch.create_time,
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
-        'last_check_state': watch.last_check_state,
+        'last_check_state': watch.last_check_message,
         'time_between_check_weeks': watch.time_between_check_weeks,
         'time_between_check_days': watch.time_between_check_days,
         'time_between_check_hours': watch.time_between_check_hours,
@@ -110,6 +144,9 @@ def get_watch(user, watch_id):
         'include_filters': watch.include_filters,
         'trigger_text': watch.trigger_text,
         'notification_email': watch.notification_email,
+        'last_24h_check_count': watch.last_24h_check_count(),
+        'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     }
     return ok(data=ret)
 
@@ -142,6 +179,7 @@ def create_watch(user, space_id):
     watch.notification_email    = request.form.get('notification_email')
     watch.include_filters       = request.form.get('include_filters')
     watch.trigger_text          = request.form.get('trigger_text')
+    watch.paused = 0
     
     # 在changedetection.io上创建监控
     external_id = watch_utils.create_watch(watch)
@@ -177,7 +215,10 @@ def get_watch_list(user, space_id):
         'create_time': watch.create_time,
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
-        'last_check_state': watch.last_check_state,
+        'last_check_state': watch.last_check_message,
+        'last_24h_check_count': watch.last_24h_check_count(),
+        'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     } for watch in ret.items]
     return ok(data=ret)
 
@@ -195,8 +236,26 @@ def get_user_watch_list(user):
         'create_time': watch.create_time,
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
-        'last_check_state': watch.last_check_state,
+        'last_check_state': watch.last_check_message,
+        'last_24h_check_count': watch.last_24h_check_count(),
+        'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     } for watch in ret.items]
+
+    ret = {
+        "total": ret.total,
+        "page": ret.page,
+        "size": ret.size,
+        "pages": ret.pages,
+        "items": ret.items,
+        'today_check_count': user.today_check_count(),
+        'today_notification_count': user.today_notification_count(),
+        'yesterday_check_count': user.yesterday_check_count(),
+        'yesterday_notification_count': user.yesterday_notification_count(),
+        'this_month_check_count': user.this_month_check_count(),
+        'this_month_notification_count': user.this_month_notification_count(),
+    }
+
     return ok(data=ret)
 
 
@@ -234,6 +293,9 @@ def soft_delete_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     watch.is_deleted = 1
+
+    watch_utils.update_watch_state(watch.external_id, paused=True)
+
     models.db.session.commit()
     return ok()
 
@@ -253,6 +315,7 @@ def restore_watch(user, watch_id):
         return abort(ErrorCode.WATCH_RESTORE_FAIL)
     
     watch.is_deleted = 0
+    watch_utils.update_watch_state(watch.external_id, paused=(watch.paused==1))
 
     models.db.session.commit()
     return ok()
@@ -316,17 +379,19 @@ def process_check_callback():
     watch_uuid    = request.get_json().get('watch_uuid')
     msg           = request.get_json().get('msg')
     watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
-    if not watch:
+    if not watch or watch.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
     
+    check_state = WatchCheckState.UNKNOWN
     check_time = datetime.now()
-    check_state = ""
+    check_message = ""
     last_snapshot_path, second_last_snapshot_path = None, None
     diff = None
 
     # 无变更
     if state == 0:
-        check_state = '检查成功：无变更'
+        check_message = '检查成功：无变更'
+        check_state = WatchCheckState.NO_CHANGE
 
     # 有变更
     elif state == 1:
@@ -338,9 +403,11 @@ def process_check_callback():
             second_last_snapshot_path = snapshot_list[-2]['file']
             second_last_snapshot = watch_utils.load_snapshot(snapshot_list[-2])
 
-        need_notification, check_state, diff = compare_watch(watch, last_snapshot, second_last_snapshot)
+        need_notification, check_message, diff = compare_watch(last_snapshot, second_last_snapshot, watch.trigger_text)
         
         if need_notification:
+            check_state = WatchCheckState.HAS_CHANGE_WITH_NOTIFICATION_SENT 
+
             if watch.notification_email:
                 if second_last_snapshot_path:
                     send_email(watch.notification_email, 
@@ -353,12 +420,15 @@ def process_check_callback():
                         'email/notification_create.html', 
                         watch=watch, diff=diff, 
                         first_check_time=check_time.strftime(current_app.config['TIME_FORMAT']))
+        else:
+            check_state = WatchCheckState.HAS_CHANGE_NO_NOTIFICATION_SENT
 
     # 检查失败
     elif state == 2:
         if msg == " ": msg = '未知错误'
         notification_msg = '监控检查失败:\n\n' + msg
-        check_state      = '检查失败：' + msg
+        check_message    = '检查失败：' + msg
+        check_state      = WatchCheckState.ERROR
         if watch.notification_email:
             send_email(watch.notification_email, 
                 'webmonitor-监控项获取失败通知', 
@@ -370,17 +440,19 @@ def process_check_callback():
         return abort(ErrorCode.PARAMS_INVALID)
             
     # 更新最新状态
+    watch.last_check_state_id = check_state.id
     watch.last_check_time = check_time
-    watch.last_check_state = check_state
+    watch.last_check_message = check_message
 
     # 更新历史状态
     history = models.WatchHistory()
     history.watch_id = watch.id
-    history.check_state = check_state
+    history.check_state_id = check_state.id
     history.check_time = check_time
+    history.check_message = check_message
     history.last_snapshot_path = last_snapshot_path
     history.second_last_snapshot_path = second_last_snapshot_path
-    history.content = diff
+    history.trigger_text = watch.trigger_text
     models.db.session.add(history)
 
     models.db.session.commit()
@@ -402,8 +474,11 @@ def get_all_watches(user):
         'create_time': watch.create_time,
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
-        'last_check_state': watch.last_check_state,
-        'notification_email': watch.notification_email
+        'last_check_state': watch.last_check_message,
+        'notification_email': watch.notification_email,
+        'last_24h_check_count': watch.last_24h_check_count(),
+        'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     } for watch in ret.items]
     return ok(data=ret)
 
@@ -434,8 +509,11 @@ def search_watches(user):
         'create_time': watch.create_time,
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
-        'last_check_state': watch.last_check_state,
-        'notification_email': watch.notification_email
+        'last_check_state': watch.last_check_message,
+        'notification_email': watch.notification_email,
+        'last_24h_check_count': watch.last_24h_check_count(),
+        'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     }for watch in ret.items]
     return ok(data=ret)
 
@@ -454,9 +532,12 @@ def get_watches_softdeleted(user):
         'create_time': watch.create_time,
         'update_time': watch.update_time,
         'last_check_time': watch.last_check_time,
-        'last_check_state': watch.last_check_state,
+        'last_check_state': watch.last_check_message,
         'notification_email': watch.notification_email,
-        'space_id': watch.space_id
+        'last_24h_check_count': watch.last_24h_check_count(),
+        'last_24h_notification_count': watch.last_24h_notification_count(),
+        'space_id': watch.space_id,
+        'paused': watch.paused,
     }for watch in ret.items]
 
     i=0
@@ -488,7 +569,8 @@ def get_watch_history(user, watch_id):
         'create_time': history.create_time,
         'update_time': history.update_time,
         'check_time': history.check_time,
-        'check_state': history.check_state,
+        'check_state': history.check_message,
+        'check_state_id': history.check_state_id,
     } for history in ret]
     return ok(data={
         "items": ret
@@ -515,11 +597,17 @@ def get_watch_history_detail(user, watch_id, history_id):
         'create_time': history.create_time,
         'update_time': history.update_time,
         'check_time': history.check_time,
-        'check_state': history.check_state,
+        'check_state': history.check_message,
+        'check_state_id': history.check_state_id,
     }
 
-    if history.content:
-        ret['content'] = history.content
+    if history.last_snapshot_path:
+        last_snapshot = watch_utils.load_snapshot({'file': history.last_snapshot_path})
+        second_last_snapshot = None
+        if history.second_last_snapshot_path:
+            second_last_snapshot = watch_utils.load_snapshot({'file': history.second_last_snapshot_path})
+        _, _, content = compare_watch(last_snapshot, second_last_snapshot, history.trigger_text)
+        ret['content'] = content
 
     return ok(data=ret)
 

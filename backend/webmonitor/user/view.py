@@ -21,16 +21,13 @@ def get_user_info(user):
         'create_time': user.create_time,
         'update_time': user.update_time,
         'role': user.role,  # 0: 普通用户 1: 管理员
-        'spaces': []
+        'today_check_count': user.today_check_count(),
+        'today_notification_count': user.today_notification_count(),
+        'yesterday_check_count': user.yesterday_check_count(),
+        'yesterday_notification_count': user.yesterday_notification_count(),
+        'this_month_check_count': user.this_month_check_count(),
+        'this_month_notification_count': user.this_month_notification_count(),
     }
-    for space in user.spaces:
-        ret['spaces'].append({
-            'id': space.id,
-            'name': space.name,
-            'desc': space.desc,
-            'create_time': space.create_time,
-            'update_time': space.update_time,
-        })
     return ok(data=ret)
 
 
@@ -90,17 +87,13 @@ def get_certain_user_info(user, user_id):
         'create_time': user.create_time,
         'update_time': user.update_time,
         'role': user.role, 
-        'spaces': []
+        'today_check_count': user.today_check_count(),
+        'today_notification_count': user.today_notification_count(),
+        'yesterday_check_count': user.yesterday_check_count(),
+        'yesterday_notification_count': user.yesterday_notification_count(),
+        'this_month_check_count': user.this_month_check_count(),
+        'this_month_notification_count': user.this_month_notification_count(),
     }
-    # spaces = models.Space.query.filter_by(owner_id=user.id).all()
-    for space in user.spaces:
-        ret['spaces'].append({
-            'id': space.id,
-            'name': space.name,
-            'desc': space.desc,
-            'create_time': space.create_time,
-            'update_time': space.update_time,
-        })
     return ok(data=ret)
 
 

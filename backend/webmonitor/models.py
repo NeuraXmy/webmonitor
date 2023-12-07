@@ -1,7 +1,9 @@
 from webmonitor import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
-    
+from datetime import datetime, timedelta
+from sqlalchemy.dialects.mysql import LONGTEXT 
+from enum import Enum
+
 
 # 基本模型
 class BaseModel(db.Model):
@@ -36,6 +38,24 @@ class User(BaseModel):
 
     def check_password(self, pwd):
         return check_password_hash(self.pwd, pwd)
+
+    def today_check_count(self):
+        return sum([space.today_check_count() for space in self.spaces])
+
+    def today_notification_count(self):
+        return sum([space.today_notification_count() for space in self.spaces])
+    
+    def yesterday_check_count(self):
+        return sum([space.yesterday_check_count() for space in self.spaces])
+    
+    def yesterday_notification_count(self):
+        return sum([space.yesterday_notification_count() for space in self.spaces])
+    
+    def this_month_check_count(self):
+        return sum([space.this_month_check_count() for space in self.spaces])
+    
+    def this_month_notification_count(self):
+        return sum([space.this_month_notification_count() for space in self.spaces])
     
 
 # 监控空间模型
@@ -48,6 +68,35 @@ class Space(BaseModel):
     owner_id    = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False)
 
     watches = db.relationship('Watch', backref='space', lazy=True)
+
+    def today_check_count(self):
+        return sum([watch.today_check_count() for watch in self.watches])
+    
+    def today_notification_count(self):
+        return sum([watch.today_notification_count() for watch in self.watches])
+
+    def yesterday_check_count(self):
+        return sum([watch.yesterday_check_count() for watch in self.watches])
+    
+    def yesterday_notification_count(self):
+        return sum([watch.yesterday_notification_count() for watch in self.watches])
+    
+    def this_month_check_count(self):
+        return sum([watch.this_month_check_count() for watch in self.watches])
+    
+    def this_month_notification_count(self):
+        return sum([watch.this_month_notification_count() for watch in self.watches])
+
+
+# 检查状态枚举值
+class WatchCheckState(Enum):
+    UNKNOWN                             = (0)
+    NO_CHANGE                           = (1)
+    HAS_CHANGE_WITH_NOTIFICATION_SENT   = (2)
+    HAS_CHANGE_NO_NOTIFICATION_SENT     = (3)
+    ERROR                               = (4)
+    def __init__(self, id) -> None:
+        self.id = id
 
 
 # 监控项模型
@@ -68,9 +117,11 @@ class Watch(BaseModel):
     time_between_check_seconds  = db.Column(db.Integer, nullable=False, default=0)
     include_filters             = db.Column(db.String(1024), nullable=True)
     trigger_text                = db.Column(db.String(1024), nullable=True)
+    paused                      = db.Column(db.Integer, nullable=False, default=0)
 
-    last_check_time  = db.Column(db.DateTime, nullable=True)         # 上次检查的时间
-    last_check_state = db.Column(db.String(256), nullable=True)      # 上次检查的状态
+    last_check_state_id = db.Column(db.Integer, nullable=True)          # 上次检查的状态id
+    last_check_time     = db.Column(db.DateTime, nullable=True)         # 上次检查的时间
+    last_check_message  = db.Column(db.String(256), nullable=True)      # 上次检查的状态信息
 
     notification_email = db.Column(db.String(64), nullable=True)    
 
@@ -78,20 +129,56 @@ class Watch(BaseModel):
 
     watch_histories = db.relationship('WatchHistory', backref='watch', lazy=True)
 
+    def today_check_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now().replace(hour=0, minute=0, second=0)).count()
+
+    def today_notification_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now().replace(hour=0, minute=0, second=0),
+                                         WatchHistory.check_state_id == WatchCheckState.HAS_CHANGE_WITH_NOTIFICATION_SENT.id).count()
+
+    def yesterday_check_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=1),
+                                         WatchHistory.check_time < datetime.now().replace(hour=0, minute=0, second=0)).count()
+    
+    def yesterday_notification_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=1),
+                                         WatchHistory.check_time < datetime.now().replace(hour=0, minute=0, second=0),
+                                         WatchHistory.check_state_id == WatchCheckState.HAS_CHANGE_WITH_NOTIFICATION_SENT.id).count()
+
+    def this_month_check_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now().replace(day=1, hour=0, minute=0, second=0)).count()
+    
+    def this_month_notification_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now().replace(day=1, hour=0, minute=0, second=0),
+                                         WatchHistory.check_state_id == WatchCheckState.HAS_CHANGE_WITH_NOTIFICATION_SENT.id).count()
+
+    def last_24h_check_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now() - timedelta(days=1)).count()
+    
+    def last_24h_notification_count(self):
+        return WatchHistory.query.filter(WatchHistory.watch_id == self.id, 
+                                         WatchHistory.check_time > datetime.now() - timedelta(days=1),
+                                         WatchHistory.check_state_id == WatchCheckState.HAS_CHANGE_WITH_NOTIFICATION_SENT.id).count()
+        
 
 # 监控项检查记录模型
 class WatchHistory(BaseModel):
     __tablename__ = "t_watch_history"
 
-    check_state = db.Column(db.String(256), nullable=True)          # 检查的状态
-    check_time  = db.Column(db.DateTime, nullable=True)             # 检查的时间
+    check_state_id = db.Column(db.Integer, nullable=True)              # 检查的状态id
+    check_time     = db.Column(db.DateTime, nullable=True)             # 检查的时间
+    check_message  = db.Column(db.String(256), nullable=True)          # 检查的状态信息
 
-    content = db.Column(db.Text, nullable=True) # 检查内容
+    trigger_text = db.Column(db.String(1024), nullable=True)    # 检查时监控的触发词
 
     last_snapshot_path        = db.Column(db.String(256), nullable=True)    # 检查的快照路径
     second_last_snapshot_path = db.Column(db.String(256), nullable=True)    # 上次检查的快照路径
 
     watch_id    = db.Column(db.Integer, db.ForeignKey('t_watch.id'), nullable=False)
-
-    
-
