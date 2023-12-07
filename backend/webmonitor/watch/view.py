@@ -146,6 +146,7 @@ def get_watch(user, watch_id):
         'notification_email': watch.notification_email,
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     }
     return ok(data=ret)
 
@@ -178,6 +179,7 @@ def create_watch(user, space_id):
     watch.notification_email    = request.form.get('notification_email')
     watch.include_filters       = request.form.get('include_filters')
     watch.trigger_text          = request.form.get('trigger_text')
+    watch.paused = 0
     
     # 在changedetection.io上创建监控
     external_id = watch_utils.create_watch(watch)
@@ -216,6 +218,7 @@ def get_watch_list(user, space_id):
         'last_check_state': watch.last_check_message,
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     } for watch in ret.items]
     return ok(data=ret)
 
@@ -236,6 +239,7 @@ def get_user_watch_list(user):
         'last_check_state': watch.last_check_message,
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     } for watch in ret.items]
 
     ret = {
@@ -289,6 +293,9 @@ def soft_delete_watch(user, watch_id):
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     watch.is_deleted = 1
+
+    watch_utils.update_watch_state(watch.external_id, paused=True)
+
     models.db.session.commit()
     return ok()
 
@@ -308,6 +315,7 @@ def restore_watch(user, watch_id):
         return abort(ErrorCode.WATCH_RESTORE_FAIL)
     
     watch.is_deleted = 0
+    watch_utils.update_watch_state(watch.external_id, paused=(watch.paused==1))
 
     models.db.session.commit()
     return ok()
@@ -470,6 +478,7 @@ def get_all_watches(user):
         'notification_email': watch.notification_email,
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     } for watch in ret.items]
     return ok(data=ret)
 
@@ -504,6 +513,7 @@ def search_watches(user):
         'notification_email': watch.notification_email,
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
     }for watch in ret.items]
     return ok(data=ret)
 
@@ -526,7 +536,8 @@ def get_watches_softdeleted(user):
         'notification_email': watch.notification_email,
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
-        'space_id': watch.space_id
+        'space_id': watch.space_id,
+        'paused': watch.paused,
     }for watch in ret.items]
 
     i=0

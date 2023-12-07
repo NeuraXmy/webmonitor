@@ -117,6 +117,7 @@ class Watch(BaseModel):
     time_between_check_seconds  = db.Column(db.Integer, nullable=False, default=0)
     include_filters             = db.Column(db.String(1024), nullable=True)
     trigger_text                = db.Column(db.String(1024), nullable=True)
+    paused                      = db.Column(db.Integer, nullable=False, default=0)
 
     last_check_state_id = db.Column(db.Integer, nullable=True)          # 上次检查的状态id
     last_check_time     = db.Column(db.DateTime, nullable=True)         # 上次检查的时间
