@@ -32,9 +32,14 @@
                             :type="activity.type"
                             >
                                 <el-card>
-                                    <el-collapse v-model="activeNames" @change="handleChange">
+                                    <el-collapse v-model="activeNames" @change="handleChange(index)">
                                         <el-collapse-item :title="activity.content" :name="activity.id">
-                                            <div style="width: '80%'" v-html="activity.diff"></div>
+                                            <el-scrollbar>
+                                                <div v-html="activity.diff"></div>
+                                            </el-scrollbar>
+                                            <!-- <div v-html="history_html"></div> -->
+                                            <!-- <div style="width: 500px;border: 3px solid red;"  v-html="history_html"></div> -->
+                                            <!-- <div style="width: 80%;border: 3px solid red;"  v-html="history_html"></div> -->
                                             <!-- <div class="history-wrapper">
                                                 <div v-html="activity.diff" class="history"></div>
                                             </div> -->
@@ -65,27 +70,14 @@ export default{
                 //     id: 1,
                 //     diff: "<h1>Hello, World!</h1><p>This is an example HTML string.</p>"
                 // },
-                // {
-                //     content: 'Approved',
-                //     timestamp: '2018-04-13',
-                //     type: 'primary',
-                //     id: 2,
-                //     diff: "<h1>Hello, World!</h1><p>This is an example HTML string.</p>"
-                // },
-                // {
-                //     content: 'Success',
-                //     timestamp: '2018-04-11',
-                //     type: 'primary',
-                //     id: 3,
-                //     diff: "<h1>Hello, World!</h1><p>This is an example HTML string.</p>"
-                // },
             ],
             watch_id:'',
             history_id:'',
             history_html:'',
             watch_url:'',
             activeNames:'',
-            check_html:[]
+            check_html:[],
+            loading:false
         }
     },
     created(){
@@ -96,7 +88,7 @@ export default{
         async getHistoryList(){
             this.watch_id = sessionStorage.getItem('watch_id')
             this.watch_url = sessionStorage.getItem('watch_url')
-            // this.loading = true
+            this.loading = true
 
             const {data: res} = await this.$axios.get('/watch/' + this.watch_id + '/histories',
             {
@@ -107,30 +99,21 @@ export default{
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
             
-            // this.loading = true
+            this.loading = false
             console.log(res.data.items)
-            for(let i = 0; i < res.data.items.length; i++){
-                this.history_id = res.data.items[i].id
-                await this.getHistory()
-            }
-            
-            // console.log(this.loading)
             for(let i = 0; i < res.data.items.length; i++){
                 this.Histories.push({
                     content: res.data.items[i].check_state,
                     timestamp: res.data.items[i].check_time,
                     type: 'primary',
                     check_id: res.data.items[i].id,
-                    diff: this.check_html[i].diff
+                    diff: ''
                 })
-                console.log(this.check_html[i].diff)
-                console.log(this.Histories)
             }
-            // this.loading = false
-            // console.log(this.loading)
         },
         //获取所有单个监控的监控信息
         async getHistory(){
+            this.loading = true
             const {data: res} = await this.$axios.get('/watch/' + this.watch_id + '/history/' + this.history_id,
             {
                 headers : {
@@ -139,19 +122,27 @@ export default{
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
-            console.log(res)
-            this.check_html.push({
-                diff: res.data.content
-            })
-            console.log(this.check_html)
+            console.log(res.data)
+            // this.check_html.push({
+            //     diff: res.data.content
+            // })
+            this.loading = false
+            // console.log(res.data.content)
             this.history_html = res.data.content
         },
         //返回监控页面
         back(){
-            this.$router.push('/spaces')
+            if(sessionStorage.getItem('front') === 'spaces') this.$router.push('/spaces')
+            if(sessionStorage.getItem('front') === 'monitors') this.$router.push('/monitors')
         },
-        handleChange(){
-            // console.log(this.activeNames)
+        async handleChange(event){
+            console.log(event)
+            if(this.history_id === this.Histories[event].check_id) return ;
+            this.history_id = this.Histories[event].check_id
+            // console.log(this.history_id)
+            
+            await this.getHistory()
+            this.Histories[event].diff = this.history_html
         }
     }
 }
@@ -164,5 +155,8 @@ export default{
 .history{
     width: 80% !important;
     height: 100%;
+}
+.scrollbar-flex-content {
+  display: flex;
 }
 </style>

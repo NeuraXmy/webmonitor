@@ -28,10 +28,12 @@
                 <el-row>
                     <el-table v-loading="loading" :data="MonitorList" style="width: 100%">
                         <el-table-column prop="id" label="ID" width="50" />
-                        <el-table-column prop="name" label="监控名" width="80" />
-                        <el-table-column prop="url" label="网址" width="270" />
-                        <el-table-column prop="last_check_time" label="检查时间" width="200" />
-                        <el-table-column prop="last_check_state" label="检查状态" width="200" />
+                        <el-table-column prop="name" label="监控名" width="70" />
+                        <el-table-column prop="url" label="网址" width="230" />
+                        <el-table-column prop="last_check_time" label="检查时间" width="170" />
+                        <el-table-column prop="last_check_state" label="检查状态" width="170" />
+                        <el-table-column prop="last_24h_check_count" label="24小时检查次数" width="130" />
+                        <el-table-column prop="last_24h_notification_count" label="24小时触发警报次数" width="155" />
                         <el-table-column prop="edit" label="Edit" width="340">
                             <template #default="scope">
                                 <el-button size="small" @click="WatchEdit(scope.row)"
@@ -387,7 +389,7 @@ export default{
             TotalPages: 10,
             queryPage: {
                 page:1,
-                size:5
+                size:10
             },
             MonitorList:[
                 //   {id:'',name:'',url:'',create_time:'',update_time:'',last_check_time:''}
@@ -809,6 +811,7 @@ export default{
             sessionStorage.setItem('watch_id',row.id);
             sessionStorage.setItem('watch_url',row.url);
             sessionStorage.setItem('back_spacesValue',this.spacesValue)
+            sessionStorage.setItem('front','spaces');
             this.$router.push('/CheckHistory')
         }
     }

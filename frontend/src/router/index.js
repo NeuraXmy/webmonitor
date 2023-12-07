@@ -20,6 +20,7 @@ import RecycleUsers from '../components/super_admin/recycleUsers.vue'
 import RecycleSpaces from '../components/super_admin/recycleSpaces.vue'
 import RecycleMonitors from '../components/super_admin/recycleMonitors.vue'
 import Spaces from '../components/monitor/Spaces.vue'
+import Monitors from '../components/monitor/Monitors.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -44,7 +45,8 @@ const routes = [
             {path: '/monitor_list', component: Monitor },
             {path: '/space', component: Space },
             {path: '/CheckHistory', component: CheckHistory },
-            {path: '/spaces', component: Spaces }
+            {path: '/spaces', component: Spaces },
+            {path: '/monitors', component: Monitors }
             // ,
             // {path: '/select_monitor', component: SelectMonitor }
         ]

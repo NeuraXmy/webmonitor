@@ -31,7 +31,10 @@
                     <span><el-icon><Menu /></el-icon>任务管理</span>
                 </template> -->
                     <el-menu-item index="spaces">
-                        <span><el-icon><Compass /></el-icon>监控空间</span>
+                        <span><el-icon><Compass /></el-icon>空间</span>
+                    </el-menu-item>
+                    <el-menu-item index="monitors">
+                        <span><el-icon><Compass /></el-icon>监控</span>
                     </el-menu-item>
                 <!-- </el-sub-menu> -->
             </el-menu>

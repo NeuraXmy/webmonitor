@@ -158,6 +158,23 @@
                 </span>
             </template>
         </el-dialog>
+        <el-dialog
+            v-model="okAddElement"
+            width="30%"
+            align-center
+            >
+            <span>是否添加该元素？</span>
+            <template #footer>
+                <span class="dialog-footer">
+                <el-button type="success" @click="this.okAddElement = false">
+                    取消
+                </el-button>
+                <el-button type="primary" @click="confirm_addelement">
+                    确定
+                </el-button>
+                </span>
+            </template>
+        </el-dialog>
     </div>
     
 </template>
@@ -264,7 +281,8 @@ export default{
                 //     xpath: '123',
                 //     cssSelector: '234'
                 // }
-            ]
+            ],
+            okAddElement:false
         }
     },
     created(){
@@ -283,7 +301,7 @@ export default{
                 this.okLogin = true
                 this.fullscreenLoading = false
             }
-            // this.Element = e.data;
+            this.Element = e.data;
             this.addMonitorForm.url = e.data.baseURI;
             this.SelectText = e.data.selectText;
             if(e.data.xpath === ''){
@@ -298,12 +316,7 @@ export default{
                     }
                 }
                 if(ok){
-                    this.filters.push({
-                        option: 'XPath',
-                        element: e.data.xpath,
-                        xpath: e.data.xpath,
-                        cssSelector: e.data.selector
-                    });
+                    this.okAddElement = true;
                 }
                 
             }
@@ -335,6 +348,16 @@ export default{
                     this.filters[i].element = this.filters[i].cssSelector
                 }
             }
+        },
+        //确定添加该元素
+        confirm_addelement(){
+            this.okAddElement = false
+            this.filters.push({
+                option: 'XPath',
+                element: this.Element.xpath,
+                xpath: this.Element.xpath,
+                cssSelector: this.Element.selector
+            });
         },
         //删除单个元素
         deletefilter(event){
@@ -373,7 +396,6 @@ export default{
             })
         },
         async getMonitorSpaceList(){
-            console.log("???")
             if(this.verify_authenticity_token === '') return ;
             const {data: res} = await this.$axios.get('/spaces',
             {
