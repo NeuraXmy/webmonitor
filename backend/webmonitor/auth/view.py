@@ -34,6 +34,9 @@ def register():
     else:
         user.password = password
         user.nickname = nickname
+    models.db.session.commit()
+
+    user = models.User.query.filter_by(email=email).first()
 
     # 生成激活链接
     activation_token = generate_token(user.id)
@@ -41,7 +44,7 @@ def register():
     activation_link = base_url + '/auth/activate?token=' + activation_token
     # 发送验证邮件
     send_email(user.email, 'webmonitor账户验证', 'email/activate.html', activation_link=activation_link)
-    models.db.session.commit()
+    
     return ok()
     
 
@@ -51,6 +54,7 @@ def activate():
     token = request.args.get('token')
 
     user_id = verify_token(token, 3600)
+    print(user_id)
     if not user_id:
         return abort(ErrorCode.TOKEN_INVALID)
     
