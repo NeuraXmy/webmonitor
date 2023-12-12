@@ -23,14 +23,15 @@
                     </template>
                 </el-input>
               </el-col>
-              <!-- <el-col :span="2">
-                  <div>
-                      <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>新增监控</el-button>
-                  </div>
-              </el-col> -->
-              <el-col :span="4">
+
+              <el-col :span="2">
                   <div>
                       <el-button type="danger" @click="DeleteMonitors"><el-icon><Delete /></el-icon>批量删除</el-button>
+                  </div>
+              </el-col>
+              <el-col :span="4">
+                  <div>
+                      <el-button type="success" @click="CloseMonitors"><el-icon><Delete /></el-icon>批量关闭</el-button>
                   </div>
               </el-col>
           </el-row>
@@ -41,26 +42,47 @@
                   <el-table-column prop="notification_email" label="邮箱" width="180" />
                   <el-table-column prop="name" label="监控名" width="150" />
                   <el-table-column prop="url" label="网址" width="220" />
-                  <!-- <el-table-column prop="update_time" label="更新时间" width="200" /> -->
                   <el-table-column prop="last_check_time" label="检查时间" width="170" />
                   <el-table-column prop="last_check_state" label="检查状态" width="200" />
-                  <el-table-column prop="edit" label="Edit" width="200">
+                  <el-table-column prop="last_24h_check_count" label="24小时检查次数" width="130" />
+                  <el-table-column prop="last_24h_notification_count" label="24小时触发警报次数" width="155" />
+                  <el-table-column prop="paused" label="是否启用" width="100" >
+                        <template #default="scope">
+                            <el-switch
+                                v-model="scope.row.paused"
+                                :active-value="0"
+                                :inactive-value="1"
+                                active-color="#02538C"
+                                inactive-color="#B9B9B9"
+                                inline-prompt
+                                active-text="ON"
+                                inactive-text="OFF"
+                                @change="CloseMonitor(scope.row)"/>
+                        </template>
+                  </el-table-column>
+                  <el-table-column fixed="right" prop="edit" label="Edit" width="280">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
-                          >编辑</el-button
+                            >编辑</el-button
                           >
                           <el-button
-                          size="small"
-                          type="danger"
-                          @click="DeleteWatch(scope.row)"
-                          >删除</el-button
+                            size="small"
+                            type="danger"
+                            @click="DeleteWatch(scope.row)"
+                            >删除</el-button
                           >
                           <el-button
-                          size="small"
-                          type="info"
-                          @click="RefreshWatch(scope.row)"
-                          >刷新</el-button
+                            size="small"
+                            type="info"
+                            @click="RefreshWatch(scope.row)"
+                            >刷新</el-button
                           >
+                          <el-button
+                                size="small"
+                                type="success"
+                                @click="WatchHistory(scope.row)"
+                                >检查记录</el-button
+                            >
                       </template>
                   </el-table-column>
               </el-table>
@@ -75,79 +97,6 @@
                     />
           </el-row>
         </el-card>
-        <el-dialog
-              v-model="addMonitor"
-              title="新增监控网址"
-              width="40%"
-          >
-              <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
-                  <el-form-item label="监控名" prop="name">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="监控说明" prop="desc">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.desc" placeholder="请输入监控说明"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="网址" prop="url">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.url" placeholder="请输入网址（http://或https://开头）"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="关键词">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.trigger_text" placeholder="请输入监控关键词"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="监控元素">
-                      <el-col :span="20">
-                          <el-select v-model="this.value" placeholder="Select" size="large" @change="ChangeElement">
-                              <el-option
-                              v-for="item in options"
-                              :key="item.value"
-                              :label="item.label"
-                              :value="item.value"
-                              />
-                          </el-select>
-                          <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
-                      </el-col>
-                      
-                  </el-form-item>
-                  <el-form-item label="刷新时间">
-                      <el-form-item prop="time_between_check_weeks" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_days" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_hours" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_minutes" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_seconds" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
-                      </el-form-item>
-                  </el-form-item>
-                  <el-form-item label="通知邮箱" prop="notification_email">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.notification_email"></el-input>
-                      </el-col>
-                  </el-form-item>
-              </el-form>
-              <!-- <span>....</span> -->
-              <template #footer>
-              <span class="dialog-footer">
-                  <el-button @click="addMonitor = false">取消</el-button>
-                  <el-button type="primary" @click="addMonitorList">
-                  确定
-                  </el-button>
-              </span>
-              </template>
-          </el-dialog>
           <el-dialog
               v-model="EditMonitor"
               title="编辑监控信息"
@@ -257,6 +206,22 @@
                 </span>
             </template>
         </el-dialog>
+        <el-dialog
+            v-model="okCloseMonitors"
+            width="30%"
+            align-center
+            title="温馨提示"
+            >
+            <span>你确定要关闭选中项吗？</span>
+            <template #footer>
+                <span class="dialog-footer">
+                <el-button @click="okCloseMonitors = false">取消</el-button>
+                <el-button type="primary" @click="ConfirmCloseMonitors">
+                    确定
+                </el-button>
+                </span>
+            </template>
+        </el-dialog>
       </div>
   </template>
   <script>
@@ -360,12 +325,13 @@
                 name:'',
                 url:'',
                 page:1,
-                size:5
+                size:10
               },
               selectMonitorsRows:'',
               okDeleteMonitors:false,
               selectValue:'',
-              searchValue:''
+              searchValue:'',
+              okCloseMonitors:false
           }
       },
       created(){
@@ -404,44 +370,6 @@
               if(res.status !== 200) return  this.$message.error(res.msg)
               this.TotalPages = res.data.total
               this.MonitorList = res.data.items
-          },
-          //用户在某个space下创建监控
-          addMonitorList(){
-            this.$refs.MonitorRef.validate(async valid => {
-                console.log(valid)
-                if(!valid) return 
-                this.addMonitor=false
-                this.loading = true
-                let data = this.$qs.stringify(this.addMonitorForm)
-                const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
-                {
-                    headers : {
-                        'token': sessionStorage.getItem('token')
-                    }
-                })
-                if(res.status ===200){
-                    this.JumpMonitorManage()
-                    // this.RefreshMonitorManage(this.space_id)
-                }else{
-                    this.$message.error(res.msg);
-                }
-                this.loading = false
-            })
-          },
-          addMonitorListener(){
-              this.addMonitor=true
-              this.addMonitorForm.desc = ''
-              this.addMonitorForm.element = ''
-              this.addMonitorForm.include_filters = ''
-              this.addMonitorForm.notification_email = ''
-              this.addMonitorForm.url = ''
-              this.addMonitorForm.trigger_text = ''
-              this.addMonitorForm.name = ''
-              this.addMonitorForm.time_between_check_days = '1'
-              this.addMonitorForm.time_between_check_hours = '0'
-              this.addMonitorForm.time_between_check_minutes = '0'
-              this.addMonitorForm.time_between_check_seconds = '0'
-              this.addMonitorForm.time_between_check_weeks = ''
           },
           //用户确定删除监控
           async ConfirmDeleteWatch(){
@@ -595,7 +523,50 @@
             this.queryPage.page = 1
             this.queryPage.size = 5
             this.JumpMonitorManage();
-        }
+        },
+        //关闭监控
+        async CloseMonitor(row){
+            console.log(row)
+            let data = this.$qs.stringify(row)
+            const {data: res} = await this.$axios.post('/watch/'+row.id+'/state',data,
+            {
+                params: {
+                    'pause': row.paused
+                },
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status ===200){
+                this.JumpMonitorManage()
+            }else{
+                this.$message.error(res.msg);
+            }
+        },
+        CloseMonitors(){
+            console.log(this.selectMonitorsRows.length)
+            if(this.selectMonitorsRows.length > 0){
+                this.okCloseMonitors = true;
+            }
+        },
+        ConfirmCloseMonitors(){
+            for(let i = 0; i < this.selectMonitorsRows.length; i++){
+                this.selectMonitorsRows[i].paused = 1
+                this.CloseMonitor(this.selectMonitorsRows[i])
+            }
+            // this.RefreshMonitorManage(this.space_id)
+            this.JumpMonitorManage()
+            this.okCloseMonitors = false;
+        },
+        //点击检查记录按钮
+        WatchHistory(row){
+            console.log(row)
+            sessionStorage.setItem('watch_id',row.id);
+            sessionStorage.setItem('watch_url',row.url);
+            // sessionStorage.setItem('back_spacesValue',this.spacesValue)
+            sessionStorage.setItem('front','monitorsManagement');
+            this.$router.push('/AdminCheckHistory')
+        },
       }
   }
   

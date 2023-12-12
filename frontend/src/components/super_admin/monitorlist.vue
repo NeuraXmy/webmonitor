@@ -23,28 +23,49 @@
               <el-table v-loading="loading" :data="MonitorList" style="width: 100%" @selection-change="handleSelectionMonitorsChange">
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="id" label="ID" width="50" />
-                  <el-table-column prop="name" label="监控名" width="80" />
-                  <el-table-column prop="url" label="网址" width="270" />
-                  <!-- <el-table-column prop="update_time" label="更新时间" width="200" /> -->
-                  <el-table-column prop="last_check_time" label="检查时间" width="200" />
+                  <el-table-column prop="name" label="监控名" width="150" />
+                  <el-table-column prop="url" label="网址" width="220" />
+                  <el-table-column prop="last_check_time" label="检查时间" width="170" />
                   <el-table-column prop="last_check_state" label="检查状态" width="200" />
-                  <el-table-column prop="edit" label="Edit" width="240">
+                  <el-table-column prop="last_24h_check_count" label="24小时检查次数" width="130" />
+                  <el-table-column prop="last_24h_notification_count" label="24小时触发警报次数" width="155" />
+                  <el-table-column prop="paused" label="是否启用" width="100" >
+                        <template #default="scope">
+                            <el-switch
+                                v-model="scope.row.paused"
+                                :active-value="0"
+                                :inactive-value="1"
+                                active-color="#02538C"
+                                inactive-color="#B9B9B9"
+                                inline-prompt
+                                active-text="ON"
+                                inactive-text="OFF"
+                                @change="CloseMonitor(scope.row)"/>
+                        </template>
+                  </el-table-column>
+                  <el-table-column fixed="right" prop="edit" label="Edit" width="280">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
-                          >编辑</el-button
+                            >编辑</el-button
                           >
                           <el-button
-                          size="small"
-                          type="danger"
-                          @click="DeleteWatch(scope.row)"
-                          >删除</el-button
+                            size="small"
+                            type="danger"
+                            @click="DeleteWatch(scope.row)"
+                            >删除</el-button
                           >
                           <el-button
-                          size="small"
-                          type="info"
-                          @click="RefreshWatch(scope.row)"
-                          >刷新</el-button
+                            size="small"
+                            type="info"
+                            @click="RefreshWatch(scope.row)"
+                            >刷新</el-button
                           >
+                          <el-button
+                                size="small"
+                                type="success"
+                                @click="WatchHistory(scope.row)"
+                                >检查记录</el-button
+                            >
                       </template>
                   </el-table-column>
               </el-table>
@@ -562,7 +583,35 @@
         handleSizeMonitorChange(val){
             this.queryPage.size = val
             this.RefreshMonitorManage(this.space_id)
-        }
+        },
+        //关闭监控
+        async CloseMonitor(row){
+            console.log(row)
+            let data = this.$qs.stringify(row)
+            const {data: res} = await this.$axios.post('/watch/'+row.id+'/state',data,
+            {
+                params: {
+                    'pause': row.paused
+                },
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status ===200){
+                this.RefreshMonitorManage(this.space_id)
+            }else{
+                this.$message.error(res.msg);
+            }
+        },
+        //点击检查记录按钮
+        WatchHistory(row){
+            console.log(row)
+            sessionStorage.setItem('watch_id',row.id);
+            sessionStorage.setItem('watch_url',row.url);
+            // sessionStorage.setItem('back_spacesValue',this.spacesValue)
+            sessionStorage.setItem('front','monitorlist');
+            this.$router.push('/AdminCheckHistory')
+        },
       }
   }
   

@@ -31,7 +31,7 @@
               <span><el-icon><Compass /></el-icon>空间管理</span>
           </el-menu-item>
           <el-menu-item index="monitorsManagement">
-              <span><el-icon><Message /></el-icon>监控管理</span>
+              <span><el-icon><Monitor /></el-icon>监控管理</span>
           </el-menu-item>
           <el-sub-menu index="1">
                 <template #title>
@@ -44,7 +44,7 @@
                         <span><el-icon><Compass /></el-icon>空间回收</span>
                     </el-menu-item>
                     <el-menu-item index="RecycleMonitors">
-                        <span><el-icon><Message /></el-icon>监控回收</span>
+                        <span><el-icon><Monitor /></el-icon>监控回收</span>
                     </el-menu-item>
                 </el-sub-menu>
           </el-menu>
@@ -58,11 +58,11 @@
 
 
 <script>
-import { Menu,Compass,User,Message,Delete } from '@element-plus/icons-vue'
+import { Menu,Compass,User,Message,Delete,Monitor } from '@element-plus/icons-vue'
 import Cookies from 'universal-cookie';
 
 export default{
-  components: { Menu,Compass,User,Message,Delete },
+  components: { Menu,Compass,User,Message,Delete,Monitor },
   data() {
     return {
       admin:true

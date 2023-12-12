@@ -30,12 +30,15 @@
                 <template #title>
                     <span><el-icon><Menu /></el-icon>任务管理</span>
                 </template> -->
-                    <el-menu-item index="spaces">
-                        <span><el-icon><Compass /></el-icon>空间</span>
-                    </el-menu-item>
-                    <el-menu-item index="monitors">
-                        <span><el-icon><Compass /></el-icon>监控</span>
-                    </el-menu-item>
+                <el-menu-item index="spaces">
+                    <span><el-icon><Compass /></el-icon>空间</span>
+                </el-menu-item>
+                <el-menu-item index="monitors">
+                    <span><el-icon><Monitor /></el-icon>监控</span>
+                </el-menu-item>
+                <el-menu-item index="tools">
+                    <span><el-icon><Tools /></el-icon>工具</span>
+                </el-menu-item>
                 <!-- </el-sub-menu> -->
             </el-menu>
         </el-aside>
@@ -48,11 +51,11 @@
 
 
 <script>
-import { Menu,Compass } from '@element-plus/icons-vue'
+import { Menu,Compass,Tools,Monitor } from '@element-plus/icons-vue'
 import Cookies from 'universal-cookie';
 
 export default{
-    components: { Menu,Compass },
+    components: { Menu,Compass,Tools,Monitor },
     data(){
         return {
             okadmin:1,

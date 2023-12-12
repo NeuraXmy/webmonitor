@@ -168,7 +168,7 @@
               this.loading = true
               const {data: res} = await this.$axios.get('/spaces',
               {
-                  params: this.queryPage,
+                //   params: this.queryPage,
                   headers : {
                       'token': sessionStorage.getItem('token')
                   }

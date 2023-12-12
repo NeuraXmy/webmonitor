@@ -34,28 +34,42 @@
                         <el-table-column prop="last_check_state" label="检查状态" width="170" />
                         <el-table-column prop="last_24h_check_count" label="24小时检查次数" width="130" />
                         <el-table-column prop="last_24h_notification_count" label="24小时触发警报次数" width="155" />
-                        <el-table-column prop="edit" label="Edit" width="340">
+                        <el-table-column prop="paused" label="是否启用" width="100" >
+                            <template #default="scope">
+                                <el-switch
+                                    v-model="scope.row.paused"
+                                    :active-value="0"
+                                    :inactive-value="1"
+                                    active-color="#02538C"
+                                    inactive-color="#B9B9B9"
+                                    inline-prompt
+                                    active-text="ON"
+                                    inactive-text="OFF"
+                                    @change="CloseMonitor(scope.row)"/>
+                            </template>
+                        </el-table-column>
+                        <el-table-column fixed="right" prop="edit" label="Edit" width="330">
                             <template #default="scope">
                                 <el-button size="small" @click="WatchEdit(scope.row)"
-                                >编辑</el-button
+                                    >编辑</el-button
                                 >
                                 <el-button
-                                size="small"
-                                type="danger"
-                                @click="DeleteWatch(scope.row)"
-                                >删除</el-button
+                                    size="small"
+                                    type="danger"
+                                    @click="DeleteWatch(scope.row)"
+                                    >删除</el-button
                                 >
                                 <el-button
-                                size="small"
-                                type="info"
-                                @click="RefreshWatch(scope.row)"
-                                >刷新</el-button
+                                    size="small"
+                                    type="info"
+                                    @click="RefreshWatch(scope.row)"
+                                    >刷新</el-button
                                 >
                                 <el-button
-                                size="small"
-                                type="success"
-                                @click="WatchHistory(scope.row)"
-                                >检查记录</el-button
+                                    size="small"
+                                    type="success"
+                                    @click="WatchHistory(scope.row)"
+                                    >检查记录</el-button
                                 >
                             </template>
                         </el-table-column>
@@ -511,10 +525,11 @@ export default{
             }
             // this.MonitorSpaceList = res.data.items
             this.loading = false
-            // console.log(this.MonitorSpaceList)
+            console.log(this.MonitorSpaceList)
         },
         //获取某个space下的监控列表
         JumpMonitorManage(val){
+            // console.log("------");
             this.space_id=val.id
             window.sessionStorage.setItem('space_id',val.id)
             this.$router.push('/monitor_list')
@@ -591,7 +606,7 @@ export default{
             this.loading = true
             const {data: res} = await this.$axios.delete('/space/'+this.EditSpaceID,
             {
-                params:{id: this.EditSpaceID},
+                //params:{id: this.EditSpaceID},
                 headers : {
                     'token': sessionStorage.getItem('token')
                 }
@@ -813,6 +828,25 @@ export default{
             sessionStorage.setItem('back_spacesValue',this.spacesValue)
             sessionStorage.setItem('front','spaces');
             this.$router.push('/CheckHistory')
+        },
+        //关闭监控
+        async CloseMonitor(row){
+            console.log(row)
+            let data = this.$qs.stringify(row)
+            const {data: res} = await this.$axios.post('/watch/'+row.id+'/state',data,
+            {
+                params: {
+                    'pause': row.paused
+                },
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status ===200){
+                this.getMonitorSpaceList()
+            }else{
+                this.$message.error(res.msg);
+            }
         }
     }
 }

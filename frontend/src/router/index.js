@@ -21,6 +21,9 @@ import RecycleSpaces from '../components/super_admin/recycleSpaces.vue'
 import RecycleMonitors from '../components/super_admin/recycleMonitors.vue'
 import Spaces from '../components/monitor/Spaces.vue'
 import Monitors from '../components/monitor/Monitors.vue'
+import Tools from '../components/monitor/Tools.vue'
+import PauseMonitor from '../components/email/PauseMonitor.vue'
+import AdminCheckHistory from '../components/super_admin/AdminCheckHistory.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -46,9 +49,8 @@ const routes = [
             {path: '/space', component: Space },
             {path: '/CheckHistory', component: CheckHistory },
             {path: '/spaces', component: Spaces },
-            {path: '/monitors', component: Monitors }
-            // ,
-            // {path: '/select_monitor', component: SelectMonitor }
+            {path: '/monitors', component: Monitors },
+            {path: '/tools', component: Tools }
         ]
     },
     { 
@@ -74,7 +76,8 @@ const routes = [
             {path: '/monitorsManagement', component: MonitorsManagement },
             {path: '/RecycleUsers', component: RecycleUsers },
             {path: '/RecycleSpaces', component: RecycleSpaces },
-            {path: '/RecycleMonitors', component: RecycleMonitors }
+            {path: '/RecycleMonitors', component: RecycleMonitors },
+            {path: '/AdminCheckHistory', component: AdminCheckHistory }
         ]
     },
     { 
@@ -92,6 +95,11 @@ const routes = [
         component: test,
         hidden: true
     },
+    { 
+        path: '/pause_monitor',
+        component: PauseMonitor,
+        hidden: true
+    }
 ]
 
 const router = createRouter({
@@ -102,7 +110,7 @@ const router = createRouter({
 export default router;
 
 router.beforeEach((to, from, next) => {
-    if(to.path === '/login' || to.path === '/register' || to.path === '/activate' || to.path === '/activate_success' || to.path === '/select_monitor') return next()
+    if(to.path === '/login' || to.path === '/register' || to.path === '/activate' || to.path === '/activate_success' || to.path === '/select_monitor'|| to.path === '/pause_monitor') return next()
     const tokenStr = window.sessionStorage.getItem('token')
     if(!tokenStr) return next('/login')
     next()
