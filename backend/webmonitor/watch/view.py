@@ -388,6 +388,9 @@ def process_check_callback():
     last_snapshot_path, second_last_snapshot_path = None, None
     diff = None
 
+    mail_token = generate_token(watch.id)
+    mail_unsubscribe_url = current_app.config['FRONTEND_BASE_URL'] + '/pause_monitor?token=' + mail_token
+
     # 无变更
     if state == 0:
         check_message = '检查成功：无变更'
@@ -413,13 +416,14 @@ def process_check_callback():
                     send_email(watch.notification_email, 
                         'webmonitor-监控项变更通知', 
                         'email/notification_success.html', 
-                        watch=watch, diff=diff)
+                        watch=watch, diff=diff, unsubscribe_url=mail_unsubscribe_url)
                 else:
                     send_email(watch.notification_email, 
                         'webmonitor-监控项创建通知', 
                         'email/notification_create.html', 
                         watch=watch, diff=diff, 
-                        first_check_time=check_time.strftime(current_app.config['TIME_FORMAT']))
+                        first_check_time=check_time.strftime(current_app.config['TIME_FORMAT']),
+                        unsubscribe_url=mail_unsubscribe_url)
         else:
             check_state = WatchCheckState.HAS_CHANGE_NO_NOTIFICATION_SENT
 
@@ -433,7 +437,7 @@ def process_check_callback():
             send_email(watch.notification_email, 
                 'webmonitor-监控项获取失败通知', 
                 'email/notification_fail.html', 
-                watch=watch, message=notification_msg)
+                watch=watch, message=notification_msg, unsubscribe_url=mail_unsubscribe_url)
             
     # 未知状态
     else:
@@ -611,3 +615,91 @@ def get_watch_history_detail(user, watch_id, history_id):
 
     return ok(data=ret)
 
+
+# 设置监控状态（暂停/恢复）
+@watch_bp.route('/watch/<int:watch_id>/state', methods=['POST'])
+@login_required
+def set_watch_state(user, watch_id):
+    watch = models.Watch.query.get(watch_id)
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
+    space = models.Space.query.get(watch.space_id)
+    if user.role != 1 and space.owner_id != user.id:
+        return abort(ErrorCode.FORBIDDEN)
+    
+    paused = request.args.get('pause')
+    if paused is None:
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    if paused not in ['0', '1']:
+        return abort(ErrorCode.PARAMS_INVALID)
+    paused = int(paused)
+    if watch.paused != paused:
+        watch.paused = paused
+        watch_utils.update_watch_state(watch.external_id, paused=(paused==1))
+        models.db.session.commit()
+    return ok()
+
+
+# 获取通过邮件退订监控的监控信息
+@watch_bp.route('/watch/unsubscribe/mail', methods=['GET'])
+def get_mail_unsubscribe_info():
+    token = request.args.get('token')
+    if not token:
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    watch_id = verify_token(token, expiration=3600*24*7)
+    if not watch_id:
+        return abort(ErrorCode.PARAMS_INVALID)
+    watch = models.Watch.query.get(watch_id)
+    if not watch or watch.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    ret = {
+        'id': watch.id,
+        'name': watch.name,
+        'desc': watch.desc,
+        'url': watch.url,
+        'create_time': watch.create_time,
+        'update_time': watch.update_time,
+        'last_check_time': watch.last_check_time,
+        'last_check_state': watch.last_check_message,
+        'time_between_check_weeks': watch.time_between_check_weeks,
+        'time_between_check_days': watch.time_between_check_days,
+        'time_between_check_hours': watch.time_between_check_hours,
+        'time_between_check_minutes': watch.time_between_check_minutes,
+        'time_between_check_seconds': watch.time_between_check_seconds,
+        'include_filters': watch.include_filters,
+        'trigger_text': watch.trigger_text,
+        'notification_email': watch.notification_email,
+#        'last_24h_check_count': watch.last_24h_check_count(),
+#        'last_24h_notification_count': watch.last_24h_notification_count(),
+        'paused': watch.paused,
+    }
+
+    return ok(data=ret)
+
+
+# 通过邮件退订监控（暂停/恢复）
+@watch_bp.route('/watch/unsubscribe/mail', methods=['POST'])
+def set_mail_unsubscribe():
+    token = request.args.get('token')
+    pause = request.args.get('pause')
+    if not token or pause is None:
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    
+    watch_id = verify_token(token, expiration=3600*24*7)
+    if not watch_id:
+        return abort(ErrorCode.PARAMS_INVALID)
+    watch = models.Watch.query.get(watch_id)
+    if not watch:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    pause = int(pause)
+    if pause not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    
+    if watch.paused != pause:
+        watch.paused = pause
+        watch_utils.update_watch_state(watch.external_id, paused=(pause==1))
+        models.db.session.commit()
+
+    return ok()

@@ -23,6 +23,7 @@
     <p>监控名：{{watch.name}}</p>
     <p>监控地址：{{watch.url}}</p>
     <p>更新时间：{{watch.last_check_time}}</p>
+    <p>如果您不想再收到该监控的通知邮件，请点击<a href="{{unsubscribe_url}}">这里</a>暂停监控。</p>
     <div>
         {{diff|safe}}
     </div>
