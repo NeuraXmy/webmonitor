@@ -51,6 +51,9 @@ def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
             text = ' '.join([sub.text for sub in subs])
             remove_lines.append((index, text))
 
+    # 防止转义
+    LEFT_MARK_STR, RIGHT_MARK_STR = "$lm$", "$rm$"
+
     # 判断关键词触发
     trigger_desc = ""
     if trigger_text:
@@ -86,12 +89,7 @@ def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
                         word['indices'] = sorted(word['indices'])
                         trigger_desc += f"<p>关键词 \"{word['word']}\" 共出现 {word['count']} 次，出现位置: 第 {', '.join(word['indices'])} 行</p>"
     
-        # 添加关键词高亮的style
-        TRIGGER_WORD_STYLE = "mark {background-color: brown; color: white;}"
-        soup.head.style.string = soup.head.style.text + TRIGGER_WORD_STYLE
         # 添加关键词高亮的tag
-        # 防止转义
-        LEFT_MARK_STR, RIGHT_MARK_STR = "$lm$", "$rm$"
         for row in rows:
             _, lheader, left, _, rheader, right = row.find_all('td')
             adds = right.find_all(class_='diff_add')
@@ -105,13 +103,45 @@ def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
                 for rchg in rchgs:
                     if word['word'] in rchg.text:
                         rchg.string = rchg.text.replace(word['word'], f"{LEFT_MARK_STR}{word['word']}{RIGHT_MARK_STR}")
-        # 重新生成html
-        html_diff = soup.prettify()
-        html_diff = html_diff.replace(LEFT_MARK_STR, "<mark>").replace(RIGHT_MARK_STR, "</mark>")
+
+    # 设置style
+    STYLE_STRING = """
+    table.diff {
+        font-family: Courier;
+        border: medium;
+        word-wrap: break-word;
+        table-layout: fixed;
+        width: 100%;
+    }
+    .diff_header { 
+        background-color: #e0e0e0;
+        width: 40px;
+    }
+    td.diff_header { 
+        text-align: right;
+        vertical-align: top;
+    }
+    .diff_next { 
+        background-color: #c0c0c0; 
+        visibility: hidden;
+        width: 0px;
+    }
+    .diff_add { background-color: #aaffaa; }
+    .diff_chg { background-color: #ffff77; }
+    .diff_sub { background-color: #ffaaaa; }
+    mark { background-color: brown; color: white; }
+    """
+    soup.head.style.string = STYLE_STRING
+
+    # 重新生成html
+    html_diff = soup.prettify()
+    html_diff = html_diff.replace(LEFT_MARK_STR, "<mark>").replace(RIGHT_MARK_STR, "</mark>")
 
     final_content = render_template('diff/diff_content.html', 
                                     trigger_desc=trigger_desc, 
                                     diff_content=html_diff)
+    # 去掉nowrap
+    final_content = final_content.replace('td nowrap="nowrap"', 'td')
 
     return need_notification, check_message, final_content
 
