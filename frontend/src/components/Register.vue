@@ -17,17 +17,13 @@
             <el-form-item prop="nickname">
                 <el-input v-model="userForm.nickname" placeholder="昵称"></el-input>
             </el-form-item>
-            <vue-recaptcha
-              :sitekey="v2Sitekey"
-              size="normal"
-              theme="light"
-              hl="zh"
-              @verify="recaptchaVerified"
-              @expire="recaptchaExpired"
-              @fail="recaptchaFailed"
-              ref="vueRecaptcha">
-            </vue-recaptcha>
+            <cfturnstile
+              :sitekey="sitekey"
+              @verify="verify"
+            />
+            <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAOhZLLzYs90Djqz" data-theme="light" data-callback="javascriptCallback"></div> -->
             <el-form-item>
+                <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAOhZLLzYs90Djqz" data-callback="javascriptCallback"></div> -->
                 <el-button type="primary" @click="register">注册</el-button>
                 <el-button @click="restForm">重置</el-button>
             </el-form-item>
@@ -38,8 +34,11 @@
 
 <script>
 import vueRecaptcha from 'vue3-recaptcha2';
+import cfturnstile from 'cfturnstile-vue3'
+
+
 export default {
-  components: { vueRecaptcha },
+  components: { vueRecaptcha,cfturnstile },
   data() {
     const validEmail = (rule, value, callback) => {
       const EmailReg = /^^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/
@@ -65,21 +64,18 @@ export default {
               {required:true, min:2,  message: '昵称长度不能小于2位', trigger:'blur'}
           ]
       },
-      okVerified: false
+      okVerified: false,
+      sitekey:'0x4AAAAAAAOhZLLzYs90Djqz'
     };
   },
   setup() {
-    const v2Sitekey = '6LcqoRMpAAAAAIYDSZpLccz_w7axiDZ9EvUaFaqt';
-    return {
-      v2Sitekey
-    }
+    
   },
   methods:{
     restForm(){
-      // console.log(this)
       this.$refs.userRegisterRef.resetFields()
     },
-    register(){
+    async register(){
       if(this.okVerified === true){
         this.$refs.userRegisterRef.validate(async valid => {
           console.log(valid)
@@ -101,20 +97,9 @@ export default {
       }
       
     },
-    // 回传一组 token，并把 token 传给后端验证
-    recaptchaVerified(res){
-      console.log(res)
-      this.okVerified = true
-	  },
- 
-    recaptchaExpired(){
-      // 过期后执行动作
-      this.okVerified = false
-    },
- 
-    recaptchaFailed(){
-      // 失败执行动作
-      this.okVerified = false
+    async verify(token) {
+        console.log(token)
+        this.okVerified = true;
     }
   }
 }

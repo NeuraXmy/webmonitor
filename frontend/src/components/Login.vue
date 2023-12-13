@@ -15,12 +15,14 @@
                 <el-input show-password prefix-icon="Lock" v-model="userForm.password" placeholder="密码"></el-input>
             </el-form-item>
             <el-form-item>
+              <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAOhZLLzYs90Djqz" data-callback="javascriptCallback"></div> -->
                 <el-button type="primary" @click="login">登录</el-button>
                 <el-button @click="restForm">重置</el-button>
             </el-form-item>
-            <router-link to="/register">
+            <a class="form__link" @click="register">注册</a>
+            <!-- <router-link to="/register">
               <div style="margin-top: 5px">注册</div>
-          </router-link>
+          </router-link> -->
         </el-form>
     </div>
   </div>
@@ -85,7 +87,12 @@ export default{
       })
     },
     register(){
-      this.$router.push('/register')
+      console.log("-----")
+      // this.$router.push('/register')
+      this.$router.push({ path: '/register' }).then(() => {
+        console.log("----")
+        location.reload()
+      })
     },
     forgetPassword(){
 
@@ -185,8 +192,9 @@ export default{
 }
 .form__link {
   /* color: #181818; */
-  font-size: 13px;
+  font-size: 14px;
   margin-top: 25px;
+  color: #409EFF;
   border-bottom: 1px solid #a0a5a8;
   line-height: 2;
   cursor: pointer;

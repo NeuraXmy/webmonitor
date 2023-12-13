@@ -371,9 +371,9 @@ export default{
             this.addMonitorForm.include_filters = ''
             for(let i = 0; i < this.filters.length; i++){
                 if(this.filters[i].option === 'XPath')
-                    this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "xpath:" + this.filters[i].xpath + '\n';
+                    this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + this.filters[i].xpath + '\n';
                 if(this.filters[i].option === 'CssSelector')
-                    this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + "css:" + this.filters[i].cssSelector + '\n';
+                    this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + this.filters[i].cssSelector + '\n';
             }
             console.log(this.addMonitorForm.include_filters)
             // console.log(document.cookie)
