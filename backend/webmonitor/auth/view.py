@@ -3,7 +3,7 @@ from webmonitor import models
 from flask import render_template, request, current_app, redirect, url_for
 from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
-from webmonitor.utils.email import send_email
+from webmonitor.utils.send_email import send_email
 
 
 # 用户注册
@@ -12,6 +12,9 @@ def register():
     email       = request.form.get('email')
     password    = request.form.get('password')
     nickname    = request.form.get('nickname')
+
+    current_app.logger.info(f"user register with email={email}, password={password}, nickname={nickname}")
+
     if not all([email, password, nickname]):
         abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
@@ -54,7 +57,9 @@ def activate():
     token = request.args.get('token')
 
     user_id = verify_token(token, 3600)
-    print(user_id)
+
+    current_app.logger.info(f"user activate with token={token}, user_id={user_id}")
+    
     if not user_id:
         return abort(ErrorCode.TOKEN_INVALID)
     
@@ -67,6 +72,7 @@ def activate():
     # 激活用户
     user.activated = True
     user.activated_on = models.datetime.now()
+    user.month_quota = 500
 
     # 创建默认空间
     space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)
@@ -83,6 +89,9 @@ def activate():
 def login():
     email    = request.form.get('email')
     password = request.form.get('password')
+
+    current_app.logger.info(f"user login with email={email}, password={password}")
+
     if not all([email, password]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     import re
@@ -107,7 +116,7 @@ def login():
     return ok(data={
         'token': token,
         'role': user.role
-        })
+    })
 
 
 # 管理员登录
@@ -115,6 +124,9 @@ def login():
 def admin_login():
     email    = request.form.get('email')
     password = request.form.get('password')
+
+    current_app.logger.info(f"admin login with email={email}, password={password}")
+
     if not all([email, password]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     import re

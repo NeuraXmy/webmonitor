@@ -1,10 +1,10 @@
 from webmonitor.space import space_bp
 from webmonitor import models
-from flask import render_template, request
+from flask import render_template, request, current_app
 from flask_restful import Resource
 from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
-from webmonitor.utils.email import send_email
+from webmonitor.utils.send_email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
 from webmonitor.utils.page import paginate
@@ -14,6 +14,8 @@ from webmonitor.utils.page import paginate
 @space_bp.route('/spaces', methods=['GET'])
 @login_required
 def get_space_list(user):
+    current_app.logger.info(f"get space list with user_id={user.id}")
+        
     ret = models.Space.query.filter_by(owner_id=user.id, is_deleted=0).order_by(models.Space.create_time).all()
     ret = { 
         'items': [{
@@ -30,6 +32,8 @@ def get_space_list(user):
 @space_bp.route('/user/<int:user_id>/spaces', methods=['GET'])
 @login_required
 def get_space_list_by_user(user, user_id):
+    current_app.logger.info(f"get space list by user with admin_id={user.id}, user_id={user_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Space.query.filter_by(owner_id=user_id, is_deleted=0).order_by(models.Space.create_time.desc()))
@@ -46,6 +50,8 @@ def get_space_list_by_user(user, user_id):
 @space_bp.route('/space/<int:space_id>', methods=['GET'])
 @login_required
 def get_space(user, space_id):
+    current_app.logger.info(f"get space with user_id={user.id}, space_id={space_id}")
+
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
@@ -72,6 +78,9 @@ def get_space(user, space_id):
 def create_space(user):
     name = request.form.get('name')
     desc = request.form.get('desc')
+
+    current_app.logger.info(f"create space with user_id={user.id}, name={name}")
+
     if not name:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     if len(name) > 20:
@@ -93,6 +102,9 @@ def create_space_by_user(user, user_id):
         return abort(ErrorCode.FORBIDDEN)
     name = request.form.get('name')
     desc = request.form.get('desc')
+
+    current_app.logger.info(f"create space by user with admin_id={user.id}, user_id={user_id}, name={name}")
+
     if not name:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     if len(name) > 20:
@@ -110,6 +122,8 @@ def create_space_by_user(user, user_id):
 @space_bp.route('/space/<int:space_id>', methods=['PUT'])
 @login_required
 def modify_space(user, space_id):
+    current_app.logger.info(f"modify space with user_id={user.id}, space_id={space_id}")
+
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
@@ -135,6 +149,8 @@ def modify_space(user, space_id):
 @space_bp.route('/space/<int:space_id>', methods=['DELETE'])
 @login_required
 def delete_space(user, space_id):
+    current_app.logger.info(f"delete space with user_id={user.id}, space_id={space_id}")
+
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
@@ -146,6 +162,8 @@ def delete_space(user, space_id):
     for watch in space.watches:
         external_ids.append(watch.external_id)
         models.db.session.delete(watch)
+    for check_count in space.check_counts:
+        models.db.session.delete(check_count)
     models.db.session.delete(space)
     models.db.session.commit()
     for id in external_ids:
@@ -157,9 +175,12 @@ def delete_space(user, space_id):
 @space_bp.route('/spaces/search', methods=['GET'])
 @login_required
 def search_spaces(user):
+    name = request.args.get('name')
+
+    current_app.logger.info(f"search spaces with admin_id={user.id}, name={name}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
-    name = request.args.get('name')
     if not name:
         ret = paginate(models.Space.query.filter_by(is_deleted=0).order_by(models.Space.create_time.desc()))
     else:
@@ -186,6 +207,8 @@ def search_spaces(user):
 @space_bp.route('/spaces/all', methods=['GET'])
 @login_required
 def get_all_spaces(user):
+    current_app.logger.info(f"get all spaces with admin_id={user.id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Space.query.filter_by(is_deleted=0).order_by(models.Space.create_time.desc()))
@@ -210,6 +233,8 @@ def get_all_spaces(user):
 @space_bp.route('/space/<int:space_id>/softdelete', methods=['PUT'])
 @login_required
 def soft_delete_space(user, space_id):
+    current_app.logger.info(f"soft delete space with admin_id={user.id}, space_id={space_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     space = models.Space.query.filter_by(id=space_id).first()
@@ -226,6 +251,8 @@ def soft_delete_space(user, space_id):
 @space_bp.route('/space/<int:space_id>/restore', methods=['PUT'])
 @login_required
 def restore_space(user, space_id):
+    current_app.logger.info(f"restore space with admin_id={user.id}, space_id={space_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     space = models.Space.query.filter_by(id=space_id).first()
@@ -245,6 +272,8 @@ def restore_space(user, space_id):
 @space_bp.route('/spaces/softdelete', methods=['GET'])
 @login_required
 def get_spaces_softdeleted(user):
+    current_app.logger.info(f"get soft deleted spaces with admin_id={user.id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Space.query.filter_by(is_deleted=1).order_by(models.Space.update_time.desc()))

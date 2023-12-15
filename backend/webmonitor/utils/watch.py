@@ -17,6 +17,7 @@ def print_watch(watch):
 
 # 获取所有的watch
 def get_all_watch():
+    current_app.logger.info(f"cdio get all watch")
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, }
@@ -31,6 +32,7 @@ def get_all_watch():
 
 # 获取指定的watch
 def get_watch(id):
+    current_app.logger.info(f"cdio get watch with id={id}")
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, }
@@ -42,6 +44,7 @@ def get_watch(id):
 
 # 设置指定watch的状态 recheck:是否立刻更新 paused:设置暂停 muted:设置静音 
 def update_watch_state(id, recheck=None, paused=None, muted=None):
+    current_app.logger.info(f"cdio update watch state with id={id} recheck={recheck} paused={paused} muted={muted}")
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, }
@@ -84,6 +87,7 @@ def extract_watch_data(watch):
 
 # 创建一个watch
 def create_watch(watch_model):
+    current_app.logger.info(f"cdio create watch with name={watch_model.name} url={watch_model.url}")
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, "Content-Type": "application/json" }   
@@ -93,6 +97,7 @@ def create_watch(watch_model):
 
 # 修改一个watch
 def update_watch(id, watch_model):
+    current_app.logger.info(f"cdio update watch with id={id} name={watch_model.name} url={watch_model.url}")
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, "Content-Type": "application/json" }   
@@ -102,6 +107,7 @@ def update_watch(id, watch_model):
 
 # 删除一个watch
 def delete_watch(id):
+    current_app.logger.info(f"cdio delete watch with id={id}")
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, }
@@ -111,6 +117,7 @@ def delete_watch(id):
 
 # 查询一个watch的所有历史记录 返回按时间排序的历史记录列表
 def get_watch_snapshot_list(id):
+    current_app.logger.info(f"cdio get watch snapshot list with id={id}")
     api_key = current_app.config['CHANGEDETECTIONIO_API_KEY']
     url     = current_app.config['CHANGEDETECTIONIO_API_URL']
     headers = { "x-api-key": api_key, }
@@ -124,6 +131,7 @@ def get_watch_snapshot_list(id):
 
 # 读取某个历史记录的内容
 def load_snapshot(snapshot):
+    current_app.logger.info(f"cdio load snapshot with file={snapshot['file']}")
     dir = current_app.config['CHANGEDETECTIONIO_DIRECTORY']
     watch_path = '/'.join(snapshot['file'].split('/')[-2:])
     file_path = os.path.join(dir, watch_path)
