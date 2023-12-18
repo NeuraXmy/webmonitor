@@ -6,6 +6,7 @@ from flask import current_app, render_template
 from webmonitor.utils.error import ErrorCode, abort
 
 def send_email(to, subject, template, **kwargs):
+    current_app.logger.info(f"send email to {to} with subject={subject} template={template}")
     html = render_template(template, **kwargs)
     config = current_app.config
     email_thread = threading.Thread(target=send_email_thread, args=(to, subject, html, config))

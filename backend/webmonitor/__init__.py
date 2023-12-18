@@ -39,6 +39,7 @@ def register_plugin(app):
     apply_cors(app)
     apply_json_provider(app)
     apply_exception_handler(app)
+    apply_logger(app)
 
 
 def apply_cors(app):
@@ -54,13 +55,27 @@ def apply_json_provider(app):
 def apply_exception_handler(app):
     from webmonitor.utils.error import ErrorCode
     from webmonitor.utils.error import APIException
+
     @app.errorhandler(APIException)
     def handle_api_exception(ex: APIException):
         return ex.error_code.to_response(msg=ex.msg)
+    
     @app.errorhandler(Exception)
     def handle_exception(ex):
-        print("Unhandled Exception Ocurred:")
         import traceback
-        traceback.print_exception(type(ex), ex, ex.__traceback__)
-        return ErrorCode.INTERNAL_SERVER_ERROR.to_response(msg=str(ex))
+        tb_msg = traceback.format_exception(type(ex), ex, ex.__traceback__)
+        app.logger.error(f"Unhandled Exception Ocurred: {ex}\n" + "".join(tb_msg))
+
+        from sqlalchemy.exc import SQLAlchemyError
+        if isinstance(ex, SQLAlchemyError):
+            if db.session.is_active:
+                app.logger.error("Database Session is active, rollback.")
+                db.session.rollback()
+            else:
+                app.logger.error("Database Session is not active, rollback failed.")
+
+        return ErrorCode.INTERNAL_SERVER_ERROR.to_response(msg=f"Unhandled Exception Ocurred: {ex}")
     
+
+def apply_logger(app):
+    pass

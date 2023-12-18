@@ -5,7 +5,7 @@ from flask import render_template, request, current_app
 from flask_restful import Resource
 from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
-from webmonitor.utils.email import send_email
+from webmonitor.utils.send_email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
 from webmonitor.utils.page import paginate
@@ -51,6 +51,9 @@ def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
             text = ' '.join([sub.text for sub in subs])
             remove_lines.append((index, text))
 
+    # 防止转义
+    LEFT_MARK_STR, RIGHT_MARK_STR = "$lm$", "$rm$"
+
     # 判断关键词触发
     trigger_desc = ""
     if trigger_text:
@@ -86,12 +89,7 @@ def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
                         word['indices'] = sorted(word['indices'])
                         trigger_desc += f"<p>关键词 \"{word['word']}\" 共出现 {word['count']} 次，出现位置: 第 {', '.join(word['indices'])} 行</p>"
     
-        # 添加关键词高亮的style
-        TRIGGER_WORD_STYLE = "mark {background-color: brown; color: white;}"
-        soup.head.style.string = soup.head.style.text + TRIGGER_WORD_STYLE
         # 添加关键词高亮的tag
-        # 防止转义
-        LEFT_MARK_STR, RIGHT_MARK_STR = "$lm$", "$rm$"
         for row in rows:
             _, lheader, left, _, rheader, right = row.find_all('td')
             adds = right.find_all(class_='diff_add')
@@ -105,13 +103,45 @@ def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
                 for rchg in rchgs:
                     if word['word'] in rchg.text:
                         rchg.string = rchg.text.replace(word['word'], f"{LEFT_MARK_STR}{word['word']}{RIGHT_MARK_STR}")
-        # 重新生成html
-        html_diff = soup.prettify()
-        html_diff = html_diff.replace(LEFT_MARK_STR, "<mark>").replace(RIGHT_MARK_STR, "</mark>")
+
+    # 设置style
+    STYLE_STRING = """
+    table.diff {
+        font-family: Courier;
+        border: medium;
+        word-wrap: break-word;
+        table-layout: fixed;
+        width: 100%;
+    }
+    .diff_header { 
+        background-color: #e0e0e0;
+        width: 40px;
+    }
+    td.diff_header { 
+        text-align: right;
+        vertical-align: top;
+    }
+    .diff_next { 
+        background-color: #c0c0c0; 
+        visibility: hidden;
+        width: 0px;
+    }
+    .diff_add { background-color: #aaffaa; }
+    .diff_chg { background-color: #ffff77; }
+    .diff_sub { background-color: #ffaaaa; }
+    mark { background-color: brown; color: white; }
+    """
+    soup.head.style.string = STYLE_STRING
+
+    # 重新生成html
+    html_diff = soup.prettify()
+    html_diff = html_diff.replace(LEFT_MARK_STR, "<mark>").replace(RIGHT_MARK_STR, "</mark>")
 
     final_content = render_template('diff/diff_content.html', 
                                     trigger_desc=trigger_desc, 
                                     diff_content=html_diff)
+    # 去掉nowrap
+    final_content = final_content.replace('td nowrap="nowrap"', 'td')
 
     return need_notification, check_message, final_content
 
@@ -120,6 +150,8 @@ def compare_watch(last_snapshot, second_last_snapshot=None, trigger_text=None):
 @watch_bp.route('/watch/<int:watch_id>', methods=['GET'])
 @login_required
 def get_watch(user, watch_id):
+    current_app.logger.info(f"user get watch with user_id={user.id}, watch_id={watch_id}")
+
     watch = models.Watch.query.get(watch_id)
     space = models.Space.query.get(watch.space_id)
     if not watch:
@@ -155,6 +187,8 @@ def get_watch(user, watch_id):
 @watch_bp.route('/space/<int:space_id>/watch', methods=['POST'])
 @login_required
 def create_watch(user, space_id):
+    current_app.logger.info(f"user create watch with user_id={user.id}, space_id={space_id}")
+
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
@@ -200,6 +234,8 @@ def create_watch(user, space_id):
 @watch_bp.route('/space/<int:space_id>/watches', methods=['GET'])
 @login_required
 def get_watch_list(user, space_id):
+    current_app.logger.info(f"user get watch list with user_id={user.id}, space_id={space_id}")
+
     space = models.Space.query.get(space_id)
     if not space:
         return abort(ErrorCode.NOT_FOUND)
@@ -227,6 +263,8 @@ def get_watch_list(user, space_id):
 @watch_bp.route('/user_watches', methods=['GET'])
 @login_required
 def get_user_watch_list(user):
+    current_app.logger.info(f"user get watch list with user_id={user.id}")
+
     spaces_ids = [space.id for space in user.spaces]
     ret = paginate(models.Watch.query.filter(models.Watch.space_id.in_(spaces_ids), models.Watch.is_deleted==0).order_by(models.Watch.create_time.desc()))
     ret.items = [{
@@ -254,6 +292,8 @@ def get_user_watch_list(user):
         'yesterday_notification_count': user.yesterday_notification_count(),
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
+        'month_quota': user.month_quota,
+        'quota_exceeded': user.quota_exceeded,
     }
 
     return ok(data=ret)
@@ -263,6 +303,8 @@ def get_user_watch_list(user):
 @watch_bp.route('/watch/<int:watch_id>', methods=['DELETE'])
 @login_required
 def delete_watch(user, watch_id):
+    current_app.logger.info(f"user delete watch with user_id={user.id}, watch_id={watch_id}")
+
     watch = models.Watch.query.get(watch_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
@@ -287,15 +329,16 @@ def delete_watch(user, watch_id):
 @watch_bp.route('/watch/<int:watch_id>/softdelete', methods=['PUT'])
 @login_required
 def soft_delete_watch(user, watch_id):
+    current_app.logger.info(f"admin soft delete watch with user_id={user.id}, watch_id={watch_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     watch = models.Watch.query.filter_by(id=watch_id).first()
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
     watch.is_deleted = 1
-
-    watch_utils.update_watch_state(watch.external_id, paused=True)
-
+    
+    watch.sync_cdio_pause()
     models.db.session.commit()
     return ok()
 
@@ -304,6 +347,8 @@ def soft_delete_watch(user, watch_id):
 @watch_bp.route('/watch/<int:watch_id>/restore', methods=['PUT'])
 @login_required
 def restore_watch(user, watch_id):
+    current_app.logger.info(f"admin restore watch with user_id={user.id}, watch_id={watch_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     watch = models.Watch.query.filter_by(id=watch_id).first()
@@ -315,8 +360,7 @@ def restore_watch(user, watch_id):
         return abort(ErrorCode.WATCH_RESTORE_FAIL)
     
     watch.is_deleted = 0
-    watch_utils.update_watch_state(watch.external_id, paused=(watch.paused==1))
-
+    watch.sync_cdio_pause()
     models.db.session.commit()
     return ok()
 
@@ -325,6 +369,8 @@ def restore_watch(user, watch_id):
 @watch_bp.route('/watch/<int:watch_id>', methods=['PUT'])
 @login_required
 def update_watch(user, watch_id):
+    current_app.logger.info(f"user update watch with user_id={user.id}, watch_id={watch_id}")
+
     watch = models.Watch.query.get(watch_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
@@ -360,6 +406,8 @@ def update_watch(user, watch_id):
 @watch_bp.route('/watch/<int:watch_id>/check', methods=['POST'])
 @login_required
 def check_watch(user, watch_id):
+    current_app.logger.info(f"user check watch with user_id={user.id}, watch_id={watch_id}")
+
     watch = models.Watch.query.get(watch_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
@@ -378,9 +426,27 @@ def process_check_callback():
     state         = request.get_json().get('state')
     watch_uuid    = request.get_json().get('watch_uuid')
     msg           = request.get_json().get('msg')
+
+    current_app.logger.info(f"cdio check callback with state={state}, watch_uuid={watch_uuid}, msg={msg}")
+
+    # 获取监控、空间、用户
     watch = models.Watch.query.filter_by(external_id=watch_uuid).first()
     if not watch or watch.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
+    if watch.paused == 1:
+        return abort(ErrorCode.WATCH_ALREADY_PAUSED)
+    
+    space = models.Space.query.get(watch.space_id)
+    if not space or space.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+
+    user  = models.User.query.get(space.owner_id)
+    if not user or user.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    if user.quota_exceeded == 1:
+        return abort(ErrorCode.USER_QUOTA_EXCEEDED)
+    
+    current_app.logger.info(f"watch_uuid to watch_id={watch.id}")
     
     check_state = WatchCheckState.UNKNOWN
     check_time = datetime.now()
@@ -388,6 +454,7 @@ def process_check_callback():
     last_snapshot_path, second_last_snapshot_path = None, None
     diff = None
 
+    # 生成邮件退订链接
     mail_token = generate_token(watch.id)
     mail_unsubscribe_url = current_app.config['FRONTEND_BASE_URL'] + '/pause_monitor?token=' + mail_token
 
@@ -459,6 +526,14 @@ def process_check_callback():
     history.trigger_text = watch.trigger_text
     models.db.session.add(history)
 
+    # 更新用户和空间的统计信息
+    user.increase_check_count(check_state)
+    space.increase_check_count(check_state)
+
+    models.db.session.commit()
+
+    # 检查是否超额
+    user.check_quota()
     models.db.session.commit()
     
     return ok()
@@ -468,6 +543,8 @@ def process_check_callback():
 @watch_bp.route('/watches', methods=['GET'])
 @login_required
 def get_all_watches(user):
+    current_app.logger.info(f"admin get all watches with user_id={user.id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Watch.query.filter_by(is_deleted=0).order_by(models.Watch.create_time.desc()))
@@ -491,10 +568,14 @@ def get_all_watches(user):
 @watch_bp.route('/watches/search', methods=['GET'])
 @login_required
 def search_watches(user):
-    if user.role != 1:
-        return abort(ErrorCode.FORBIDDEN)
     url = request.args.get('url')
     name = request.args.get('name')
+
+    current_app.logger.info(f"admin search watches with user_id={user.id}, url={url}, name={name}")
+
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+
     if not any([url, name]):
         ret = paginate(models.Watch.query.filter_by(is_deleted=0).order_by(models.Watch.create_time.desc()))
     else:
@@ -526,6 +607,8 @@ def search_watches(user):
 @watch_bp.route('/watches/softdelete', methods=['GET'])
 @login_required
 def get_watches_softdeleted(user):
+    current_app.logger.info(f"admin get soft deleted watches with user_id={user.id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.Watch.query.filter_by(is_deleted=1).order_by(models.Watch.update_time.desc()))
@@ -561,6 +644,8 @@ def get_watches_softdeleted(user):
 @watch_bp.route('/watch/<int:watch_id>/histories', methods=['GET'])
 @login_required
 def get_watch_history(user, watch_id):
+    current_app.logger.info(f"user get watch history with user_id={user.id}, watch_id={watch_id}")
+
     watch = models.Watch.query.get(watch_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
@@ -585,6 +670,8 @@ def get_watch_history(user, watch_id):
 @watch_bp.route('/watch/<int:watch_id>/history/<int:history_id>', methods=['GET'])
 @login_required
 def get_watch_history_detail(user, watch_id, history_id):
+    current_app.logger.info(f"user get watch history detail with user_id={user.id}, watch_id={watch_id}, history_id={history_id}")
+
     watch = models.Watch.query.get(watch_id)
     if not watch:  
         return abort(ErrorCode.NOT_FOUND)
@@ -620,6 +707,10 @@ def get_watch_history_detail(user, watch_id, history_id):
 @watch_bp.route('/watch/<int:watch_id>/state', methods=['POST'])
 @login_required
 def set_watch_state(user, watch_id):
+    paused = request.args.get('pause')
+
+    current_app.logger.info(f"user set watch state with user_id={user.id}, watch_id={watch_id}, pause={paused}")
+
     watch = models.Watch.query.get(watch_id)
     if not watch:
         return abort(ErrorCode.NOT_FOUND)
@@ -627,7 +718,6 @@ def set_watch_state(user, watch_id):
     if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
-    paused = request.args.get('pause')
     if paused is None:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     if paused not in ['0', '1']:
@@ -635,7 +725,7 @@ def set_watch_state(user, watch_id):
     paused = int(paused)
     if watch.paused != paused:
         watch.paused = paused
-        watch_utils.update_watch_state(watch.external_id, paused=(paused==1))
+        watch.sync_cdio_pause()
         models.db.session.commit()
     return ok()
 
@@ -644,11 +734,17 @@ def set_watch_state(user, watch_id):
 @watch_bp.route('/watch/unsubscribe/mail', methods=['GET'])
 def get_mail_unsubscribe_info():
     token = request.args.get('token')
+
+    current_app.logger.info(f"get mail unsubscribe info with token={token}")
+
     if not token:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     watch_id = verify_token(token, expiration=3600*24*7)
     if not watch_id:
         return abort(ErrorCode.PARAMS_INVALID)
+    
+    current_app.logger.info(f"token to watch_id={watch_id}")
+
     watch = models.Watch.query.get(watch_id)
     if not watch or watch.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
@@ -683,10 +779,16 @@ def get_mail_unsubscribe_info():
 def set_mail_unsubscribe():
     token = request.args.get('token')
     pause = request.args.get('pause')
+
+    current_app.logger.info(f"set mail unsubscribe with token={token}, pause={pause}")
+
     if not token or pause is None:
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     
     watch_id = verify_token(token, expiration=3600*24*7)
+
+    current_app.logger.info(f"token to watch_id={watch_id}")
+
     if not watch_id:
         return abort(ErrorCode.PARAMS_INVALID)
     watch = models.Watch.query.get(watch_id)
@@ -699,7 +801,7 @@ def set_mail_unsubscribe():
     
     if watch.paused != pause:
         watch.paused = pause
-        watch_utils.update_watch_state(watch.external_id, paused=(pause==1))
+        watch.sync_cdio_pause()
         models.db.session.commit()
 
     return ok()

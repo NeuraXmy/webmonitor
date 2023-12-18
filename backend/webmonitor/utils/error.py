@@ -1,4 +1,4 @@
-from flask import make_response
+from flask import make_response, current_app
 from enum import Enum
 
 
@@ -24,6 +24,9 @@ class ErrorCode(Enum):
     
     # ---------------------- 8xx watch ---------------------- #
     WATCH_RESTORE_FAIL     = (200, 800, "空间被软删除，无法恢复监控项")
+    WATCH_ALREADY_PAUSED   = (200, 801, "监控项已暂停")
+    USER_QUOTA_EXCEEDED    = (200, 802, "用户配额超出限制")
+    SPACE_QUOTA_EXCEEDED   = (200, 803, "空间配额超出限制")
 
     # ---------------------- 9xx space ---------------------- #
     SAPCE_RESTORE_FAIL           = (200, 900, "用户被软删除，无法恢复空间")
@@ -36,8 +39,6 @@ class ErrorCode(Enum):
         self.msg = msg                   # 错误消息
 
     def to_response(self, msg=None, data=None):
-        if msg is None:
-            msg = self.msg
         # 因为不方便修改，返回前端时错误码仍然命名为status而不是code
         if data:
             response = make_response({
@@ -62,9 +63,15 @@ class APIException(Exception):
     
 
 def abort(error_code: ErrorCode, msg=None):
+    if not msg:
+        msg = error_code.msg
+    current_app.logger.info(f"response sent with error_code={error_code.code}, msg={msg}")
     raise APIException(error_code, msg)
 
 def ok(msg=None, data=None):
+    if not msg:
+        msg = ErrorCode.OK.msg
+    current_app.logger.info(f"response sent with error_code={ErrorCode.OK.code}, msg={msg}")
     return ErrorCode.OK.to_response(msg, data)
     
 

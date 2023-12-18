@@ -1,10 +1,10 @@
 from webmonitor.user import user_bp
 from webmonitor import models
-from flask import render_template, request
+from flask import render_template, request, current_app
 from flask_restful import Resource
 from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
-from webmonitor.utils.email import send_email
+from webmonitor.utils.send_email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
 from webmonitor.utils.page import paginate
@@ -14,6 +14,8 @@ from webmonitor.utils.page import paginate
 @user_bp.route('/user', methods=['GET'])
 @login_required
 def get_user_info(user):
+    current_app.logger.info(f"user get info with user_id={user.id}")
+
     ret = {
         'id': user.id,
         'email': user.email,
@@ -27,6 +29,8 @@ def get_user_info(user):
         'yesterday_notification_count': user.yesterday_notification_count(),
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
+        'month_quota': user.month_quota,
+        'quota_exceeded': user.quota_exceeded,
     }
     return ok(data=ret)
 
@@ -38,10 +42,16 @@ def update_user_info(user):
     nickname = request.form.get('nickname')
     email    = request.form.get('email')
     password = request.form.get('password')
+
+    current_app.logger.info(f"user update info with user_id={user.id}, nickname={nickname}, email={email}")
+        
     if not all([nickname, email, password]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     if len(nickname) < 2:
         return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
+    if models.User.query.filter_by(email=email).first() and email != user.email:
+        return abort(ErrorCode.USER_ALREADY_EXISTS, msg="邮箱已被使用")
+
     user.nickname = nickname
     user.email    = email
     user.password = password
@@ -53,6 +63,8 @@ def update_user_info(user):
 @user_bp.route('/users', methods=['GET'])
 @login_required
 def get_all_users_info(user):
+    current_app.logger.info(f"admin get all users info with user_id={user.id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.User.query.filter_by(is_deleted=0).order_by(models.User.create_time.desc()))
@@ -75,6 +87,8 @@ def get_all_users_info(user):
 @user_bp.route('/user/<int:user_id>', methods=['GET'])
 @login_required
 def get_certain_user_info(user, user_id):
+    current_app.logger.info(f"admin get certain user info with user_id={user.id}, target_user_id={user_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     user = models.User.query.get(user_id)
@@ -93,6 +107,8 @@ def get_certain_user_info(user, user_id):
         'yesterday_notification_count': user.yesterday_notification_count(),
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
+        'month_quota': user.month_quota,
+        'quota_exceeded': user.quota_exceeded,
     }
     return ok(data=ret)
 
@@ -106,22 +122,38 @@ def update_certain_user_info(user, user_id):
     user = models.User.query.get(user_id)
     if not user:
         return abort(ErrorCode.NOT_FOUND)
+    
     nickname = request.form.get('nickname')
     email    = request.form.get('email')
     password = request.form.get('password')
-    role     = int(request.form.get('role'))
-    if not all([nickname, email]):
-        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    role     = request.form.get('role')
+    month_quota = request.form.get('month_quota')
+
+    current_app.logger.info(f"admin update certain user info with user_id={user.id}, target_user_id={user_id}, nickname={nickname}, email={email}, role={role}")
+
     import re
-    if not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
+    if email and not re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email):
         return abort(ErrorCode.PARAMS_INVALID, msg="邮箱格式错误")
-    if len(nickname) < 2:
+    if nickname and len(nickname) < 2:
         return abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
-    user.nickname = nickname
-    user.email    = email
-    user.role     = role
-    if password is not None:
+    if email and models.User.query.filter_by(email=email).first() and email != user.email:
+        return abort(ErrorCode.USER_ALREADY_EXISTS, msg="邮箱已被使用")
+    if role and int(role) not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID, msg="角色参数错误")
+    if month_quota and int(month_quota) < 0:
+        return abort(ErrorCode.PARAMS_INVALID, msg="配额参数错误")
+
+    if nickname is not None:
+        user.nickname = nickname
+    if email is not None: 
+        user.email = email
+    if role is not None:     
+        user.role = int(role)
+    if password is not None: 
         user.password = password
+    if month_quota is not None:
+        user.month_quota = int(month_quota)
+
     models.db.session.commit()
     return ok()
 
@@ -130,6 +162,8 @@ def update_certain_user_info(user, user_id):
 @user_bp.route('/user/<int:user_id>/softdelete', methods=['PUT'])
 @login_required
 def softdelete_certain_user(user, user_id):
+    current_app.logger.info(f"admin softdelete certain user with user_id={user.id}, target_user_id={user_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     user = models.User.query.filter_by(id=user_id).first()
@@ -151,6 +185,8 @@ def softdelete_certain_user(user, user_id):
 @user_bp.route('/user/<int:user_id>/restore', methods=['PUT'])
 @login_required
 def restore_certain_user(user, user_id):
+    current_app.logger.info(f"admin restore certain user with user_id={user.id}, target_user_id={user_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     user = models.User.query.filter_by(id=user_id).first()
@@ -172,6 +208,8 @@ def restore_certain_user(user, user_id):
 @user_bp.route('/user/<int:user_id>/delete', methods=['DELETE'])
 @login_required
 def delete_certain_user(user, user_id):
+    current_app.logger.info(f"admin delete certain user with user_id={user.id}, target_user_id={user_id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     user = models.User.query.filter_by(id=user_id).first()
@@ -188,6 +226,9 @@ def delete_certain_user(user, user_id):
         models.db.session.commit()
         for id in external_ids:
             response = watch_utils.delete_watch(id)
+    
+    for check_count in user.check_counts:
+        models.db.session.delete(check_count)
 
     models.db.session.delete(user)
     models.db.session.commit()
@@ -200,10 +241,14 @@ def delete_certain_user(user, user_id):
 def add_user(user):
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
+    
     email    = request.form.get('email')
     nickname = request.form.get('nickname')
     password = request.form.get('password')
     role     = int(request.form.get('role'))
+
+    current_app.logger.info(f"admin add user with user_id={user.id}, email={email}, nickname={nickname}, role={role}")
+
     if role not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID, msg="角色参数错误")
     if not all([email, nickname, password]):
@@ -216,7 +261,8 @@ def add_user(user):
     if len(password) < 6:
         return abort(ErrorCode.PARAMS_INVALID, msg="密码长度不能小于6")
     if models.User.query.filter_by(email=email).first():
-        return abort(ErrorCode.USER_ALREADY_EXISTS, msg="用户已存在")
+        return abort(ErrorCode.USER_ALREADY_EXISTS, msg="邮箱已被使用")
+    
     user = models.User(email=email, nickname=nickname, password=password, role=role)
     
     # 激活用户
@@ -240,10 +286,14 @@ def add_user(user):
 @user_bp.route('/users/search', methods=['GET'])
 @login_required
 def search_user(user):
-    if user.role != 1:
-        return abort(ErrorCode.FORBIDDEN)
     email    = request.args.get('email')
     nickname = request.args.get('nickname')
+
+    current_app.logger.info(f"admin search user with user_id={user.id}, email={email}, nickname={nickname}")
+
+    if user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+
     if not any([email, nickname]):
         ret = paginate(models.User.query.filter_by(is_deleted=0).order_by(models.User.create_time.desc()))
     else:
@@ -273,6 +323,8 @@ def search_user(user):
 @user_bp.route('/users/softdelete', methods=['GET'])
 @login_required
 def get_users_softdeleted(user):
+    current_app.logger.info(f"admin get softdeleted users with user_id={user.id}")
+
     if user.role != 1:
         return abort(ErrorCode.FORBIDDEN)
     ret = paginate(models.User.query.filter_by(is_deleted=1).order_by(models.User.create_time.desc()))
