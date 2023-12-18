@@ -34,16 +34,17 @@ javascript:(function() {
     return path[path.length-1];
   };
   var cssPath = function(el) {
-      var path = [];
-      while (
-        (el.nodeName.toLowerCase() != 'body') &&
-          (el = el.parentNode) &&
-          path.unshift(el.nodeName.toLowerCase() +
-            (el.id ? '#' + el.id : '') +
-              (el.className ? '.' + el.className.replace(/\s+/g, '.') : ''))
-      );
-      return path;
+    var path = [];
+    while (
+      (el.nodeName.toLowerCase() != 'body') &&
+        (el = el.parentNode) &&
+        path.unshift(el.nodeName.toLowerCase() +
+          (el.id ? '#' + el.id : '') +
+            (el.className ? '.' + el.className.replace(/\s+/g, ".") : ''))
+    );
+    return path;
   };
+
   window.addEventListener('click', function(evt) {
       if(window.okRemoveIframe === true){
           console.log(evt);

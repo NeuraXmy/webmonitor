@@ -87,12 +87,12 @@ export default{
       })
     },
     register(){
-      console.log("-----")
-      // this.$router.push('/register')
-      this.$router.push({ path: '/register' }).then(() => {
-        console.log("----")
-        location.reload()
-      })
+      // console.log("-----")
+      this.$router.push('/register')
+      // this.$router.push({ path: '/register' }).then(() => {
+      //   console.log("----")
+      //   location.reload()
+      // })
     },
     forgetPassword(){
 

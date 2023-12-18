@@ -17,13 +17,12 @@
             <el-form-item prop="nickname">
                 <el-input v-model="userForm.nickname" placeholder="昵称"></el-input>
             </el-form-item>
-            <cfturnstile
+            <vue-hcaptcha :sitekey="sitekey" @verify="verify"></vue-hcaptcha>
+            <!-- <cfturnstile
               :sitekey="sitekey"
               @verify="verify"
-            />
-            <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAOhZLLzYs90Djqz" data-theme="light" data-callback="javascriptCallback"></div> -->
+            /> -->
             <el-form-item>
-                <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAOhZLLzYs90Djqz" data-callback="javascriptCallback"></div> -->
                 <el-button type="primary" @click="register">注册</el-button>
                 <el-button @click="restForm">重置</el-button>
             </el-form-item>
@@ -35,10 +34,10 @@
 <script>
 import vueRecaptcha from 'vue3-recaptcha2';
 import cfturnstile from 'cfturnstile-vue3'
-
+import VueHcaptcha from '@hcaptcha/vue3-hcaptcha';
 
 export default {
-  components: { vueRecaptcha,cfturnstile },
+  components: { vueRecaptcha,cfturnstile,VueHcaptcha },
   data() {
     const validEmail = (rule, value, callback) => {
       const EmailReg = /^^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/
@@ -65,7 +64,7 @@ export default {
           ]
       },
       okVerified: false,
-      sitekey:'0x4AAAAAAAOhZLLzYs90Djqz'
+      sitekey:'50c11cc1-e8f1-4076-aac4-80099d040f90'
     };
   },
   setup() {
@@ -97,8 +96,9 @@ export default {
       }
       
     },
-    async verify(token) {
-        console.log(token)
+    verify(token) {
+        // console.log(token)
+        // console.log("-----")
         this.okVerified = true;
     }
   }

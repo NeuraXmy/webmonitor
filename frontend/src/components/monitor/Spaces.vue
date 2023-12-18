@@ -4,6 +4,10 @@
         新增空间
         </el-button>
     </div> -->
+    <el-breadcrumb>
+        <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item>空间</el-breadcrumb-item>
+    </el-breadcrumb>
     <el-tabs
         v-model="spacesValue"
         type="card"

@@ -1,5 +1,9 @@
 <template>
     <div>
+        <el-breadcrumb>
+            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>工具</el-breadcrumb-item>
+        </el-breadcrumb>
         <a :href="iframe_url" title="将我拖动到书签栏">小书签</a>
     </div>
     <el-card style="margin-top: 20px;">

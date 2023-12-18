@@ -24,6 +24,10 @@ import Monitors from '../components/monitor/Monitors.vue'
 import Tools from '../components/monitor/Tools.vue'
 import PauseMonitor from '../components/email/PauseMonitor.vue'
 import AdminCheckHistory from '../components/super_admin/AdminCheckHistory.vue'
+import SubscribePackage from '../components/subscribe/SubscribePackage.vue'
+import Orders from '../components/subscribe/orders.vue'
+import subscribeManagement from '../components/super_admin/subscribe/subscribeManagement.vue'
+
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -50,7 +54,9 @@ const routes = [
             {path: '/CheckHistory', component: CheckHistory },
             {path: '/spaces', component: Spaces },
             {path: '/monitors', component: Monitors },
-            {path: '/tools', component: Tools }
+            {path: '/tools', component: Tools },
+            {path: '/SubscribePackage', component: SubscribePackage },
+            {path: '/orders', component: Orders }
         ]
     },
     { 
@@ -77,7 +83,8 @@ const routes = [
             {path: '/RecycleUsers', component: RecycleUsers },
             {path: '/RecycleSpaces', component: RecycleSpaces },
             {path: '/RecycleMonitors', component: RecycleMonitors },
-            {path: '/AdminCheckHistory', component: AdminCheckHistory }
+            {path: '/AdminCheckHistory', component: AdminCheckHistory },
+            {path: '/subscribeManagement', component: subscribeManagement }
         ]
     },
     { 
