@@ -1,5 +1,9 @@
 <template>
     <div>
+        <el-breadcrumb>
+            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>监控</el-breadcrumb-item>
+        </el-breadcrumb>
         <el-card>
             <el-row>
                 <el-col :span="5">
@@ -27,28 +31,6 @@
         </el-card>
         <el-card>
           <el-row>
-            <!-- <el-col :span="10">
-                <el-input
-                    v-model="searchValue"
-                    placeholder="请输入"
-                    class="input-with-select"
-                    >
-                    <template #prepend>
-                        <el-select v-model="selectValue" placeholder="Select" style="width: 115px">
-                        <el-option label="监控名" value="1" />
-                        <el-option label="网址" value="2" />
-                        </el-select>
-                    </template>
-                    <template #append>
-                        <el-button @click="searchMonitor"><el-icon><Search /></el-icon></el-button>
-                    </template>
-                </el-input>
-              </el-col> -->
-              <!-- <el-col :span="2">
-                  <div>
-                      <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>新增监控</el-button>
-                  </div>
-              </el-col> -->
               <el-col :span="2">
                   <div>
                       <el-button type="danger" @click="DeleteMonitors"><el-icon><Delete /></el-icon>批量删除</el-button>

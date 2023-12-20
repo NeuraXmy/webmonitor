@@ -36,6 +36,12 @@
                 <el-menu-item index="monitors">
                     <span><el-icon><Monitor /></el-icon>监控</span>
                 </el-menu-item>
+                <el-menu-item index="SubscribePackage">
+                    <span><el-icon><ShoppingBag /></el-icon>购买订阅</span>
+                </el-menu-item>
+                <el-menu-item index="orders">
+                    <span><el-icon><ShoppingCart /></el-icon>我的订单</span>
+                </el-menu-item>
                 <el-menu-item index="tools">
                     <span><el-icon><Tools /></el-icon>工具</span>
                 </el-menu-item>
@@ -51,11 +57,11 @@
 
 
 <script>
-import { Menu,Compass,Tools,Monitor } from '@element-plus/icons-vue'
+import { Menu,Compass,Tools,Monitor,ShoppingBag,ShoppingCart } from '@element-plus/icons-vue'
 import Cookies from 'universal-cookie';
 
 export default{
-    components: { Menu,Compass,Tools,Monitor },
+    components: { Menu,Compass,Tools,Monitor,ShoppingBag,ShoppingCart },
     data(){
         return {
             okadmin:1,
