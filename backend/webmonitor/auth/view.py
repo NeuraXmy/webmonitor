@@ -31,7 +31,7 @@ def register():
         abort(ErrorCode.USER_ALREADY_EXISTS)
     # 如果用户不存在则创建
     if not user:
-        user = models.User(email=email, password=password, nickname=nickname, role=0)
+        user = models.User(email=email, password=password, nickname=nickname, role=0, quota_exceeded=0)
         models.db.session.add(user)
     # 如果用户存在则更新信息
     else:
@@ -72,7 +72,6 @@ def activate():
     # 激活用户
     user.activated = True
     user.activated_on = models.datetime.now()
-    user.month_quota = 500
 
     # 创建默认空间
     space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)

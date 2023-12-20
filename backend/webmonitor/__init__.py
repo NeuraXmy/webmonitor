@@ -33,6 +33,8 @@ def register_blueprints(app):
     app.register_blueprint(user_bp)
     from webmonitor.bookmark import bookmark_bp
     app.register_blueprint(bookmark_bp)
+    from webmonitor.package import package_bp
+    app.register_blueprint(package_bp)
 
 
 def register_plugin(app):

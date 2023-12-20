@@ -179,6 +179,7 @@ def get_watch(user, watch_id):
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
         'paused': watch.paused,
+        'quota_exceeded': watch.quota_exceeded,
     }
     return ok(data=ret)
 
@@ -255,6 +256,7 @@ def get_watch_list(user, space_id):
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
         'paused': watch.paused,
+        'quota_exceeded': watch.quota_exceeded,
     } for watch in ret.items]
     return ok(data=ret)
 
@@ -278,6 +280,7 @@ def get_user_watch_list(user):
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
         'paused': watch.paused,
+        'quota_exceeded': watch.quota_exceeded,
     } for watch in ret.items]
 
     ret = {
@@ -292,7 +295,6 @@ def get_user_watch_list(user):
         'yesterday_notification_count': user.yesterday_notification_count(),
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
-        'month_quota': user.month_quota,
         'quota_exceeded': user.quota_exceeded,
     }
 
@@ -415,6 +417,12 @@ def check_watch(user, watch_id):
     if user.role != 1 and space.owner_id != user.id:
         return abort(ErrorCode.FORBIDDEN)
     
+    # 额度检查
+    user.check_quota()
+    models.db.session.commit()
+    if user.quota_exceeded == 1:
+        return abort(ErrorCode.USER_QUOTA_EXCEEDED)
+    
     # 尝试在changedetection.io上立刻刷新监控
     watch_utils.update_watch_state(watch.external_id, recheck=True)
     return ok()
@@ -526,14 +534,10 @@ def process_check_callback():
     history.trigger_text = watch.trigger_text
     models.db.session.add(history)
 
-    # 更新用户和空间的统计信息
+    # 更新用户和空间的统计信息（同时会检测是否超额）
     user.increase_check_count(check_state)
     space.increase_check_count(check_state)
 
-    models.db.session.commit()
-
-    # 检查是否超额
-    user.check_quota()
     models.db.session.commit()
     
     return ok()
@@ -560,6 +564,7 @@ def get_all_watches(user):
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
         'paused': watch.paused,
+        'quota_exceeded': watch.quota_exceeded,
     } for watch in ret.items]
     return ok(data=ret)
 
@@ -599,6 +604,7 @@ def search_watches(user):
         'last_24h_check_count': watch.last_24h_check_count(),
         'last_24h_notification_count': watch.last_24h_notification_count(),
         'paused': watch.paused,
+        'quota_exceeded': watch.quota_exceeded,
     }for watch in ret.items]
     return ok(data=ret)
 
@@ -625,6 +631,7 @@ def get_watches_softdeleted(user):
         'last_24h_notification_count': watch.last_24h_notification_count(),
         'space_id': watch.space_id,
         'paused': watch.paused,
+        'quota_exceeded': watch.quota_exceeded,
     }for watch in ret.items]
 
     i=0
