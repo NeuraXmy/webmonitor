@@ -101,6 +101,9 @@ class User(BaseModel):
     def check_quota(self):
         current_app.logger.info(f"check quotj a for user {self.id}, quota_exceeded={self.quota_exceeded}")
 
+        for package in self.packages:
+            package.update()
+
         has_quota = any([p for p in self.packages if not p.is_expired() and not p.is_quota_exceeded()])
         if self.quota_exceeded == 0 and not has_quota:
             self.quota_exceeded = 1
@@ -439,10 +442,10 @@ class Package(BaseModel):
             if self.period_type == PackagePeriodType.PERMANENT.id:
                 self.current_period_end_time = start + timedelta(days=365*100)
             elif self.period_type == PackagePeriodType.DAY.id:
-                self.end_time = start + timedelta(days=1)
+                self.current_period_end_time = start + timedelta(days=1)
             elif self.period_type == PackagePeriodType.MONTH.id:
-                self.end_time = get_next_month_day(start)
+                self.current_period_end_time = get_next_month_day(start)
             elif self.period_type == PackagePeriodType.YEAR.id:
-                self.end_time = get_next_year_day(start)
+                self.current_period_end_time = get_next_year_day(start)
 
 

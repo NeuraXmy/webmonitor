@@ -1,9 +1,11 @@
 from webmonitor.auth import auth_bp
 from webmonitor import models
+from webmonitor.models import PackagePeriodType
 from flask import render_template, request, current_app, redirect, url_for
 from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
 from webmonitor.utils.send_email import send_email
+from datetime import datetime
 
 
 # 用户注册
@@ -77,6 +79,21 @@ def activate():
     space = models.Space(name=f'默认空间', desc=f'用户{user.email}的默认空间', owner_id=user.id)
     models.db.session.add(space)
 
+    # 添加默认套餐
+    package = models.Package(
+        user_id                     = user.id,
+        name                        = "默认套餐",
+        period_count                = 12 * 10,
+        period_type                 = PackagePeriodType.MONTH.id,
+        period_check_count          = 200,
+        price                       = 0,
+    )
+    package.init(datetime.now())
+    models.db.session.add(package)
+
+    models.db.session.commit()
+
+    user.check_quota()
     models.db.session.commit()
     
     url = current_app.config['FRONTEND_BASE_URL'] + '/activate_success'
