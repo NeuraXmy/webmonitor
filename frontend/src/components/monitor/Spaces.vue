@@ -38,7 +38,7 @@
                         <el-table-column prop="last_check_state" label="检查状态" width="170" />
                         <el-table-column prop="last_24h_check_count" label="24小时检查次数" width="130" />
                         <el-table-column prop="last_24h_notification_count" label="24小时触发警报次数" width="155" />
-                        <el-table-column prop="paused" label="是否启用" width="100" >
+                        <el-table-column fixed="right" prop="paused" label="是否启用" width="80" >
                             <template #default="scope">
                                 <el-switch
                                     v-model="scope.row.paused"
@@ -52,7 +52,7 @@
                                     @change="CloseMonitor(scope.row)"/>
                             </template>
                         </el-table-column>
-                        <el-table-column fixed="right" prop="edit" label="Edit" width="330">
+                        <el-table-column fixed="right" prop="edit" label="Edit" width="280">
                             <template #default="scope">
                                 <el-button size="small" @click="WatchEdit(scope.row)"
                                     >编辑</el-button
@@ -343,6 +343,13 @@
         >
         <span>刷新监控成功</span>
     </el-dialog>
+    <el-dialog
+        v-model="okquota_exceeded"
+        width="30%"
+        align-center
+        >
+        <span>监控套餐次数已超限，所有监控暂停！</span>
+    </el-dialog>
 </template>
 
 <script>
@@ -477,8 +484,10 @@ export default{
             generateUrl: '',
             okDeleteWatch: false,
             DeleteWatchID: '',
-            okReflashWatch: false,
+            okReflashWatch: false, 
             okDisabled: false,
+            okquota_exceeded: false,
+            quota_exceeded:false
         }
     },
     async created(){
@@ -530,10 +539,10 @@ export default{
             // this.MonitorSpaceList = res.data.items
             this.loading = false
             console.log(this.MonitorSpaceList)
+            // this.JumpMonitorManage()
         },
         //获取某个space下的监控列表
         JumpMonitorManage(val){
-            // console.log("------");
             this.space_id=val.id
             window.sessionStorage.setItem('space_id',val.id)
             this.$router.push('/monitor_list')
@@ -616,7 +625,10 @@ export default{
                 }
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
-            this.getMonitorSpaceList();
+            await this.getMonitorSpaceList();
+            this.spacesValue = 0
+            this.space_id = this.spaces[0].id;
+            this.JumpMonitorManage()
             this.loading = false
         },
         //改变空间
@@ -664,6 +676,14 @@ export default{
             this.loading = false
             this.TotalPages = res.data.total
             this.MonitorList = res.data.items
+            if(this.MonitorList.length > 0){
+                if(this.MonitorList[0].quota_exceeded === 1){
+                    this.quota_exceeded = true
+                    for(let i = 0; i < this.MonitorList.length; i++){
+                        this.MonitorList[i].paused = 1
+                    }
+                }
+            }
             console.log(res.data)
         },
         //刷新监控列表
@@ -752,11 +772,11 @@ export default{
             this.loading = false
             this.addMonitorForm = res.data
             if(this.addMonitorForm.include_filters === ''){
-            this.value = 'All';
-            this.okDisabled = true
+                this.value = 'All';
+                this.okDisabled = true
             }else{
-            this.value = 'XPath/CssSelector';
-            this.okDisabled = false
+                this.value = 'XPath/CssSelector';
+                this.okDisabled = false
             }
             console.log(res.data);
         },
@@ -796,11 +816,14 @@ export default{
                     'token': sessionStorage.getItem('token')
                 }
             })
-            if(res.status !== 200) return  this.$message.error(res.msg)
-            
+            if(res.status !== 200){
+                this.loading = false
+                this.okquota_exceeded = true
+                this.quota_exceeded = true
+                return  this.$message.error(res.msg)
+            }
             this.RefreshMonitorManage(this.space_id)
             this.loading = false
-            this.okReflashWatch = true
         },
         //改变多选框
         ChangeElement(){
@@ -835,6 +858,13 @@ export default{
         },
         //关闭监控
         async CloseMonitor(row){
+            if(this.quota_exceeded === true){
+                this.okquota_exceeded = true;
+                for(let i = 0; i < this.MonitorList.length; i++){
+                    this.MonitorList[i].paused = 1
+                }
+                return ;
+            }
             console.log(row)
             let data = this.$qs.stringify(row)
             const {data: res} = await this.$axios.post('/watch/'+row.id+'/state',data,
@@ -847,7 +877,7 @@ export default{
                 }
             })
             if(res.status ===200){
-                this.getMonitorSpaceList()
+                this.JumpMonitorManage()
             }else{
                 this.$message.error(res.msg);
             }

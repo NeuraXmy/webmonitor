@@ -17,7 +17,7 @@
             <el-form-item prop="nickname">
                 <el-input v-model="userForm.nickname" placeholder="昵称"></el-input>
             </el-form-item>
-            <vue-hcaptcha :sitekey="sitekey" @verify="verify"></vue-hcaptcha>
+            <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
             <!-- <cfturnstile
               :sitekey="sitekey"
               @verify="verify"
@@ -100,6 +100,10 @@ export default {
         // console.log(token)
         // console.log("-----")
         this.okVerified = true;
+    },
+    challengeExpired(){
+      // this.okVerified = false;
+      // console.log("-----");
     }
   }
 }
