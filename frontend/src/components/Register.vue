@@ -17,7 +17,7 @@
             <el-form-item prop="nickname">
                 <el-input v-model="userForm.nickname" placeholder="昵称"></el-input>
             </el-form-item>
-            <vue-hcaptcha :sitekey="sitekey" @verify="verify"></vue-hcaptcha>
+            <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
             <!-- <cfturnstile
               :sitekey="sitekey"
               @verify="verify"
@@ -26,6 +26,7 @@
                 <el-button type="primary" @click="register">注册</el-button>
                 <el-button @click="restForm">重置</el-button>
             </el-form-item>
+            <a class="form__link" @click="login">登录</a>
         </el-form>
     </div>
   </div>
@@ -100,6 +101,13 @@ export default {
         // console.log(token)
         // console.log("-----")
         this.okVerified = true;
+    },
+    challengeExpired(){
+      // this.okVerified = false;
+      // console.log("-----");
+    },
+    login(){
+      this.$router.push('/login')
     }
   }
 }
@@ -158,8 +166,9 @@ export default {
 }
 .form__link {
   /* color: #181818; */
-  font-size: 13px;
+  font-size: 14px;
   margin-top: 25px;
+  color: #409EFF;
   border-bottom: 1px solid #a0a5a8;
   line-height: 2;
   cursor: pointer;

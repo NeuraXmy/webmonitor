@@ -10,9 +10,10 @@
             <el-check-tag :checked="checkedFrequency" @change="onChangeFrequency">按次数</el-check-tag>
         </div>
     </div>
-    <div v-if="checkedCycle === true">
-        <el-row :gutter="12" style="margin-top: 20px;">
+    <div v-loading="loading">
+        <el-row :gutter="30" style="margin-top: 20px;">
             <el-col
+                style="margin-top: 20px;"
                 v-for="item in Packages"
                 :key=item.index
                 :span="7"
@@ -25,46 +26,35 @@
                         <div class="block-content bg-gray-light">
                             <div class="py-2">
                                 <p class="h1 mb-2">¥ {{ item.price }}</p>
-                                <p class="h6 text-muted">月付</p>
+                                <p class="h6 text-muted">{{ item.period_type }}</p>
                             </div>
                         </div>
                         <div class="block-content py-3">
                             <div class="mb-3">
-                                每月x次监控次数<br>
+                                监控次数 {{ item.period_check_count }}<br>
                             </div>
-                            <el-button style="margin-top: 20px;" type="primary" size="small">立即订阅</el-button>
+                            <el-button style="margin-top: 20px;" type="primary" size="small" @click="SubscribePackage(item.id)">立即订阅</el-button>
                         </div>
                     </el-card>
                 </div>
             </el-col>
         </el-row>
     </div>
-    <div v-if="checkedFrequency === true">
-        <el-row :gutter="12" style="margin-top: 20px;">
-            <div style="width: 29%;">
-                <el-card class="block block-link-pop block-rounded m-3 mx-xl-0" shadow="hover">
-                    <div class="block-header plan">
-                        <h3 class="block-title">次数包</h3>
-                    </div>
-                    <div class="block-content bg-gray-light">
-                        <div class="py-2">
-                            <p class="h1 mb-2">¥ 25.00</p>
-                            <p class="h6 text-muted">一次性</p>
-                        </div>
-                    </div>
-                    <div class="block-content py-3">
-                        <div class="mb-3">
-                            x次监控次数用完为止<br>
-                        </div>
-                        <el-button style="margin-top: 20px;" type="primary" size="small">立即订阅</el-button>
-                    </div>
-                </el-card>
-            </div>
-        </el-row>
-    </div>
-    <!-- <el-card style="margin-top: 20px;">
-        
-    </el-card> -->
+    <el-dialog
+        v-model="okSubscribePackage"
+        width="30%"
+        align-center
+        >
+        <span>是否订阅该套餐？</span>
+        <template #footer>
+            <span class="dialog-footer">
+            <el-button @click="okSubscribePackage = false">取消</el-button>
+            <el-button type="primary" @click="ConfirmSubscribePackage">
+                确定
+            </el-button>
+            </span>
+        </template>
+    </el-dialog>
 </template>
 
 <script>
@@ -72,34 +62,85 @@ export default {
     data(){
         return {
             Packages:[
-                {
-                    name: "标准",
-                    price: 10.00
-                },
-                {
-                    name: "进阶",
-                    price: 20.00
-                },
-                {
-                    name: "高阶",
-                    price: 30.00
-                }
+                // {
+                //     name: "标准",
+                //     price: 10.00
+                // }
             ],
+            PackageList:[],
+            PackagesCycle:[],
+            PackagesFrequency:[],
             checkedCycle:true,
-            checkedFrequency:false
+            checkedFrequency:false,
+            okSubscribePackage:false,
+            Package_id:1,
+            loading:false
         }
     },
     created(){
-        // this.getBookmark()
+        this.getPackagesList()
     },
     methods: {
+        //获得所有套餐
+        async getPackagesList(){
+            this.loading = true
+            const {data: res} = await this.$axios.get('/package/template',
+            {
+                params: this.queryPage,
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            this.$message.success(res.msg)
+            this.loading = false
+            this.PackageList = res.data.items
+            this.PackagesCycle = []
+            this.PackagesFrequency = []
+            // console.log(res.data.items)
+            for(let i = 0; i < this.PackageList.length; i++){
+                this.PackageList[i].price/=100.0;
+                if(this.PackageList[i].period_type === 0) this.PackageList[i].period_type = "一次性";
+                else if(this.PackageList[i].period_type === 1) this.PackageList[i].period_type = "日付";
+                else if(this.PackageList[i].period_type === 2) this.PackageList[i].period_type = "月付";
+                else if(this.PackageList[i].period_type === 3) this.PackageList[i].period_type = "年付";
+                if(this.PackageList[i].period_type === "一次性") this.PackagesFrequency.push(this.PackageList[i]);
+                else this.PackagesCycle.push(this.PackageList[i]);
+            }
+            this.Packages = this.PackagesCycle;
+        },
+        //订阅套餐
+        SubscribePackage(id){
+            this.okSubscribePackage = true;
+            this.Package_id = id
+        },
+        //确定订阅套餐
+        async ConfirmSubscribePackage(){
+            this.okSubscribePackage = false
+            // this.loading = true
+            let data = sessionStorage.getItem('token')
+            const {data: res} = await this.$axios.post('/package/purchase/' + this.Package_id,data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status ===200){
+                this.getPackagesList()
+            }else{
+                this.$message.error(res.msg);
+            }
+            // this.loading = false
+        },
         onChangeCycle(){
             this.checkedCycle = true;
             this.checkedFrequency = false;
+            this.Packages = this.PackagesCycle;
         },
         onChangeFrequency(){
             this.checkedCycle = false;
             this.checkedFrequency = true;
+            this.Packages = this.PackagesFrequency;
         }
 
     }

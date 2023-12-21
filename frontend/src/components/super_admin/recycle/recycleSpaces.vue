@@ -133,7 +133,7 @@
               TotalPages: 10,
               queryPage: {
                 page:1,
-                size:5
+                size:10
               },
               UserID:'',
               selectSpacesRows:'',

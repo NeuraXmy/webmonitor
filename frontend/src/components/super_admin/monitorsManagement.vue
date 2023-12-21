@@ -46,7 +46,7 @@
                   <el-table-column prop="last_check_state" label="检查状态" width="200" />
                   <el-table-column prop="last_24h_check_count" label="24小时检查次数" width="130" />
                   <el-table-column prop="last_24h_notification_count" label="24小时触发警报次数" width="155" />
-                  <el-table-column prop="paused" label="是否启用" width="100" >
+                  <el-table-column fixed="right" prop="paused" label="是否启用" width="80" >
                         <template #default="scope">
                             <el-switch
                                 v-model="scope.row.paused"

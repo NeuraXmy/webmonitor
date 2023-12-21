@@ -162,7 +162,7 @@
                 email:'',
                 nickname:'',
                 page:1,
-                size:5
+                size:10
               },
               okRestoreUsers:false,
               RestoreUserID:'',

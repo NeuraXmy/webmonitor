@@ -16,9 +16,9 @@ import SpaceList from '../components/super_admin/spacelist.vue'
 import MonitorList from '../components/super_admin/monitorlist.vue'
 import SpacesManagement from '../components/super_admin/spacesManagement.vue'
 import MonitorsManagement from '../components/super_admin/monitorsManagement.vue'
-import RecycleUsers from '../components/super_admin/recycleUsers.vue'
-import RecycleSpaces from '../components/super_admin/recycleSpaces.vue'
-import RecycleMonitors from '../components/super_admin/recycleMonitors.vue'
+import RecycleUsers from '../components/super_admin/recycle/recycleUsers.vue'
+import RecycleSpaces from '../components/super_admin/recycle/recycleSpaces.vue'
+import RecycleMonitors from '../components/super_admin/recycle/recycleMonitors.vue'
 import Spaces from '../components/monitor/Spaces.vue'
 import Monitors from '../components/monitor/Monitors.vue'
 import Tools from '../components/monitor/Tools.vue'
@@ -27,7 +27,7 @@ import AdminCheckHistory from '../components/super_admin/AdminCheckHistory.vue'
 import SubscribePackage from '../components/subscribe/SubscribePackage.vue'
 import Orders from '../components/subscribe/orders.vue'
 import subscribeManagement from '../components/super_admin/subscribe/subscribeManagement.vue'
-
+import userSubscribe from '../components/super_admin/subscribe/userSubscribe.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -84,7 +84,8 @@ const routes = [
             {path: '/RecycleSpaces', component: RecycleSpaces },
             {path: '/RecycleMonitors', component: RecycleMonitors },
             {path: '/AdminCheckHistory', component: AdminCheckHistory },
-            {path: '/subscribeManagement', component: subscribeManagement }
+            {path: '/subscribeManagement', component: subscribeManagement },
+            {path: '/userSubscribe', component: userSubscribe }
         ]
     },
     { 

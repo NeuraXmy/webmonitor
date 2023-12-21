@@ -69,6 +69,9 @@
                           <el-button size="small" @click="EnterSpace(scope.row)"
                           >查看空间</el-button
                           >
+                          <el-button size="small" @click="EnterPackage(scope.row)"
+                          >查看套餐</el-button
+                          >
                       </template>
                   </el-table-column>
               </el-table>
@@ -413,6 +416,11 @@
               window.sessionStorage.setItem('UserID',val.id)
               this.$router.push('/spacelist')
           },
+          EnterPackage(val){
+              this.UserID=val.id
+              window.sessionStorage.setItem('UserID',val.id)
+              this.$router.push('/userSubscribe')
+          },
           //搜索用户
           async searchUser(){
             if(this.searchValue !== '' && this.selectValue === ''){
@@ -432,7 +440,7 @@
                 this.queryPage.nickname = ''
             }
             this.queryPage.page = 1
-            this.queryPage.size = 5
+            this.queryPage.size = 10
             const {data: res} = await this.$axios.get('/users/search',
             {
                 params: this.queryPage,
@@ -475,19 +483,6 @@
             this.getUserList()
             this.okDeleteUsers = false;
           },
-
-
-          async getBookmark(){
-            const {data: res} = await this.$axios.get('/bookmark/inject.js',
-            {
-                headers : {
-                    'token': sessionStorage.getItem('token')
-                }
-            })
-            // console.log(res.data)
-            this.iframe_url = res.data
-            // console.log(this.iframe_url)
-        },
         ChangeRole(){
             console.log(this.addUserForm.role)
             // if(this.value === '1'){
