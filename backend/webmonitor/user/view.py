@@ -29,7 +29,6 @@ def get_user_info(user):
         'yesterday_notification_count': user.yesterday_notification_count(),
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
-        'month_quota': user.month_quota,
         'quota_exceeded': user.quota_exceeded,
     }
     return ok(data=ret)
@@ -107,7 +106,6 @@ def get_certain_user_info(user, user_id):
         'yesterday_notification_count': user.yesterday_notification_count(),
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
-        'month_quota': user.month_quota,
         'quota_exceeded': user.quota_exceeded,
     }
     return ok(data=ret)
@@ -127,7 +125,6 @@ def update_certain_user_info(user, user_id):
     email    = request.form.get('email')
     password = request.form.get('password')
     role     = request.form.get('role')
-    month_quota = request.form.get('month_quota')
 
     current_app.logger.info(f"admin update certain user info with user_id={user.id}, target_user_id={user_id}, nickname={nickname}, email={email}, role={role}")
 
@@ -140,8 +137,6 @@ def update_certain_user_info(user, user_id):
         return abort(ErrorCode.USER_ALREADY_EXISTS, msg="邮箱已被使用")
     if role and int(role) not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID, msg="角色参数错误")
-    if month_quota and int(month_quota) < 0:
-        return abort(ErrorCode.PARAMS_INVALID, msg="配额参数错误")
 
     if nickname is not None:
         user.nickname = nickname
@@ -151,8 +146,6 @@ def update_certain_user_info(user, user_id):
         user.role = int(role)
     if password is not None: 
         user.password = password
-    if month_quota is not None:
-        user.month_quota = int(month_quota)
 
     models.db.session.commit()
     return ok()
