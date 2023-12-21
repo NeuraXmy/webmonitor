@@ -22,6 +22,47 @@
             </el-row>
         </el-card>
     </div>
+    <el-dialog
+      v-model="okEditPackage"
+      title="编辑空间"
+      width="40%"
+    >
+        <el-form ref="addSpaceRef" :rules="addSpaceRules" :model="addSpaceForm" label-width="80px" class="form_style">
+            <el-form-item label="昵称" prop="name">
+                <el-col :span="20">
+                    <el-input v-model="addSpaceForm.name" placeholder="请输入昵称"></el-input>
+                </el-col>
+            </el-form-item>
+            <el-form-item label="空间说明" prop="desc">
+                <el-col :span="20">
+                    <el-input v-model="addSpaceForm.desc" placeholder="请输入空间说明"></el-input>
+                </el-col>
+            </el-form-item>
+        </el-form>
+        <template #footer>
+            <span class="dialog-footer">
+            <el-button @click="okEditSpace = false">取消</el-button>
+            <el-button type="primary" @click="EditSpaceConfirm">
+                确定
+            </el-button>
+            </span>
+        </template>
+    </el-dialog>
+    <el-dialog
+        v-model="okDeletePackage"
+        width="30%"
+        align-center
+        >
+        <span>是否删除该套餐？</span>
+        <template #footer>
+            <span class="dialog-footer">
+            <el-button @click="okDeletePackage = false">取消</el-button>
+            <el-button type="primary" @click="ConfirmDeletePackage">
+                确定
+            </el-button>
+            </span>
+        </template>
+    </el-dialog>
 </template>
 
 <script>
