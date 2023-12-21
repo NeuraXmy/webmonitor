@@ -213,24 +213,6 @@ def get_user_package_list(user, user_id):
     return ok(data=ret)
 
 
-# 用户取消自己的套餐（软删除）
-@package_bp.route('/package/<int:package_id>', methods=['DELETE'])
-@login_required
-def delete_package(user, package_id):
-    current_app.logger.info(f"user delete package user_id={user.id} package_id={package_id}")
-
-    package = models.Package.query.filter_by(id=package_id, user_id=user.id, is_deleted=0).first()
-    if not package or package.is_deleted == 1:
-        return abort(ErrorCode.NOT_FOUND)
-    if package.user_id != user.id:
-        return abort(ErrorCode.FORBIDDEN)
-    
-    package.is_deleted = 1
-    user.check_quota()
-    models.db.session.commit()
-    return ok()
-
-
 # 管理员删除套餐（软删除）
 @package_bp.route('/package/<int:package_id>', methods=['DELETE'])
 @admin_required
@@ -342,7 +324,6 @@ def admin_modify_package(user, package_id):
 
 
 
-
 # 用户为自己购买某个模板的套餐，创建套餐
 @package_bp.route('/package/purchase/<int:template_id>', methods=['POST'])
 @login_required
@@ -364,6 +345,7 @@ def purchase_package(user, template_id):
         price                       = template.price,
     )
     package.init(datetime.now())
+    package.update()
     
     models.db.session.add(package)
     models.db.session.commit()
@@ -373,3 +355,38 @@ def purchase_package(user, template_id):
 
     return ok()
 
+
+# 管理员为某个用户购买某个模板的套餐，创建套餐
+@package_bp.route('/package/purchase/<int:template_id>/user/<int:user_id>', methods=['POST'])
+@admin_required
+def admin_add_package(admin, template_id, user_id):
+    current_app.logger.info(f"admin purchase package user_id={user.id} template_id={template_id} user_id={user_id}")
+
+    user = models.User.query.filter_by(id=user_id, is_deleted=0).first()
+    if not user or user.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+
+    template = models.PackageTemplate.query.filter_by(id=template_id, is_deleted=0).first()
+    if not template or template.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    # NO 扣费
+    
+    package = models.Package(
+        user_id                     = user.id,
+        name                        = template.name,
+        period_count                = template.period_count,
+        period_type                 = template.period_type,
+        period_check_count          = template.period_check_count,
+        price                       = template.price,
+    )
+    package.init(datetime.now())
+    package.update()
+
+    models.db.session.add(package)
+    models.db.session.commit()
+
+    user.check_quota()
+    models.db.session.commit()
+
+    return ok()
