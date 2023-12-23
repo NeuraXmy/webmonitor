@@ -364,6 +364,9 @@ class PackageTemplate(BaseModel):
     period_check_count  = db.Column(db.Integer, nullable=False, default=0)  # 一次周期内给予的检查次数
     price = db.Column(db.Integer, nullable=False, default=0)                # 套餐价格
 
+    hide    = db.Column(db.Integer, nullable=False, default=0)              # 是否隐藏
+    initial = db.Column(db.Integer, nullable=False, default=0)              # 是否是初始套餐
+
 
 
 # 用户套餐模型

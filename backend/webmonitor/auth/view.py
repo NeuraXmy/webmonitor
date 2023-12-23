@@ -80,17 +80,20 @@ def activate():
     models.db.session.add(space)
 
     # 添加默认套餐
-    package = models.Package(
-        user_id                     = user.id,
-        name                        = "默认套餐",
-        period_count                = 12 * 10,
-        period_type                 = PackagePeriodType.MONTH.id,
-        period_check_count          = 200,
-        price                       = 0,
-    )
-    package.init(datetime.now())
-    models.db.session.add(package)
-
+    inital_templates = models.PackageTemplate.query.filter_by(is_deleted=0, initial=1).all()
+    for template in inital_templates:
+        current_app.logger.info(f"add initial package for user {user.id} with template {template.id}")
+        package = models.Package(
+            user_id                     = user.id,
+            name                        = f"初始套餐({template.name})",
+            period_count                = template.period_count,
+            period_type                 = template.period_type,
+            period_check_count          = template.period_check_count,
+            price                       = template.price,
+        )
+        package.init(datetime.now())
+        package.update()
+        models.db.session.add(package)
     models.db.session.commit()
 
     user.check_quota()
