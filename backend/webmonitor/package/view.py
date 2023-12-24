@@ -398,7 +398,7 @@ def purchase_package(user, template_id):
 @package_bp.route('/package/purchase/<int:template_id>/user/<int:user_id>', methods=['POST'])
 @admin_required
 def admin_add_package(admin, template_id, user_id):
-    current_app.logger.info(f"admin purchase package user_id={user.id} template_id={template_id} user_id={user_id}")
+    current_app.logger.info(f"admin purchase package user_id={admin.id} template_id={template_id} user_id={user_id}")
 
     user = models.User.query.filter_by(id=user_id, is_deleted=0).first()
     if not user or user.is_deleted == 1:
