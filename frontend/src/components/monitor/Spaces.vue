@@ -1,13 +1,36 @@
 <template>
-    <!-- <div style="margin-bottom: 20px">
-        <el-button size="small" @click="addTab(editableTabsValue)">
-        新增空间
-        </el-button>
-    </div> -->
     <el-breadcrumb>
         <el-breadcrumb-item :to="{ path: '/home' }">{{ $t('breadcrumbs.home') }}</el-breadcrumb-item>
         <el-breadcrumb-item>{{ $t('breadcrumbs.spaces') }}</el-breadcrumb-item>
     </el-breadcrumb>
+    <el-card>
+        <span>
+            添加新的监控网址
+        </span>
+        <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+            <el-form-item label="网址" prop="url">
+                <el-col :span="10">
+                    <el-input v-model="addMonitorForm.url" :placeholder="$t('placeholders.monitorUrl')"></el-input>
+                </el-col>
+                <el-col :span="3" style="margin-left: 10px;">
+                    <el-select v-model="add_space_name" placeholder="监控标签/空间">
+                        <el-option
+                            v-for="item in spaces"
+                            :key="item.index"
+                            :label="item.name"
+                            :value="item.id"
+                        />
+                    </el-select>
+                </el-col>
+                <el-col :span="1" style="margin-left: 10px;">
+                    <el-button type="primary" @click="addMonitorUrl">新增</el-button>
+                </el-col>
+                <el-col :span="2" style="margin-left: 20px;">
+                    <el-button type="primary" @click="addMonitor_Edit">编辑 > 新增</el-button>
+                </el-col>
+            </el-form-item>
+        </el-form>
+    </el-card>
     <el-tabs
         v-model="spacesValue"
         type="card"
@@ -15,6 +38,7 @@
         editable
         @edit="handleTabsEdit"
         @tab-click="changeSpace"
+        style="margin-top: 5px;"
     >
         <el-tab-pane
             v-for="item in spaces"
@@ -27,7 +51,7 @@
             <el-card>
                 <el-row>
                     <el-button type="primary" @click="EditSpace(this.space_id)"><el-icon><Edit /></el-icon>{{ $t('tabs.editSpace') }}</el-button>
-                    <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>{{ $t('buttons.addSpace') }}</el-button>
+                    <el-button type="primary" @click="addMonitorListener"><el-icon><Plus /></el-icon>{{ $t('buttons.addMonitor') }}</el-button>
                 </el-row>
                 <el-row>
                     <el-table v-loading="loading" :data="MonitorList" style="width: 100%">
@@ -414,7 +438,7 @@ export default{
             TotalPages: 10,
             queryPage: {
                 page:1,
-                size:10
+                size:5
             },
             MonitorList:[
                 //   {id:'',name:'',url:'',create_time:'',update_time:'',last_check_time:''}
@@ -487,7 +511,8 @@ export default{
             okReflashWatch: false, 
             okDisabled: false,
             okquota_exceeded: false,
-            quota_exceeded:false
+            quota_exceeded:false,
+            add_space_name:''
         }
     },
     async created(){
@@ -715,6 +740,8 @@ export default{
                     }
                 })
                 if(res.status ===200){
+                    this.addMonitorForm.url = ''
+                    this.add_space_name = ''
                     this.RefreshMonitorManage(this.space_id)
                 }else{
                     this.$message.error(res.msg);
@@ -881,6 +908,61 @@ export default{
             }else{
                 this.$message.error(res.msg);
             }
+        },
+        //默认新增监控
+        async addMonitorUrl(){
+            if(this.add_space_name === ''){
+                alert("请选择监控标签/空间！");
+                return ;
+            }
+            this.addMonitorForm.desc = ''
+            this.addMonitorForm.element = ''
+            this.addMonitorForm.include_filters = ''
+            this.addMonitorForm.notification_email = sessionStorage.getItem('email')
+            this.addMonitorForm.trigger_text = ''
+            this.addMonitorForm.name = '默认监控'
+            this.addMonitorForm.time_between_check_days = '0'
+            this.addMonitorForm.time_between_check_hours = '1'
+            this.addMonitorForm.time_between_check_minutes = '0'
+            this.addMonitorForm.time_between_check_seconds = '0'
+            this.addMonitorForm.time_between_check_weeks = '0'
+            this.loading = true
+            let data = this.$qs.stringify(this.addMonitorForm)
+            const {data: res} = await this.$axios.post('/space/'+this.add_space_name+'/watch',data,
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status ===200){
+                this.addMonitorForm.url = ''
+                this.add_space_name = ''
+                this.RefreshMonitorManage(this.space_id)
+            }else{
+                this.$message.error(res.msg);
+            }
+            this.loading = false
+        },
+        //默认新增>编辑
+        addMonitor_Edit(){
+            if(this.add_space_name === '' || this.addMonitorForm.url === ''){
+                alert("请先输入监控网址和选择监控标签/空间！");
+                return ;
+            }
+            this.addMonitor=true;
+            this.addMonitorForm.desc = ''
+            this.addMonitorForm.element = ''
+            this.addMonitorForm.include_filters = ''
+            this.addMonitorForm.notification_email = sessionStorage.getItem('email')
+            this.addMonitorForm.trigger_text = ''
+            this.addMonitorForm.name = '默认监控'
+            this.addMonitorForm.time_between_check_days = '0'
+            this.addMonitorForm.time_between_check_hours = '1'
+            this.addMonitorForm.time_between_check_minutes = '0'
+            this.addMonitorForm.time_between_check_seconds = '0'
+            this.addMonitorForm.time_between_check_weeks = '0'
+            this.value = 'All';
+            this.okDisabled = true
         }
     }
 }
