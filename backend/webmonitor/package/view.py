@@ -16,18 +16,36 @@ from datetime import datetime, timedelta
 def get_package_template_list(user):
     current_app.logger.info(f"user or admin get package template list user_id={user.id}")
 
-    ret = paginate(models.PackageTemplate.query.filter_by(is_deleted=0))
-    ret.items = [{
-        "id": template.id,       
-        "name": template.name,
-        "period_count": template.period_count,
-        "period_type": template.period_type,
-        "period_check_count": template.period_check_count,
-        "price": template.price,
-        "update_time": template.update_time,
-        "create_time": template.create_time,
-    } for template in ret.items]
+    if user.role == 1:
+        ret = paginate(models.PackageTemplate.query.filter_by(is_deleted=0))
+        ret.items = [{
+            "id": template.id,       
+            "name": template.name,
+            "period_count": template.period_count,
+            "period_type": template.period_type,
+            "period_check_count": template.period_check_count,
+            "price": template.price,
+            "update_time": template.update_time,
+            "create_time": template.create_time,
+            "hide": template.hide,
+            "initial": template.initial,
+        } for template in ret.items]
+
+    else:
+        ret = paginate(models.PackageTemplate.query.filter_by(is_deleted=0, hide=0))
+        ret.items = [{
+            "id": template.id,       
+            "name": template.name,
+            "period_count": template.period_count,
+            "period_type": template.period_type,
+            "period_check_count": template.period_check_count,
+            "price": template.price,
+            "update_time": template.update_time,
+            "create_time": template.create_time,
+        } for template in ret.items]
+
     return ok(data=ret)
+    
 
 
 # 管理员创建套餐模板
@@ -39,15 +57,19 @@ def create_package_template(user):
     period_type         = request.form.get('period_type')
     period_check_count  = request.form.get('period_check_count')
     price               = request.form.get('price')
+    hide                = request.form.get('hide')
+    initial             = request.form.get('initial')
     
-    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_count={period_count} period_type={period_type} period_check_count={period_check_count} price={price}")
+    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_count={period_count} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
 
-    if not all([name, period_count, period_type, period_check_count, price]):
+    if not all([name, period_count, period_type, period_check_count, price, hide, initial]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
     period_count        = int(period_count)
     period_type         = int(period_type)
     period_check_count  = int(period_check_count)
     price               = int(price)
+    hide                = int(hide) 
+    initial             = int(initial) 
     if period_count < 0:
         return abort(ErrorCode.PARAMS_INVALID)
     if period_type not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, PackagePeriodType.PERMANENT.id]:
@@ -56,6 +78,10 @@ def create_package_template(user):
         return abort(ErrorCode.PARAMS_INVALID)
     if price < 0:
         return abort(ErrorCode.PARAMS_INVALID)
+    if hide not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if initial not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
     
     template = models.PackageTemplate(
         name=name,
@@ -63,6 +89,8 @@ def create_package_template(user):
         period_type=period_type,
         period_check_count=period_check_count,
         price=price,
+        hide=hide,
+        initial=initial,
     )
     
     models.db.session.add(template)
@@ -79,8 +107,10 @@ def modify_package_template(user, template_id):
     period_type         = request.form.get('period_type')
     period_check_count  = request.form.get('period_check_count')
     price               = request.form.get('price')
+    hide                = request.form.get('hide')
+    initial             = request.form.get('initial')
     
-    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} period_count={period_count} period_type={period_type} period_check_count={period_check_count} price={price}")
+    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} period_count={period_count} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
 
     if period_count and int(period_count) < 0:
         return abort(ErrorCode.PARAMS_INVALID)
@@ -89,6 +119,10 @@ def modify_package_template(user, template_id):
     if period_check_count and int(period_check_count) < 0:
         return abort(ErrorCode.PARAMS_INVALID)
     if price and int(price) < 0:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if hide and int(hide) not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if initial and int(initial) not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
     
     template = models.PackageTemplate.query.filter_by(id=template_id, is_deleted=0).first()
@@ -105,6 +139,10 @@ def modify_package_template(user, template_id):
         template.period_check_count = int(period_check_count)
     if price:
         template.price = int(price)
+    if hide:
+        template.hide = int(hide)
+    if initial:
+        template.initial = int(initial)
     
     models.db.session.commit()
     return ok()
@@ -211,24 +249,6 @@ def get_user_package_list(user, user_id):
         "create_time": package.create_time,
     } for package in ret.items]
     return ok(data=ret)
-
-
-# 用户取消自己的套餐（软删除）
-@package_bp.route('/package/<int:package_id>', methods=['DELETE'])
-@login_required
-def delete_package(user, package_id):
-    current_app.logger.info(f"user delete package user_id={user.id} package_id={package_id}")
-
-    package = models.Package.query.filter_by(id=package_id, user_id=user.id, is_deleted=0).first()
-    if not package or package.is_deleted == 1:
-        return abort(ErrorCode.NOT_FOUND)
-    if package.user_id != user.id:
-        return abort(ErrorCode.FORBIDDEN)
-    
-    package.is_deleted = 1
-    user.check_quota()
-    models.db.session.commit()
-    return ok()
 
 
 # 管理员删除套餐（软删除）
@@ -342,7 +362,6 @@ def admin_modify_package(user, package_id):
 
 
 
-
 # 用户为自己购买某个模板的套餐，创建套餐
 @package_bp.route('/package/purchase/<int:template_id>', methods=['POST'])
 @login_required
@@ -364,6 +383,7 @@ def purchase_package(user, template_id):
         price                       = template.price,
     )
     package.init(datetime.now())
+    package.update()
     
     models.db.session.add(package)
     models.db.session.commit()
@@ -373,3 +393,38 @@ def purchase_package(user, template_id):
 
     return ok()
 
+
+# 管理员为某个用户购买某个模板的套餐，创建套餐
+@package_bp.route('/package/purchase/<int:template_id>/user/<int:user_id>', methods=['POST'])
+@admin_required
+def admin_add_package(admin, template_id, user_id):
+    current_app.logger.info(f"admin purchase package user_id={admin.id} template_id={template_id} user_id={user_id}")
+
+    user = models.User.query.filter_by(id=user_id, is_deleted=0).first()
+    if not user or user.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+
+    template = models.PackageTemplate.query.filter_by(id=template_id, is_deleted=0).first()
+    if not template or template.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    # NO 扣费
+    
+    package = models.Package(
+        user_id                     = user.id,
+        name                        = template.name,
+        period_count                = template.period_count,
+        period_type                 = template.period_type,
+        period_check_count          = template.period_check_count,
+        price                       = template.price,
+    )
+    package.init(datetime.now())
+    package.update()
+
+    models.db.session.add(package)
+    models.db.session.commit()
+
+    user.check_quota()
+    models.db.session.commit()
+
+    return ok()
