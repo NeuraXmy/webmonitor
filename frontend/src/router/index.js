@@ -28,6 +28,7 @@ import SubscribePackage from '../components/subscribe/SubscribePackage.vue'
 import Orders from '../components/subscribe/orders.vue'
 import subscribeManagement from '../components/super_admin/subscribe/subscribeManagement.vue'
 import userSubscribe from '../components/super_admin/subscribe/userSubscribe.vue'
+import Pay from '../components/subscribe/pay.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -56,7 +57,8 @@ const routes = [
             {path: '/monitors', component: Monitors },
             {path: '/tools', component: Tools },
             {path: '/SubscribePackage', component: SubscribePackage },
-            {path: '/orders', component: Orders }
+            {path: '/orders', component: Orders },
+            {path: '/pay', component: Pay }
         ]
     },
     { 

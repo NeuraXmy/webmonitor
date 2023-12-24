@@ -2,7 +2,7 @@
     <el-container class="home-container">
       <el-header>
         <div>
-            <span>多模态信息舆论监控</span>
+            <span>{{ $t('name') }}</span>
         </div>
         <div v-if="this.okadmin == 1">
             <el-switch
@@ -14,7 +14,42 @@
                 @change="swap_admin"
             />
         </div>
-        <el-button type="primary" plain @click="logout">退出</el-button>
+        <div class="right-panel">
+            <!-- <font-awesome-icon icon="fas fa-language" />
+            <el-menu>
+                <el-sub-menu index="1">
+                    <el-menu-item index="RecycleUsers">
+                        <span>用户回收</span>
+                    </el-menu-item>
+                    <el-menu-item index="RecycleSpaces">
+                        <span><el-icon><Compass /></el-icon>空间回收</span>
+                    </el-menu-item>
+                    <el-menu-item index="RecycleMonitors">
+                        <span><el-icon><Monitor /></el-icon>监控回收</span>
+                    </el-menu-item>
+                </el-sub-menu>
+            </el-menu>
+            <el-button type="primary" plain @click="logout">退出</el-button> -->
+            <el-menu
+                :default-active="activeIndex"
+                class="el-menu-demo"
+                mode="horizontal"
+                :ellipsis="false"
+                @select="handleSelect"
+                active-text-color="#000000"
+                text-color="#545c64"
+            >
+                <el-sub-menu index="2">
+                    <template #title><font-awesome-icon icon="fas fa-language" /></template>
+                    <el-menu-item index="2-1">English</el-menu-item>
+                    <el-menu-item index="2-2">简体中文</el-menu-item>
+                </el-sub-menu>
+                <el-menu-item index="1">
+                    <el-button type="primary" plain @click="logout">退出</el-button>
+                </el-menu-item>
+            </el-menu>
+        </div>
+        
       </el-header>
       <el-container>
         <el-aside width="200px">
@@ -31,19 +66,19 @@
                     <span><el-icon><Menu /></el-icon>任务管理</span>
                 </template> -->
                 <el-menu-item index="spaces">
-                    <span><el-icon><Compass /></el-icon>空间</span>
+                    <span><el-icon><Compass /></el-icon>{{ $t('home.space') }}</span>
                 </el-menu-item>
                 <el-menu-item index="monitors">
-                    <span><el-icon><Monitor /></el-icon>监控</span>
+                    <span><el-icon><Monitor /></el-icon>{{ $t('home.monitor') }}</span>
                 </el-menu-item>
                 <el-menu-item index="SubscribePackage">
-                    <span><el-icon><ShoppingBag /></el-icon>购买订阅</span>
+                    <span><el-icon><ShoppingBag /></el-icon>{{ $t('home.subscribe') }}</span>
                 </el-menu-item>
                 <el-menu-item index="orders">
-                    <span><el-icon><ShoppingCart /></el-icon>我的订单</span>
+                    <span><el-icon><ShoppingCart /></el-icon>{{ $t('home.order') }}</span>
                 </el-menu-item>
                 <el-menu-item index="tools">
-                    <span><el-icon><Tools /></el-icon>工具</span>
+                    <span><el-icon><Tools /></el-icon>{{ $t('home.tool') }}</span>
                 </el-menu-item>
                 <!-- </el-sub-menu> -->
             </el-menu>
@@ -92,6 +127,11 @@ export default{
         },
         swap_admin(){
             this.$router.push('/admin')
+        },
+        handleSelect(val){
+            // console.log(val)
+            if(val === "2-1") this.$i18n.locale = 'en'
+            else this.$i18n.locale = 'zh'
         }
     }
 }
@@ -115,6 +155,14 @@ export default{
 }
 .el-main{
     background-color: #E4E7ED;
+}
+.right-panel{
+    /* margin-left: -7.5px; */
+}
+.el-menu-demo{
+    background-color: #409EFF;
+    /* text-color:#fff;
+    active-text-color:#fff; */
 }
 
 </style>

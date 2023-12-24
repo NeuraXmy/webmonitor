@@ -97,8 +97,9 @@ export default {
             this.PackageList = res.data.items
             this.PackagesCycle = []
             this.PackagesFrequency = []
-            // console.log(res.data.items)
+            console.log(res.data.items)
             for(let i = 0; i < this.PackageList.length; i++){
+                if(this.PackageList[i].hide === 1) continue;
                 this.PackageList[i].price/=100.0;
                 if(this.PackageList[i].period_type === 0) this.PackageList[i].period_type = "一次性";
                 else if(this.PackageList[i].period_type === 1) this.PackageList[i].period_type = "日付";

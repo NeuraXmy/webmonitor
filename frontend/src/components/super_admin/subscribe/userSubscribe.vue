@@ -6,9 +6,9 @@
             <el-breadcrumb-item>用户套餐</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card>
-            <!-- <el-row>
+            <el-row>
                 <el-button type="primary" @click="AddPackage"><el-icon><Plus /></el-icon>新增套餐</el-button>
-            </el-row> -->
+            </el-row>
             <el-row>
                 <el-table v-loading="loading" :data="OrderList" style="width: 100%">
                     <el-table-column prop="id" label="ID" width="50" />
@@ -20,9 +20,9 @@
                     <!-- <el-table-column prop="check_count_left" label="监控剩余次数" width="150" /> -->
                     <el-table-column prop="edit" label="操作" width="200">
                         <template #default="scope">
-                            <el-button size="small" @click="PackageEdit(scope.row)"
+                            <!-- <el-button size="small" @click="PackageEdit(scope.row)"
                             >更换</el-button
-                            >
+                            > -->
                             <el-button
                                 size="small"
                                 type="danger"
@@ -45,8 +45,8 @@
         </el-card>
     </div>
     <el-dialog
-      v-model="okEditPackage"
-      title="更换套餐"
+      v-model="okAddPackage"
+      title="新增套餐"
       width="40%"
     >
         <el-form ref="PackageRef" :rules="PackageRules" :model="PackageForm" label-width="80px" class="form_style">
@@ -98,8 +98,8 @@
         </el-form>
         <template #footer>
             <span class="dialog-footer">
-            <el-button @click="okEditPackage = false">取消</el-button>
-            <el-button type="primary" @click="EditPackageConfirm">
+            <el-button @click="okAddPackage = false">取消</el-button>
+            <el-button type="primary" @click="AddPackageConfirm">
                 确定
             </el-button>
             </span>
@@ -214,7 +214,9 @@ export default{
                 period_count:1,
                 price:0,
                 period_check_count:1,
-                check_count_left:1
+                check_count_left:1,
+                hide:0,
+                initial:0
             },
             Package_types:[
                 {
@@ -291,6 +293,8 @@ export default{
             this.PackageForm.period_type = this.PackageList[0].period_type
             this.PackageForm.period_check_count = this.PackageList[0].period_check_count
             this.PackageForm.price = this.PackageList[0].price
+            this.PackageForm.hide = this.PackageList[0].hide
+            this.PackageForm.initial = this.PackageList[0].initial;
         },
         //编辑套餐
         PackageEdit(row){
@@ -350,15 +354,17 @@ export default{
                 if(!valid) return ;
                 this.okAddPackage = false
                 this.loading = true
+                // console.log(this.SelectPackageID)
                 let data = this.$qs.stringify(this.PackageForm)
-                const {data: res} = await this.$axios.post('/package/template',data,
+                console.log(this.PackageForm)
+                const {data: res} = await this.$axios.post('/package/purchase/'+this.SelectPackageID+'/user/'+this.UserID ,data,
                 {
                     headers : {
                         'token': sessionStorage.getItem('token')
                     }
                 })
                 if(res.status ===200){
-                    this.getPackagesList()
+                    this.getOrderList()
                 }else{
                     this.$message.error(res.msg);
                 }
@@ -383,6 +389,8 @@ export default{
                     this.PackageForm.period_type = this.PackageList[i].period_type
                     this.PackageForm.period_check_count = this.PackageList[i].period_check_count
                     this.PackageForm.price = this.PackageList[i].price
+                    this.PackageForm.hide = this.PackageList[i].hide
+                    this.PackageForm.initial = this.PackageList[i].initial;
                 }
             }
         },
