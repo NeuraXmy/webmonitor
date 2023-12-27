@@ -4,22 +4,36 @@
       <div class="head">
         <img class="logo" src="../../public/changenotify.png" />
         <div class="name">
-          <div class="title">多模态信息舆情监控</div>
+          <div class="title">{{ $t('name') }}</div>
         </div>
       </div>
       <el-form ref="userRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
+            <el-menu
+              mode="horizontal"
+              :ellipsis="false"
+              @select="handleSelect"
+              active-text-color="#000000"
+              text-color="#545c64"
+            >
+            <div class="flex-grow" />
+              <el-sub-menu index="2" style="margin-right='0px'">
+                  <template #title><font-awesome-icon icon="fas fa-language" /></template>
+                  <el-menu-item index="2-1">English</el-menu-item>
+                  <el-menu-item index="2-2">简体中文</el-menu-item>
+              </el-sub-menu>
+            </el-menu>
             <el-form-item prop="email" >
-                <el-input prefix-icon="User" v-model="userForm.email" placeholder="邮箱"></el-input>
+                <el-input prefix-icon="User" v-model="userForm.email" :placeholder="$t('table.email')"></el-input>
             </el-form-item>
             <el-form-item  prop="password">
-                <el-input show-password prefix-icon="Lock" v-model="userForm.password" placeholder="密码"></el-input>
+                <el-input show-password prefix-icon="Lock" v-model="userForm.password" :placeholder="$t('table.password')"></el-input>
             </el-form-item>
             <el-form-item>
               <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAOhZLLzYs90Djqz" data-callback="javascriptCallback"></div> -->
-                <el-button type="primary" @click="login">登录</el-button>
-                <el-button @click="restForm">重置</el-button>
+                <el-button type="primary" @click="login">{{ $t('login') }}</el-button>
+                <el-button @click="restForm">{{ $t('restForm') }}</el-button>
             </el-form-item>
-            <a class="form__link" @click="register">注册</a>
+            <a class="form__link" @click="register">{{ $t('register') }}</a>
             <!-- <router-link to="/register">
               <div style="margin-top: 5px">注册</div>
           </router-link> -->
@@ -122,14 +136,19 @@ export default{
       setCookie(name,"")
     },
     test(){
-        const cookies = new Cookies();
-        const options = {
-          secure: true,
-          sameSite: 'none',
-        };
-        cookies.set('access_token', 'c212e015-d66e-460f-97ab-55fab8e19bed', options);
-        console.log(this.getCookie('access_token'))
-    }
+        // const cookies = new Cookies();
+        // const options = {
+        //   secure: true,
+        //   sameSite: 'none',
+        // };
+        // cookies.set('access_token', 'c212e015-d66e-460f-97ab-55fab8e19bed', options);
+        // console.log(this.getCookie('access_token'))
+    },
+    handleSelect(val){
+        // console.log(val)
+        if(val === "2-1") this.$i18n.locale = 'en'
+        else this.$i18n.locale = 'zh'
+    },
 
   }
 }
@@ -195,5 +214,9 @@ export default{
   line-height: 2;
   cursor: pointer;
   text-decoration: none;
+}
+
+.flex-grow {
+  flex-grow: 1;
 }
 </style>

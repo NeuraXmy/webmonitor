@@ -1,6 +1,10 @@
 // 1、创建中文语言包对象
 export default{
     name: "多模态信息舆论监控",
+    login: "登录",
+    register: "注册",
+    restForm: "重置",
+    back: '退出',
     home: {
         space: "空间",
         monitor: "监控",
@@ -11,13 +15,21 @@ export default{
     table: {
         username: '用户名',
         email: '邮箱',
-        mobile: '手机'
+        mobile: '手机',
+        password: "密码"
     },
     breadcrumbs: {
         home: "首页",
         spaces: "空间"
     },
+    label: {
+        nickname: "昵称",
+        spaceDec: "空间说明",
+        url: "网址"
+    },
     tabs: {
+        addMonitorURL: "添加新的监控网址",
+        MonitorTag: "监控标签/空间",
         editSpace: "编辑空间",
         deleteSpace: "删除空间",
         addMonitor: "新增监控网址",
@@ -36,7 +48,14 @@ export default{
         refreshWatch: "刷新监控",
         historyWatch: "检查记录",
         cancel: "取消",
-        confirm: "确定"
+        confirm: "确定",
+        add:"新增",
+        edit_add:"编辑 > 新增",
+        edit:"编辑",
+        delete:"删除",
+        refresh:"刷新",
+        History:"检查记录",
+        back:"返回"
     },
     tableColumns: {
         id: "ID",
@@ -56,7 +75,9 @@ export default{
     messages: {
         deleteSpaceConfirm: "是否删除监控？",
         refreshWatchSuccess: "刷新监控成功.",
-        quotaExceeded: "监控套餐次数已超限，所有监控暂停！"
+        quotaExceeded: "监控套餐次数已超限，所有监控暂停！",
+        email:"请输入有效的邮箱",
+        url:"请输入有效的网址"
     },
     placeholders: {
         nickname: "请输入昵称",
@@ -98,6 +119,11 @@ export default{
             history: '检查记录',
         },
         dialogs: {
+            weekly: "周",
+            day:"天",
+            hour:"时",
+            minute:"分",
+            second:"秒",
             addMonitor: {
                 title: '新增监控网址',
                 monitorName: '监控名',
@@ -139,7 +165,75 @@ export default{
                 confirm: '确定',
             },
             quotaExceeded: '监控套餐次数已超限，所有监控暂停！',
+            cue:"温馨提示"
         },
+    },
+    tools:{
+        home: '首页',
+        tools: '工具',
+        bookmark: '小书签',
+        elementSelector: '元素选择器',
+        selectorTypes: '选择器类型',
+        xpathOrCssSelector: '元素选择器类型可以选择 Xpath 或 Css selector。',
+        exampleSelector: '一行一个元素选择器，每一行的格式为：选择器类型{选择器内容}，例如：',
+        exampleCode: 'xpath://body/div/span[contains(@class, "example-class")]',
+        copySelectors: '可以借助浏览器 F12 直接 copy 这两种选择器，或者系统提供的小书签工具。',
+        instance: '实例',
+        openUrl: '例如监控百度热点，打开网址',
+        methodOne: '方法一：借助浏览器 F12 直接 copy 这两种选择器，按 F12 或者点击鼠标右键 -> 检查，进而调出开发者工具',
+        selectMode: '按左上角的小箭头（Ctrl+Shift+C）开启选择模式',
+        rightClick: '选定区域后右键高亮的代码',
+        copyXPath: 'Copy -> Copy XPath',
+        methodTwo: '方法二：小书签工具',
+        dragBookmark: '拖动上方小书签至浏览器导航栏',
+        clickBookmark: '打开监控网址后，点击浏览器导航栏上的小书签按钮',
+        highlightArea: '选定区域后点击高亮的部分，页面下方自动获取XPath',
+        addMonitoringTask: '在空间中添加监控任务',
+        monitoringName: '监控名：随便',
+        monitoringDescription: '监控说明：随便',
+        monitoringUrl: '监控网址：填写监控网址',
+        keywords: '关键词：填写监控关键词，监控内容为该关键词，出现即可触发',
+        monitoringElement: '监控元素：可监控整个网页，或者选择元素选择器（XPath 和 CssSelector），粘贴上一步复制的 XPath 或者 CssSelector 内容，可添加多个选择器，例如：',
+        xpath: 'xpath:复制的 XPath 内容',
+        css: 'css:复制的 CssSelector 内容',
+        refreshRate: '刷新频率：默认抓取频率为一小时，自行根据需要调整',
+        notificationEmail: '通知邮箱：随便',
+    },
+    orders:{
+        home: '首页',
+        myOrders: '我的订单',
+        id: 'ID',
+        createTime: '创建时间',
+        packageName: '套餐名称',
+        period: '周期',
+        monitorTotalCount: '监控总次数',
+        orderAmount: '订单金额',
+        monitorRemainingCount: '监控剩余次数',
+    },
+    packages:{
+        home: '首页',
+        subscribe: '购买订阅',
+        choosePackage: '选择最合适您的套餐',
+        byCycle: '按周期',
+        byFrequency: '按次数',
+        monitorFrequency: '监控次数',
+        subscribeNow: '立即订阅',
+        subscribeConfirmation: '是否订阅该套餐？',
+        cancel: '取消',
+        confirm: '确定',
+    },
+    select:{
+        selectElements: '在页面上选择一个或多个元素用于监视，通过单击所选内容中获取选择元素。',
+        add: '添加',
+        exit: '退出',
+        monitorElements: '监控元素',
+        selectSpace: '选择空间',
+        keywords: '关键词',
+        loginPrompt: '用户未登录或上次登录状态过期，请重新登录。',
+        addSuccess: '添加成功',
+        continue: '继续',
+        confirm: '确定',
+        cancel: '取消',
+        addElementPrompt: '是否添加该元素？',
     }
 }
-//昵称,空间说明

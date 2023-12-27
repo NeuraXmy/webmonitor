@@ -1,19 +1,19 @@
 <template>
     <div>
         <el-breadcrumb>
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>我的订单</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/home' }">{{ $t('orders.home') }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ $t('orders.myOrders') }}</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card>
             <el-row>
                 <el-table v-loading="loading" :data="OrderList" style="width: 100%">
-                    <el-table-column prop="id" label="ID" width="50" />
-                    <el-table-column prop="create_time" label="创建时间" width="200" />
-                    <el-table-column prop="name" label="套餐名称" width="150" />
-                    <el-table-column prop="period_type" label="周期" width="150" />
-                    <el-table-column prop="period_check_count" label="监控总次数" width="150" />
-                    <el-table-column prop="price" label="订单金额" width="150" />
-                    <el-table-column prop="check_count_left" label="监控剩余次数" width="150" />
+                    <el-table-column prop="id" :label="$t('orders.id')" width="50" />
+                    <el-table-column prop="create_time" :label="$t('orders.createTime')" width="200" />
+                    <el-table-column prop="name" :label="$t('orders.packageName')" width="150" />
+                    <el-table-column prop="period_type" :label="$t('orders.period')" width="150" />
+                    <el-table-column prop="period_check_count" :label="$t('orders.monitorTotalCount')" width="150" />
+                    <el-table-column prop="price" :label="$t('orders.orderAmount')" width="150" />
+                    <el-table-column prop="check_count_left" :label="$t('orders.monitorRemainingCount')" width="150" />
                     <!-- <el-table-column prop="edit" label="操作" width="340">
                         <template #default="scope">
                             <el-button size="small" @click="WatchEdit(scope.row)"
