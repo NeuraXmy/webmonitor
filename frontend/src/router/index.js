@@ -113,12 +113,12 @@ const routes = [
         hidden: true
     },
     { 
-        path: '/package/payment/success',
+        path: '/package/purchase/success',
         component: SubscribeSuccess,
         hidden: true
     },
     { 
-        path: '/package/payment/error',
+        path: '/package/purchase/error',
         component: SubscribeCancel,
         hidden: true
     }
