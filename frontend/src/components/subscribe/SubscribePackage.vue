@@ -148,7 +148,7 @@ export default {
             if(res.status ===200){
                 console.log(res.data)
                 this.stripe.redirectToCheckout({ sessionId: res.data.session_id });
-                this.getPackagesList()
+                // this.getPackagesList()
             }else{
                 this.$message.error(res.msg);
             }
