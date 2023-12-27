@@ -33,6 +33,7 @@ class ErrorCode(Enum):
 
     # ---------------------- 10xx user ---------------------- #
 
+
     def __init__(self, http_status, code, msg) -> None:
         self.http_status = http_status   # HTTP状态码 
         self.code = code                 # 后端错误码

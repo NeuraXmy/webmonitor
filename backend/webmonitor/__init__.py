@@ -41,7 +41,8 @@ def register_plugin(app):
     apply_cors(app)
     apply_json_provider(app)
     apply_exception_handler(app)
-    apply_logger(app)
+    apply_stripe(app)
+    
 
 
 def apply_cors(app):
@@ -79,5 +80,7 @@ def apply_exception_handler(app):
         return ErrorCode.INTERNAL_SERVER_ERROR.to_response(msg=f"Unhandled Exception Ocurred: {ex}")
     
 
-def apply_logger(app):
-    pass
+def apply_stripe(app):
+    import stripe
+    stripe.api_key = app.config["STRIPE_API_KEY"]
+

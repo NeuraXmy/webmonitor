@@ -1,6 +1,6 @@
 from webmonitor.package import package_bp
 from webmonitor import models
-from webmonitor.models import PackagePeriodType
+from webmonitor.models import PackagePeriodType, PackagePaymentStatus
 from flask import render_template, request, current_app, redirect, url_for
 from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
@@ -8,6 +8,7 @@ from webmonitor.utils.send_email import send_email
 from webmonitor.utils.auth import login_required, admin_required
 from webmonitor.utils.page import paginate
 from datetime import datetime, timedelta
+import stripe
 
 
 # 用户或管理员获取所有的套餐模板（分页）
@@ -361,8 +362,7 @@ def admin_modify_package(user, package_id):
     return ok()
 
 
-
-# 用户为自己购买某个模板的套餐，创建套餐
+# 用户为自己购买某个模板的套餐
 @package_bp.route('/package/purchase/<int:template_id>', methods=['POST'])
 @login_required
 def purchase_package(user, template_id):
@@ -372,10 +372,81 @@ def purchase_package(user, template_id):
     if not template or template.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
     
-    # TODO: 扣费
+    # 创建session
+    done_url = current_app.config['FRONTEND_BASE_URL'] + "/package/purchase/done?session_id={CHECKOUT_SESSION_ID}"
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        line_items=[
+            {
+                "price": current_app.config['STRIPE_PRICE_ID'],
+                "quantity": template.price
+            }
+        ],
+        mode="payment",
+        success_url=done_url,
+        cancel_url=done_url,
+    )
+    current_app.logger.info(f"create stripe session_id={session['id']}")
 
+    # 创建payment
+    payment = models.PackagePayment(
+        user_id     = user.id,
+        template_id = template_id,
+        session_id  = session["id"],
+        status      = PackagePaymentStatus.PENDING.id,
+    )
+    models.db.session.add(payment)
+    models.db.session.commit()
+
+    return ok(data={ "session_id" : session["id"] })
+    
+
+# 用户套餐付款结束webhook
+@package_bp.route('/package/purchase/webhook', methods=['POST'])
+def purchase_package_webhook():
+    # 获取event
+    event = None
+    payload = request.data
+    sig_header = request.headers['STRIPE_SIGNATURE']
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, current_app.config['STRIPE_ENDPOINT_KEY']
+        )
+    except ValueError as e:
+        raise e
+    except stripe.error.SignatureVerificationError as e:
+        raise e
+    
+    current_app.logger.info(f"webhook event type={event['type']}")
+
+    # 如果不是支付成功
+    if event['type'] != 'payment_intent.succeeded':
+        abort(ErrorCode.PARAMS_INVALID, f'Unhandled webhook event type: {event['type']}')
+
+    # 支付成功，获取session_id查询Payment对象
+    payment_intent_id = event['data']['object']['id']
+    session = stripe.checkout.Session.list(payment_intent=payment_intent_id, limit=1)['data'][0]
+    session_id = session['id']
+
+    current_app.logger.info(f"payment success session_id={session_id}")
+
+    payment = models.PackagePayment.query.filter_by(session_id=session_id).first()
+    if not payment:
+        return abort(ErrorCode.NOT_FOUND)
+
+    user_id = payment.user_id
+    user = models.User.query.filter_by(id=user_id, is_deleted=0).first()
+    if not user or user.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+
+    template_id = payment.template_id
+    template = models.PackageTemplate.query.filter_by(id=template_id, is_deleted=0).first()
+    if not template or template.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    # 添加套餐
     package = models.Package(
-        user_id                     = user.id,
+        user_id                     = user_id,
         name                        = template.name,
         period_count                = template.period_count,
         period_type                 = template.period_type,
@@ -384,6 +455,9 @@ def purchase_package(user, template_id):
     )
     package.init(datetime.now())
     package.update()
+
+    # 更新payment状态
+    payment.status = PackagePaymentStatus.PAID.id
     
     models.db.session.add(package)
     models.db.session.commit()

@@ -452,3 +452,29 @@ class Package(BaseModel):
                 self.current_period_end_time = get_next_year_day(start)
 
 
+
+# 套餐付款状态
+class PackagePaymentStatus(Enum):
+    CREATED     = (0)
+    PENDING     = (1)
+    SUCCEEDED   = (2)
+    CANCELED    = (3)
+    REFUND      = (4)
+
+    def __init__(self, id) -> None:
+        self.id = id
+
+
+
+# 套餐付款模型
+class PackagePayment(BaseModel):
+    __tablename__ = "t_payment"
+
+    user_id     = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False)             # 用户id
+    template_id = db.Column(db.Integer, db.ForeignKey('t_package_template.id'), nullable=False) # 购买的套餐模板id
+    session_id  = db.Column(db.String(512), nullable=False, unique=True)                         # stripe的session id
+
+    status      = db.Column(db.Integer, nullable=False, default=0)  # 付款状态
+
+    user     = db.relationship('User',            backref='package_payments', lazy=True)
+    template = db.relationship('PackageTemplate', backref='package_payments', lazy=True)
