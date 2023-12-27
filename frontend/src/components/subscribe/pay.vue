@@ -1,51 +1,33 @@
 <template>
-     <form @submit.prevent="handleSubmit">
-            <div id="payment-element"/>
-            <el-button native-type="submit" type="primary" round >Complete</el-button>
-    </form>
-
+    <div>
+      <!-- <stripe-checkout
+        ref="checkoutRef"
+        :pk="publishableKey"
+        :session-id="sessionId"
+      /> -->
+      <button @click="submit">Checkout!</button>
+    </div>
 </template>
-  
-<script>
-import {toRaw} from '@vue/reactivity'
-import {loadStripe} from "@stripe/stripe-js";
-export default {
-	data(){
-		return{
-		      stripe: undefined,
-		      elements:undefined,
-		}
-	},
-	methods:{
-        async initStripe() {
-            this.stripe = await loadStripe('pk_test_qblFNYngBkEdjEZ16jxxoWSM');
-            this.elements = this.stripe.elements({
-                theme: 'stripe',
-                clientSecret: 'pk_test_qblFNYngBkEdjEZ16jxxoWSM',
-                locale:'auto'
-            })
-            const paymentElement = this.elements.create("payment");
-            paymentElement.mount("#payment-element");
-        },
-	},
-	async handleSubmit(e) {
-        e.preventDefault();
-        let elements=toRaw(this.elements)
-        let stripe=toRaw(this.stripe)
-        const {error} = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-            // Make sure to change this to your payment completion page
-            return_url: "http://localhost:4242/checkout.html",
-            },
-            //redirect: 'if_required'如果设置redirect: 'if_required'则不跳转returnUrl
-        });
-        console.log(error)
-    },
-    created() {
-        this.initStripe()
-    },
-}
-</script>
 
-  
+<script>
+export default {
+    data () {
+        this.publishableKey = 'pk_test_51OREOcLtU7FRbXomhUG0ZaECp4eRnRKkqSLHl0AmmkmD3U1OLhyjLLTp3rgKv9m6PtrEljETNfjoPmxX4YxZ44JW00Vvlhhrj1'
+        return {
+            loading: false,
+            sessionId: 'cs_test_a1pUvpL7vaiNbp9P253Nghz2j04bVKCSsvv6MGj7j3dae1Bp17IQwCEsEG', // session id from backend
+            stripe: null
+        };
+    },
+    created(){
+        this.stripe = Stripe('pk_test_51OREOcLtU7FRbXomhUG0ZaECp4eRnRKkqSLHl0AmmkmD3U1OLhyjLLTp3rgKv9m6PtrEljETNfjoPmxX4YxZ44JW00Vvlhhrj1');
+    },
+    methods: {
+        submit () {
+            // You will be redirected to Stripe's secure checkout page
+            // this.$refs.checkoutRef.redirectToCheckout();
+            this.stripe.redirectToCheckout({ sessionId: 'cs_test_a1pUvpL7vaiNbp9P253Nghz2j04bVKCSsvv6MGj7j3dae1Bp17IQwCEsEG' });
+        },
+    },
+};
+</script>

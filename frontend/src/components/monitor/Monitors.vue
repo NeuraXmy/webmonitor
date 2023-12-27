@@ -1,22 +1,19 @@
 <template>
     <div>
         <el-breadcrumb>
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>监控</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/home' }">{{ $t('breadcrumbs.home') }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ $t('home.monitor') }}</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card>
             <el-row>
-                <!-- <el-col :span="5">
-                    <el-statistic title="默认次数" :value="this.checkForm.total" />
-                </el-col> -->
                 <el-col :span="5">
-                    <el-statistic title="本月消耗次数" :value="this.checkForm.this_month_check_count" />
+                    <el-statistic :title="$t('monitor.consumption.thisMonth')" :value="this.checkForm.this_month_check_count" />
                 </el-col>
                 <el-col :span="5">
-                    <el-statistic title="今日消耗次数" :value="this.checkForm.today_check_count" />
+                    <el-statistic :title="$t('monitor.consumption.today')" :value="this.checkForm.today_check_count" />
                 </el-col>
                 <el-col :span="5">
-                    <el-statistic title="昨日消耗次数" :value="this.checkForm.yesterday_check_count">
+                    <el-statistic :title="$t('monitor.consumption.yesterday')" :value="this.checkForm.yesterday_check_count">
                         <template #suffix>
                         <el-icon style="vertical-align: -0.125em">
                             <ChatLineRound />
@@ -25,7 +22,7 @@
                     </el-statistic>
                 </el-col>
                 <el-col :span="4">
-                    <el-statistic title="今日触发警报次数" :value="this.checkForm.today_notification_count" />
+                    <el-statistic :title="$t('monitor.consumption.todayAlerts')" :value="this.checkForm.today_notification_count" />
                 </el-col>
             </el-row>
         </el-card>
@@ -33,26 +30,26 @@
           <el-row>
               <el-col :span="2">
                   <div>
-                      <el-button type="danger" @click="DeleteMonitors"><el-icon><Delete /></el-icon>批量删除</el-button>
+                      <el-button type="danger" @click="DeleteMonitors"><el-icon><Delete /></el-icon>{{$t('monitor.actions.deleteMonitors')}}</el-button>
                   </div>
               </el-col>
               <el-col :span="4">
                   <div>
-                      <el-button type="success" @click="CloseMonitors"><el-icon><Delete /></el-icon>批量关闭</el-button>
+                      <el-button type="success" @click="CloseMonitors"><el-icon><Delete /></el-icon>{{$t('monitor.actions.closeMonitors')}}</el-button>
                   </div>
               </el-col>
           </el-row>
           <el-row>
               <el-table v-loading="loading" :data="MonitorList" style="width: 100%" @selection-change="handleSelectionMonitorsChange">
                     <el-table-column type="selection" width="50" />
-                    <el-table-column prop="id" label="ID" width="50" />
-                    <el-table-column prop="name" label="监控名" width="70" />
-                    <el-table-column prop="url" label="网址" width="230" />
-                    <el-table-column prop="last_check_time" label="检查时间" width="170" />
-                    <el-table-column prop="last_check_state" label="检查状态" width="170" />
-                    <el-table-column prop="last_24h_check_count" label="24小时检查次数" width="130" />
-                    <el-table-column prop="last_24h_notification_count" label="24小时触发警报次数" width="155" />
-                    <el-table-column fixed="right" prop="paused" label="是否启用" width="80" >
+                    <el-table-column prop="id" :label="$t('monitor.table.id')" width="50" />
+                    <el-table-column prop="name" :label="$t('monitor.table.monitorName')" width="70" />
+                    <el-table-column prop="url" :label="$t('monitor.table.url')" width="230" />
+                    <el-table-column prop="last_check_time" :label="$t('monitor.table.checkTime')" width="170" />
+                    <el-table-column prop="last_check_state" :label="$t('monitor.table.checkStatus')" width="170" />
+                    <el-table-column prop="last_24h_check_count" :label="$t('monitor.table.last24hCheckCount')" width="130" />
+                    <el-table-column prop="last_24h_notification_count" :label="$t('monitor.table.last24hAlerts')" width="155" />
+                    <el-table-column fixed="right" prop="paused" :label="$t('monitor.table.enable')" width="80" >
                         <template #default="scope">
                             <el-switch
                                 v-model="scope.row.paused"
@@ -69,25 +66,25 @@
                     <el-table-column fixed="right" prop="edit" label="Edit" width="280">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
-                          >编辑</el-button
+                          >{{$t('monitor.table.edit')}}</el-button
                           >
                           <el-button
                           size="small"
                           type="danger"
                           @click="DeleteWatch(scope.row)"
-                          >删除</el-button
+                          >{{$t('monitor.table.delete')}}</el-button
                           >
                           <el-button
                           size="small"
                           type="info"
                           @click="RefreshWatch(scope.row)"
-                          >刷新</el-button
+                          >{{$t('monitor.table.refresh')}}</el-button
                           >
                           <el-button
                             size="small"
                             type="success"
                             @click="WatchHistory(scope.row)"
-                            >检查记录</el-button
+                            >{{$t('monitor.table.history')}}</el-button
                             >
                       </template>
                   </el-table-column>
@@ -104,160 +101,179 @@
           </el-row>
         </el-card>
         <el-dialog
-              v-model="addMonitor"
-              title="新增监控网址"
-              width="40%"
-          >
-              <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
-                  <el-form-item label="监控名" prop="name">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="监控说明" prop="desc">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.desc" placeholder="请输入监控说明"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="网址" prop="url">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.url" placeholder="请输入网址（http://或https://开头）"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="关键词">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.trigger_text" placeholder="请输入监控关键词"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="监控元素">
-                      <el-col :span="20">
-                          <el-select v-model="this.value" placeholder="Select" size="large" @change="ChangeElement">
-                              <el-option
-                              v-for="item in options"
-                              :key="item.value"
-                              :label="item.label"
-                              :value="item.value"
-                              />
-                          </el-select>
-                          <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
-                      </el-col>
-                      
-                  </el-form-item>
-                  <el-form-item label="刷新时间">
-                      <el-form-item prop="time_between_check_weeks" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_days" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_hours" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_minutes" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
-                      </el-form-item>
-                      <el-form-item prop="time_between_check_seconds" style="width:81px;">
-                            <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
-                      </el-form-item>
-                  </el-form-item>
-                  <el-form-item label="通知邮箱" prop="notification_email">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.notification_email"></el-input>
-                      </el-col>
-                  </el-form-item>
-              </el-form>
-              <!-- <span>....</span> -->
-              <template #footer>
-              <span class="dialog-footer">
-                  <el-button @click="addMonitor = false">取消</el-button>
-                  <el-button type="primary" @click="addMonitorList">
-                  确定
-                  </el-button>
-              </span>
-              </template>
-          </el-dialog>
+            v-model="addMonitor"
+            :title="$t('buttons.addMonitor')"
+            width="40%"
+        >
+            <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorName')" prop="name">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.name" :placeholder="$t('placeholders.monitorName')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorDesc')" prop="desc">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.desc" :placeholder="$t('placeholders.monitorDescription')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.url')" prop="url">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.url" :placeholder="$t('placeholders.monitorUrl')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.keyword')">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.trigger_text" :placeholder="$t('placeholders.monitorKeywords')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.element')">
+                    <el-col :span="20">
+                        <el-select v-model="this.value" placeholder="Select" size="large" @change="ChangeElement">
+                            <el-option
+                                v-for="item in options"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                        <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：                   //*[contains(@class, 'sametext')]"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.refreshTime')">
+                    <el-form-item prop="time_between_check_weeks" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_weeks">
+                            <template #append>{{$t('monitor.dialogs.weekly')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_days" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_days">
+                            <template #append>{{$t('monitor.dialogs.day')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_hours" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_hours">
+                            <template #append>{{$t('monitor.dialogs.hour')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_minutes" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_minutes">
+                            <template #append>{{$t('monitor.dialogs.minute')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_seconds" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_seconds">
+                            <template #append>{{$t('monitor.dialogs.second')}}</template>
+                        </el-input>
+                    </el-form-item>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.notificationEmail')" prop="notification_email">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.notification_email"></el-input>
+                    </el-col>
+                </el-form-item>
+            </el-form>
+            <!-- <span>....</span> -->
+            <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="addMonitor = false">{{ $t('buttons.cancel') }}</el-button>
+                <el-button type="primary" @click="addMonitorList">
+                    {{ $t('buttons.confirm') }}
+                </el-button>
+            </span>
+            </template>
+        </el-dialog>
           <el-dialog
-              v-model="EditMonitor"
-              title="编辑监控信息"
-              width="40%"
-          >
-              <el-form  ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
-                  <el-form-item label="监控名" prop="name">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.name" placeholder="请输入昵称"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="监控说明" prop="desc">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.desc" placeholder="请输入监控说明"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="网址" prop="url">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.url" placeholder="请输入网址（http://或https://开头）"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="关键词">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.trigger_text" placeholder="请输入监控关键词"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="监控元素">
-                      <el-col :span="20">
-                          <el-select v-model="value" placeholder="Select" size="large" @change="ChangeElement">
-                              <el-option
-                              v-for="item in options"
-                              :key="item.value"
-                              :label="item.label"
-                              :value="item.value"
-                              />
-                          </el-select>
-                          <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="刷新时间" prop="time">
-                      <el-col :span="4">
-                          <el-input v-model="addMonitorForm.time_between_check_weeks" placeholder="周"></el-input>
-                      </el-col>
-                      <el-col :span="4">
-                          <el-input v-model="addMonitorForm.time_between_check_days" placeholder="天"></el-input>
-                      </el-col>
-                      <el-col :span="4">
-                          <el-input v-model="addMonitorForm.time_between_check_hours" placeholder="时"></el-input>
-                      </el-col>
-                      <el-col :span="4">
-                          <el-input v-model="addMonitorForm.time_between_check_minutes" placeholder="分"></el-input>
-                      </el-col>
-                      <el-col :span="4">
-                          <el-input v-model="addMonitorForm.time_between_check_seconds" placeholder="秒"></el-input>
-                      </el-col>
-                  </el-form-item>
-                  <el-form-item label="通知邮箱" prop="notification_email">
-                      <el-col :span="20">
-                          <el-input v-model="addMonitorForm.notification_email"></el-input>
-                      </el-col>
-                  </el-form-item>
-              </el-form>
-              <template #footer>
-              <span class="dialog-footer">
-                  <el-button @click="EditMonitor = false">取消</el-button>
-                  <el-button type="primary" @click="WatchEditConfirm">
-                  确定
-                  </el-button>
-              </span>
-              </template>
-          </el-dialog>
+            v-model="EditMonitor"
+            :title="$t('buttons.editMonitor')"
+            width="40%"
+        >
+            <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorName')" prop="name">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.name" :placeholder="$t('placeholders.monitorName')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorDesc')" prop="desc">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.desc" :placeholder="$t('placeholders.monitorDescription')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.url')" prop="url">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.url" :placeholder="$t('placeholders.monitorUrl')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.keyword')">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.trigger_text" :placeholder="$t('placeholders.monitorKeywords')"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.element')">
+                    <el-col :span="20">
+                        <el-select v-model="this.value" placeholder="Select" size="large" @change="ChangeElement">
+                            <el-option
+                                v-for="item in options"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                        <el-input type="textarea" :disabled="okDisabled" :rows="6" v-model="addMonitorForm.include_filters" placeholder="请输入监控元素（XPath/CssSelector）, 例如：                   //*[contains(@class, 'sametext')]"></el-input>
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.refreshTime')">
+                    <el-form-item prop="time_between_check_weeks" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_weeks">
+                            <template #append>{{$t('monitor.dialogs.weekly')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_days" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_days">
+                            <template #append>{{$t('monitor.dialogs.day')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_hours" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_hours">
+                            <template #append>{{$t('monitor.dialogs.hour')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_minutes" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_minutes">
+                            <template #append>{{$t('monitor.dialogs.minute')}}</template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="time_between_check_seconds" style="width:81px;">
+                        <el-input v-model="addMonitorForm.time_between_check_seconds">
+                            <template #append>{{$t('monitor.dialogs.second')}}</template>
+                        </el-input>
+                    </el-form-item>
+                </el-form-item>
+                <el-form-item :label="$t('monitor.dialogs.addMonitor.notificationEmail')" prop="notification_email">
+                    <el-col :span="20">
+                        <el-input v-model="addMonitorForm.notification_email"></el-input>
+                    </el-col>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="EditMonitor = false">{{ $t('buttons.cancel') }}</el-button>
+                <el-button type="primary" @click="WatchEditConfirm">
+                    {{ $t('buttons.confirm') }}
+                </el-button>
+            </span>
+            </template>
+        </el-dialog>
         <el-dialog
             v-model="okDeleteWatch"
             width="30%"
             align-center
             >
-            <span>是否删除监控？</span>
+            <span>{{ $t('messages.deleteSpaceConfirm') }}</span>
             <template #footer>
                 <span class="dialog-footer">
-                <el-button @click="okDeleteWatch = false">取消</el-button>
+                <el-button @click="okDeleteWatch = false">{{ $t('buttons.cancel') }}</el-button>
                 <el-button type="primary" @click="ConfirmDeleteWatch">
-                    确定
+                    {{ $t('buttons.confirm') }}
                 </el-button>
                 </span>
             </template>
@@ -267,20 +283,20 @@
             width="30%"
             align-center
             >
-            <span>刷新监控成功</span>
+            <span>{{ $t('messages.refreshWatchSuccess') }}</span>
         </el-dialog>
         <el-dialog
             v-model="okDeleteMonitors"
             width="30%"
             align-center
-            title="温馨提示"
+            :title="$t('monitor.dialogs.cue')"
             >
-            <span>你确定要删除选中项吗？</span>
+            <span>{{ $t('monitor.dialogs.confirmDeleteMonitors.message') }}</span>
             <template #footer>
                 <span class="dialog-footer">
-                <el-button @click="okDeleteMonitors = false">取消</el-button>
+                <el-button @click="okDeleteMonitors = false">{{ $t('monitor.dialogs.confirmDeleteMonitors.cancel') }}</el-button>
                 <el-button type="primary" @click="ConfirmDeleteMonitors">
-                    确定
+                    {{ $t('monitor.dialogs.confirmDeleteMonitors.confirm') }}
                 </el-button>
                 </span>
             </template>
@@ -289,14 +305,14 @@
             v-model="okCloseMonitors"
             width="30%"
             align-center
-            title="温馨提示"
+            :title="$t('monitor.dialogs.cue')"
             >
-            <span>你确定要关闭选中项吗？</span>
+            <span>{{ $t('monitor.dialogs.confirmCloseMonitors.message') }}</span>
             <template #footer>
                 <span class="dialog-footer">
-                <el-button @click="okCloseMonitors = false">取消</el-button>
+                <el-button @click="okCloseMonitors = false">{{ $t('monitor.dialogs.confirmDeleteMonitors.cancel') }}</el-button>
                 <el-button type="primary" @click="ConfirmCloseMonitors">
-                    确定
+                    {{ $t('monitor.dialogs.confirmDeleteMonitors.confirm') }}
                 </el-button>
                 </span>
             </template>
@@ -306,7 +322,7 @@
             width="30%"
             align-center
         >
-            <span>监控套餐次数已超限，所有监控暂停！</span>
+            <span>{{ $t('monitor.dialogs.quotaExceeded') }}</span>
         </el-dialog>
       </div>
   </template>

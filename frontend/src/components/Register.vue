@@ -4,18 +4,32 @@
       <div class="head">
         <img class="logo" src="../../public/changenotify.png" />
         <div class="name">
-          <div class="title">多模态信息舆情监控</div>
+          <div class="title">{{ $t('name') }}</div>
         </div>
       </div>
         <el-form ref="userRegisterRef" :rules="userRules" :model="userForm" label-width="0px" class="form_style">
+          <el-menu
+              mode="horizontal"
+              :ellipsis="false"
+              @select="handleSelect"
+              active-text-color="#000000"
+              text-color="#545c64"
+            >
+            <div class="flex-grow" />
+              <el-sub-menu index="2" style="margin-right='0px'">
+                  <template #title><font-awesome-icon icon="fas fa-language" /></template>
+                  <el-menu-item index="2-1">English</el-menu-item>
+                  <el-menu-item index="2-2">简体中文</el-menu-item>
+              </el-sub-menu>
+            </el-menu>
             <el-form-item prop="email">
-                <el-input v-model="userForm.email" placeholder="邮箱"></el-input>
+                <el-input v-model="userForm.email" :placeholder="$t('table.email')"></el-input>
             </el-form-item>
             <el-form-item prop="password">
-                <el-input show-password v-model="userForm.password" placeholder="密码"></el-input>
+                <el-input show-password v-model="userForm.password" :placeholder="$t('table.password')"></el-input>
             </el-form-item>
             <el-form-item prop="nickname">
-                <el-input v-model="userForm.nickname" placeholder="昵称"></el-input>
+                <el-input v-model="userForm.nickname" :placeholder="$t('label.nickname')"></el-input>
             </el-form-item>
             <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
             <!-- <cfturnstile
@@ -23,10 +37,10 @@
               @verify="verify"
             /> -->
             <el-form-item>
-                <el-button type="primary" @click="register">注册</el-button>
-                <el-button @click="restForm">重置</el-button>
+                <el-button type="primary" @click="register">{{ $t('register') }}</el-button>
+                <el-button @click="restForm">{{ $t('restForm') }}</el-button>
             </el-form-item>
-            <a class="form__link" @click="login">登录</a>
+            <a class="form__link" @click="login">{{ $t('login') }}</a>
         </el-form>
     </div>
   </div>
@@ -108,7 +122,12 @@ export default {
     },
     login(){
       this.$router.push('/login')
-    }
+    },
+    handleSelect(val){
+        // console.log(val)
+        if(val === "2-1") this.$i18n.locale = 'en'
+        else this.$i18n.locale = 'zh'
+    },
   }
 }
 </script>
@@ -122,7 +141,7 @@ export default {
 }
 .login-container {
     width: 420px;
-    height: 500px;
+    height: 600px;
     background-color: #fff;
     border-radius: 4px;
     box-shadow: 0px 21px 41px 0px rgba(0, 0, 0, 0.2);
@@ -173,5 +192,8 @@ export default {
   line-height: 2;
   cursor: pointer;
   text-decoration: none;
+}
+.flex-grow {
+  flex-grow: 1;
 }
 </style>

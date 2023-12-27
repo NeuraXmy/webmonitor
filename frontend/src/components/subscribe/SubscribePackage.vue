@@ -1,21 +1,21 @@
 <template>
     <div>
         <el-breadcrumb>
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>购买订阅</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/home' }">{{$t('packages.home')}}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{$t('packages.subscribe')}}</el-breadcrumb-item>
         </el-breadcrumb>
-        <h2>选择最合适您的套餐</h2>
+        <h2>{{$t('packages.choosePackage')}}</h2>
         <div>
-            <el-check-tag :checked="checkedCycle" style="margin-right: 8px" @change="onChangeCycle">按周期</el-check-tag>
-            <el-check-tag :checked="checkedFrequency" @change="onChangeFrequency">按次数</el-check-tag>
+            <el-check-tag :checked="checkedCycle" style="margin-right: 8px" @change="onChangeCycle">{{$t('packages.byCycle')}}</el-check-tag>
+            <el-check-tag :checked="checkedFrequency" @change="onChangeFrequency">{{$t('packages.byFrequency')}}</el-check-tag>
         </div>
     </div>
     <div v-loading="loading">
         <el-row :gutter="30" style="margin-top: 20px;">
             <el-col
                 style="margin-top: 20px;"
-                v-for="item in Packages"
-                :key=item.index
+                v-for="(item, index) in Packages"
+                :key="index"
                 :span="7"
             >
                 <div class="col-md-12 col-xl-4">
@@ -31,26 +31,32 @@
                         </div>
                         <div class="block-content py-3">
                             <div class="mb-3">
-                                监控次数 {{ item.period_check_count }}<br>
+                                {{$t('packages.monitorFrequency')}} {{ item.period_check_count }}<br>
                             </div>
-                            <el-button style="margin-top: 20px;" type="primary" size="small" @click="SubscribePackage(item.id)">立即订阅</el-button>
+                            <el-button style="margin-top: 20px;" type="primary" size="small" @click="SubscribePackage(item.id, index)">{{$t('packages.subscribeNow')}}</el-button>
+                            
                         </div>
                     </el-card>
                 </div>
             </el-col>
         </el-row>
     </div>
+    <!-- <stripe-checkout
+        ref="checkoutRef"
+        :pk="publishableKey"
+        session-id="cs_test_a1pUvpL7vaiNbp9P253Nghz2j04bVKCSsvv6MGj7j3dae1Bp17IQwCEsEG"
+    /> -->
     <el-dialog
         v-model="okSubscribePackage"
         width="30%"
         align-center
         >
-        <span>是否订阅该套餐？</span>
+        <span>{{$t('packages.subscribeConfirmation')}}</span>
         <template #footer>
             <span class="dialog-footer">
-            <el-button @click="okSubscribePackage = false">取消</el-button>
+            <el-button @click="okSubscribePackage = false">{{$t('packages.cancel')}}</el-button>
             <el-button type="primary" @click="ConfirmSubscribePackage">
-                确定
+                {{$t('packages.confirm')}}
             </el-button>
             </span>
         </template>
@@ -58,13 +64,18 @@
 </template>
 
 <script>
+// import { StripeCheckout } from '@vue-stripe/vue-stripe'
+
 export default {
+    // components:{ StripeCheckout },
     data(){
+        this.publishableKey = "pk_test_51OREOcLtU7FRbXomhUG0ZaECp4eRnRKkqSLHl0AmmkmD3U1OLhyjLLTp3rgKv9m6PtrEljETNfjoPmxX4YxZ44JW00Vvlhhrj1"
         return {
             Packages:[
                 // {
                 //     name: "标准",
-                //     price: 10.00
+                //     price: 10.00,
+                //     sessionId: ""
                 // }
             ],
             PackageList:[],
@@ -74,11 +85,14 @@ export default {
             checkedFrequency:false,
             okSubscribePackage:false,
             Package_id:1,
-            loading:false
+            loading:false,
+            sessionId: 'cs_test_a1pUvpL7vaiNbp9P253Nghz2j04bVKCSsvv6MGj7j3dae1Bp17IQwCEsEG',
+            stripe: null
         }
     },
     created(){
         this.getPackagesList()
+        this.stripe = Stripe('pk_test_51OMSmYD2kZi8DEOLsHme4tqTNhV6JZRAcF5dLsdxxGUTb6hXb4OTXXF1em8PVncr2A0Hogb7yxFQ8YNaF99gjeQ100UuAvtJLQ');
     },
     methods: {
         //获得所有套餐
@@ -111,9 +125,14 @@ export default {
             this.Packages = this.PackagesCycle;
         },
         //订阅套餐
-        SubscribePackage(id){
+        SubscribePackage(id, index){
             this.okSubscribePackage = true;
             this.Package_id = id
+            // console.log(id, index)
+            //stripe checkout sessions create --success-url="http://127.0.0.1:5173/package/payment/success" -d "line_items[0][price]"=price_1ORFP8LtU7FRbXomTotanJyd -d "line_items[0][quantity]"=1 --mode=payment
+            // this.$refs['checkoutRef'][index].redirectToCheckout();
+            // this.$refs.checkoutRef.redirectToCheckout();
+            // this.stripe.redirectToCheckout({ sessionId: 'cs_test_a1pUvpL7vaiNbp9P253Nghz2j04bVKCSsvv6MGj7j3dae1Bp17IQwCEsEG' });
         },
         //确定订阅套餐
         async ConfirmSubscribePackage(){
@@ -127,6 +146,8 @@ export default {
                 }
             })
             if(res.status ===200){
+                console.log(res.data)
+                this.stripe.redirectToCheckout({ sessionId: res.data.session_id });
                 this.getPackagesList()
             }else{
                 this.$message.error(res.msg);
@@ -168,7 +189,7 @@ export default {
     /* width: 100%; */
     margin: 0 auto;
     padding: 1.25rem 1.25rem 1px;
-    overflow-x: visible
+    overflow-x: visible;
 }
 .mb-2 {
     margin-bottom: .5rem!important
@@ -180,7 +201,7 @@ export default {
     padding-top: .5rem!important
 }
 .bg-gray-light {
-    background-color: #e9ecef!important
+    background-color: #fff!important
 }
 .block-header.plan {
     background-color: #fff!important

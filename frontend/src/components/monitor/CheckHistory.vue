@@ -1,12 +1,5 @@
 <template>
     <div>
-        <!-- <el-breadcrumb>
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>任务管理</el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/spaces' }">监控空间列表</el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/monitor_list' }">空间监控管理</el-breadcrumb-item>
-            <el-breadcrumb-item>监控检查历史</el-breadcrumb-item>
-        </el-breadcrumb> -->
         <el-card>
             <div class="common-layout">
                 <el-container>
@@ -14,7 +7,7 @@
                         <el-row>
                             <el-col :span="2">
                                 <div>
-                                    <el-button type="primary" @click="back"><el-icon><ArrowLeft/></el-icon>返回</el-button>
+                                    <el-button type="primary" @click="back"><el-icon><ArrowLeft/></el-icon>{{$t('buttons.back')}}</el-button>
                                 </div>
                             </el-col>
                             <el-col :span="10">
@@ -37,12 +30,6 @@
                                             <el-scrollbar>
                                                 <div v-html="activity.diff"></div>
                                             </el-scrollbar>
-                                            <!-- <div v-html="history_html"></div> -->
-                                            <!-- <div style="width: 500px;border: 3px solid red;"  v-html="history_html"></div> -->
-                                            <!-- <div style="width: 80%;border: 3px solid red;"  v-html="history_html"></div> -->
-                                            <!-- <div class="history-wrapper">
-                                                <div v-html="activity.diff" class="history"></div>
-                                            </div> -->
                                         </el-collapse-item>
                                     </el-collapse>
                                 </el-card>

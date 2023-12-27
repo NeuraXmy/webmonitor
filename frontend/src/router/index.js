@@ -25,6 +25,8 @@ import Tools from '../components/monitor/Tools.vue'
 import PauseMonitor from '../components/email/PauseMonitor.vue'
 import AdminCheckHistory from '../components/super_admin/AdminCheckHistory.vue'
 import SubscribePackage from '../components/subscribe/SubscribePackage.vue'
+import SubscribeSuccess from '../components/subscribe/SubscribeSuccess.vue'
+import SubscribeCancel from '../components/subscribe/SubscribeCancel.vue'
 import Orders from '../components/subscribe/orders.vue'
 import subscribeManagement from '../components/super_admin/subscribe/subscribeManagement.vue'
 import userSubscribe from '../components/super_admin/subscribe/userSubscribe.vue'
@@ -108,6 +110,16 @@ const routes = [
     { 
         path: '/pause_monitor',
         component: PauseMonitor,
+        hidden: true
+    },
+    { 
+        path: '/package/payment/success',
+        component: SubscribeSuccess,
+        hidden: true
+    },
+    { 
+        path: '/package/payment/error',
+        component: SubscribeCancel,
         hidden: true
     }
 ]

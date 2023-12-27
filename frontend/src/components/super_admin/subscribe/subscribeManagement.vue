@@ -10,53 +10,63 @@
             </el-row>
             <el-row>
                 <el-table v-loading="loading" :data="PackageList" style="width: 100%">
-                        <el-table-column prop="id" label="ID" width="150" />
-                        <el-table-column prop="name" label="套餐名称" width="150" />
-                        <el-table-column prop="period_type" label="周期" width="150" />
-                        <!-- <el-table-column prop="period_count" label="周期数" width="150" /> -->
-                        <el-table-column prop="period_check_count" label="监控次数" width="200" />
-                        <el-table-column prop="price" label="价格(分)" width="150" />
-                        <el-table-column prop="hide" label="隐藏" width="80" >
-                            <template #default="scope">
-                                <el-switch
-                                    v-model="scope.row.hide"
-                                    :active-value = 1
-                                    :inactive-value = 0
-                                    active-color="#02538C"
-                                    inactive-color="#B9B9B9"
-                                    inline-prompt
-                                    active-text="ON"
-                                    inactive-text="OFF"
-                                    @click="hidePackage(scope.row)"/>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="initial" label="初始套餐" width="80" >
-                            <template #default="scope">
-                                <el-switch
-                                    v-model="scope.row.initial"
-                                    :active-value = 1
-                                    :inactive-value = 0
-                                    active-color="#02538C"
-                                    inactive-color="#B9B9B9"
-                                    inline-prompt
-                                    active-text="ON"
-                                    inactive-text="OFF"
-                                    @click="initialPackage(scope.row)"/>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="edit" label="操作" width="200">
-                            <template #default="scope">
-                                <el-button size="small" @click="PackageEdit(scope.row)"
-                                    >编辑</el-button
-                                >
-                                <el-button
-                                    size="small"
-                                    type="danger"
-                                    @click="DeletePackage(scope.row)"
-                                    >删除</el-button
-                                >
-                            </template>
-                        </el-table-column>
+                    <el-table-column prop="id" label="ID" width="150" />
+                    <el-table-column prop="name" label="套餐名称" width="150" />
+                    <el-table-column prop="period_type" label="周期" width="150" />
+                    <!-- <el-table-column prop="period_count" label="周期数" width="150" /> -->
+                    <el-table-column prop="period_check_count" label="监控次数" width="200" />
+                    <el-table-column prop="price" label="价格(分)" width="100" />
+                    <el-table-column prop="hide" label="隐藏" width="80" >
+                        <template #default="scope">
+                            <el-switch
+                                v-model="scope.row.hide"
+                                :active-value = 1
+                                :inactive-value = 0
+                                active-color="#02538C"
+                                inactive-color="#B9B9B9"
+                                inline-prompt
+                                active-text="ON"
+                                inactive-text="OFF"
+                                @click="hidePackage(scope.row)"/>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="initial" label="初始套餐" width="80" >
+                        <template #default="scope">
+                            <el-switch
+                                v-model="scope.row.initial"
+                                :active-value = 1
+                                :inactive-value = 0
+                                active-color="#02538C"
+                                inactive-color="#B9B9B9"
+                                inline-prompt
+                                active-text="ON"
+                                inactive-text="OFF"
+                                @click="initialPackage(scope.row)"/>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="edit" label="操作" width="230">
+                        <template #default="scope">
+                            <el-button size="small" @click="PackageEdit(scope.row)"
+                                >编辑</el-button
+                            >
+                            <el-button
+                                size="small"
+                                type="danger"
+                                @click="DeletePackage(scope.row)"
+                                >删除</el-button
+                            >
+                            <el-button class="operatBtn" size="small"
+                                :disabled="scope.$index===0"
+                                @click="moveUp(scope.$index,scope.row)">
+                                <el-icon><Top /></el-icon>
+                            </el-button>
+                            <el-button class="operatBtn" size="small"
+                                :disabled="scope.$index===(PackageList.length-1)"
+                                @click="moveDown(scope.$index,scope.row)">
+                                <el-icon><Bottom /></el-icon>
+                            </el-button>
+                        </template>
+                    </el-table-column>
                 </el-table>
                 <el-pagination
                     v-model:current-page="queryPage.page"
@@ -223,10 +233,10 @@
 </template>
 
 <script>
-import { Search,Plus,Delete,Edit } from '@element-plus/icons-vue'
+import { Search,Plus,Delete,Edit,Top,Bottom } from '@element-plus/icons-vue'
 export default{
     
-    components: { Search,Plus,Delete,Edit },
+    components: { Search,Plus,Delete,Edit,Top,Bottom },
     data(){
         return {
             PackageList:[
@@ -530,7 +540,33 @@ export default{
                 this.$message.error(res.message);
             }
             this.loading = false
-        }
+        },
+        //向上移动
+        moveUp(index,row) {
+            var that = this;
+            console.log('上移',index,row);
+            console.log(that.PackageList[index]);
+            if (index > 0) {
+                let upDate = that.PackageList[index - 1];
+                that.PackageList.splice(index - 1, 1);
+                that.PackageList.splice(index,0, upDate);
+            } else {
+                alert('已经是第一条，不可上移');
+            }
+        },
+        //向下移动
+        moveDown(index,row){
+            var that = this;
+            console.log('下移',index,row);
+            if ((index + 1) === that.PackageList.length){
+                alert('已经是最后一条，不可下移');
+            } else {
+                console.log(index);
+                let downDate = that.PackageList[index + 1];
+                that.PackageList.splice(index + 1, 1);
+                that.PackageList.splice(index,0, downDate);
+            }
+        },
     }
 };
 </script>

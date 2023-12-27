@@ -15,21 +15,6 @@
             />
         </div>
         <div class="right-panel">
-            <!-- <font-awesome-icon icon="fas fa-language" />
-            <el-menu>
-                <el-sub-menu index="1">
-                    <el-menu-item index="RecycleUsers">
-                        <span>用户回收</span>
-                    </el-menu-item>
-                    <el-menu-item index="RecycleSpaces">
-                        <span><el-icon><Compass /></el-icon>空间回收</span>
-                    </el-menu-item>
-                    <el-menu-item index="RecycleMonitors">
-                        <span><el-icon><Monitor /></el-icon>监控回收</span>
-                    </el-menu-item>
-                </el-sub-menu>
-            </el-menu>
-            <el-button type="primary" plain @click="logout">退出</el-button> -->
             <el-menu
                 :default-active="activeIndex"
                 class="el-menu-demo"
@@ -45,7 +30,7 @@
                     <el-menu-item index="2-2">简体中文</el-menu-item>
                 </el-sub-menu>
                 <el-menu-item index="1">
-                    <el-button type="primary" plain @click="logout">退出</el-button>
+                    <el-button type="primary" plain @click="logout">{{$t('back')}}</el-button>
                 </el-menu-item>
             </el-menu>
         </div>
@@ -132,6 +117,9 @@ export default{
             // console.log(val)
             if(val === "2-1") this.$i18n.locale = 'en'
             else this.$i18n.locale = 'zh'
+        },
+        activeIndex(){
+            
         }
     }
 }
