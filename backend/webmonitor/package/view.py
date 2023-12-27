@@ -460,7 +460,7 @@ def purchase_package_webhook():
     package.update()
 
     # 更新payment状态
-    payment.status = PackagePaymentStatus.PAID.id
+    payment.status = PackagePaymentStatus.SUCCEEDED.id
     
     models.db.session.add(package)
     models.db.session.commit()
