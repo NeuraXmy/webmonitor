@@ -421,7 +421,7 @@ def purchase_package_webhook():
 
     # 如果不是支付成功
     if event['type'] != 'payment_intent.succeeded':
-        abort(ErrorCode.PARAMS_INVALID, f'Unhandled webhook event type: {event['type']}')
+        abort(ErrorCode.PARAMS_INVALID, f"Unhandled webhook event type: {event['type']}")
 
     # 支付成功，获取session_id查询Payment对象
     payment_intent_id = event['data']['object']['id']
