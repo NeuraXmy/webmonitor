@@ -373,7 +373,8 @@ def purchase_package(user, template_id):
         return abort(ErrorCode.NOT_FOUND)
     
     # 创建session
-    done_url = current_app.config['FRONTEND_BASE_URL'] + "/package/purchase/done?session_id={CHECKOUT_SESSION_ID}"
+    success_url = current_app.config['FRONTEND_BASE_URL'] + "/package/purchase/success?session_id={CHECKOUT_SESSION_ID}"
+    cancel_url  = current_app.config['FRONTEND_BASE_URL'] + "/package/purchase/error?session_id={CHECKOUT_SESSION_ID}"
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
         line_items=[
@@ -383,8 +384,8 @@ def purchase_package(user, template_id):
             }
         ],
         mode="payment",
-        success_url=done_url,
-        cancel_url=done_url,
+        success_url=success_url,
+        cancel_url=cancel_url,
     )
     current_app.logger.info(f"create stripe session_id={session['id']}")
 
