@@ -472,7 +472,7 @@ class PackagePayment(BaseModel):
 
     user_id     = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False)             # 用户id
     template_id = db.Column(db.Integer, db.ForeignKey('t_package_template.id'), nullable=False) # 购买的套餐模板id
-    session_id  = db.Column(db.String(512), nullable=False, unique=True)                         # stripe的session id
+    session_id  = db.Column(db.String(256), nullable=False, unique=True)                         # stripe的session id
 
     status      = db.Column(db.Integer, nullable=False, default=0)  # 付款状态
 

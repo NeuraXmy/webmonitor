@@ -423,6 +423,8 @@ def purchase_package_webhook():
     if event['type'] != 'payment_intent.succeeded':
         abort(ErrorCode.PARAMS_INVALID, f"Unhandled webhook event type: {event['type']}")
 
+    # TODO 支付取消
+
     # 支付成功，获取session_id查询Payment对象
     payment_intent_id = event['data']['object']['id']
     session = stripe.checkout.Session.list(payment_intent=payment_intent_id, limit=1)['data'][0]
