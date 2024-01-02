@@ -34,18 +34,12 @@
                                 {{$t('packages.monitorFrequency')}} {{ item.period_check_count }}<br>
                             </div>
                             <el-button style="margin-top: 20px;" type="primary" size="small" @click="SubscribePackage(item.id, index)">{{$t('packages.subscribeNow')}}</el-button>
-                            
                         </div>
                     </el-card>
                 </div>
             </el-col>
         </el-row>
     </div>
-    <!-- <stripe-checkout
-        ref="checkoutRef"
-        :pk="publishableKey"
-        session-id="cs_test_a1pUvpL7vaiNbp9P253Nghz2j04bVKCSsvv6MGj7j3dae1Bp17IQwCEsEG"
-    /> -->
     <el-dialog
         v-model="okSubscribePackage"
         width="30%"
@@ -128,11 +122,6 @@ export default {
         SubscribePackage(id, index){
             this.okSubscribePackage = true;
             this.Package_id = id
-            // console.log(id, index)
-            //stripe checkout sessions create --success-url="http://127.0.0.1:5173/package/payment/success" -d "line_items[0][price]"=price_1ORFP8LtU7FRbXomTotanJyd -d "line_items[0][quantity]"=1 --mode=payment
-            // this.$refs['checkoutRef'][index].redirectToCheckout();
-            // this.$refs.checkoutRef.redirectToCheckout();
-            // this.stripe.redirectToCheckout({ sessionId: 'cs_test_a1pUvpL7vaiNbp9P253Nghz2j04bVKCSsvv6MGj7j3dae1Bp17IQwCEsEG' });
         },
         //确定订阅套餐
         async ConfirmSubscribePackage(){
@@ -145,10 +134,14 @@ export default {
                     'token': sessionStorage.getItem('token')
                 }
             })
-            if(res.status ===200){
-                console.log(res.data)
-                this.stripe.redirectToCheckout({ sessionId: res.data.session_id });
-                // this.getPackagesList()
+            if(res.status === 200){
+                // console.log(res.data)
+                // 构建Stripe支付链接URL
+                const stripeUrl = res.data.url;
+                // 在新窗口中打开Stripe支付页面
+                window.open(stripeUrl, '_blank');
+                // 监听新窗口关闭事件
+                // this.stripe.redirectToCheckout({ sessionId: res.data.session_id });
             }else{
                 this.$message.error(res.msg);
             }

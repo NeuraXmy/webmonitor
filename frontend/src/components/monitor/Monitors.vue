@@ -63,7 +63,7 @@
                                 @change="CloseMonitor(scope.row)"/>
                         </template>
                     </el-table-column>
-                    <el-table-column fixed="right" prop="edit" label="Edit" width="280">
+                    <el-table-column fixed="right" prop="edit" label="Edit" width="300">
                       <template #default="scope">
                           <el-button size="small" @click="WatchEdit(scope.row)"
                           >{{$t('monitor.table.edit')}}</el-button
