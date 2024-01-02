@@ -399,7 +399,10 @@ def purchase_package(user, template_id):
     models.db.session.add(payment)
     models.db.session.commit()
 
-    return ok(data={ "session_id" : session["id"] })
+    return ok(data={ 
+        "session_id" : session["id"],
+        "url"        : session["url"],
+    })
     
 
 # 用户套餐付款结束webhook
