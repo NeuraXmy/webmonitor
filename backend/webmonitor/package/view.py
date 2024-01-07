@@ -8,7 +8,9 @@ from webmonitor.utils.send_email import send_email
 from webmonitor.utils.auth import login_required, admin_required
 from webmonitor.utils.page import paginate
 from datetime import datetime, timedelta
+from webmonitor.utils.apscheduler import scheduler
 import stripe
+
 
 
 # 用户或管理员获取所有的套餐模板（分页）
@@ -22,7 +24,6 @@ def get_package_template_list(user):
         ret.items = [{
             "id": template.id,       
             "name": template.name,
-            "period_count": template.period_count,
             "period_type": template.period_type,
             "period_check_count": template.period_check_count,
             "price": template.price,
@@ -37,7 +38,6 @@ def get_package_template_list(user):
         ret.items = [{
             "id": template.id,       
             "name": template.name,
-            "period_count": template.period_count,
             "period_type": template.period_type,
             "period_check_count": template.period_check_count,
             "price": template.price,
@@ -54,26 +54,23 @@ def get_package_template_list(user):
 @admin_required
 def create_package_template(user):
     name = request.form.get('name')
-    period_count        = request.form.get('period_count')
     period_type         = request.form.get('period_type')
     period_check_count  = request.form.get('period_check_count')
     price               = request.form.get('price')
     hide                = request.form.get('hide')
     initial             = request.form.get('initial')
     
-    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_count={period_count} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
+    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
 
-    if not all([name, period_count, period_type, period_check_count, price, hide, initial]):
+    if not all([name, period_type, period_check_count, price, hide, initial]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
-    period_count        = int(period_count)
     period_type         = int(period_type)
     period_check_count  = int(period_check_count)
     price               = int(price)
     hide                = int(hide) 
     initial             = int(initial) 
-    if period_count < 0:
-        return abort(ErrorCode.PARAMS_INVALID)
-    if period_type not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, PackagePeriodType.PERMANENT.id]:
+    if period_type not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, 
+                           PackagePeriodType.PERMANENT.id, PackagePeriodType.TEST.id]:
         return abort(ErrorCode.PARAMS_INVALID)
     if period_check_count < 0:
         return abort(ErrorCode.PARAMS_INVALID)
@@ -86,7 +83,6 @@ def create_package_template(user):
     
     template = models.PackageTemplate(
         name=name,
-        period_count=period_count,
         period_type=period_type,
         period_check_count=period_check_count,
         price=price,
@@ -104,18 +100,16 @@ def create_package_template(user):
 @admin_required
 def modify_package_template(user, template_id):
     name = request.form.get('name')
-    period_count        = request.form.get('period_count')
     period_type         = request.form.get('period_type')
     period_check_count  = request.form.get('period_check_count')
     price               = request.form.get('price')
     hide                = request.form.get('hide')
     initial             = request.form.get('initial')
     
-    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} period_count={period_count} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
+    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
 
-    if period_count and int(period_count) < 0:
-        return abort(ErrorCode.PARAMS_INVALID)
-    if period_type and int(period_type) not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, PackagePeriodType.PERMANENT.id]:
+    if period_type and int(period_type) not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, 
+                                                PackagePeriodType.PERMANENT.id, PackagePeriodType.TEST.id]:
         return abort(ErrorCode.PARAMS_INVALID)
     if period_check_count and int(period_check_count) < 0:
         return abort(ErrorCode.PARAMS_INVALID)
@@ -132,8 +126,6 @@ def modify_package_template(user, template_id):
     
     if name: 
         template.name = name
-    if period_count: 
-        template.period_count = int(period_count)
     if period_type:
         template.period_type = int(period_type)
     if period_check_count:
@@ -174,7 +166,6 @@ def get_deleted_package_template_list(user):
     return ok(data=[{
         "id": template.id,       
         "name": template.name,
-        "period_count": template.period_count,
         "period_type": template.period_type,
         "period_check_count": template.period_check_count,
         "price": template.price,
@@ -210,20 +201,49 @@ def get_package_list(user):
     ret.items = [{
         "id": package.id,       
         "name": package.name,
-        "period_count": package.period_count,
         "period_type": package.period_type,
         "period_check_count": package.period_check_count,
         "price": package.price,
         "start_time": package.start_time,
-        "end_time": package.end_time,
         "current_period_start_time": package.current_period_start_time,
         "current_period_end_time": package.current_period_end_time,
-        "period_left": package.period_left,
         "check_count_left": package.check_count_left,
+        "cancel_at_next": package.cancel_at_next,
+        "need_payment": package.need_payment,
+        "is_last_payment_failed": package.is_last_payment_failed,
+        "is_expired": package.is_expired(),
         "update_time": package.update_time,
         "create_time": package.create_time,
     } for package in ret.items]
     return ok(data=ret)
+
+
+# 用户或管理员获取自己正在使用的套餐
+@package_bp.route('/package/using', methods=['GET'])
+@login_required
+def get_using_package(user):
+    current_app.logger.info(f"user or admin get using package user_id={user.id}")
+
+    package = user.get_current_package()
+    if not package:
+        return ok()
+    return ok(data={
+        "id": package.id,
+        "name": package.name,
+        "period_type": package.period_type,
+        "period_check_count": package.period_check_count,
+        "price": package.price,
+        "start_time": package.start_time,
+        "current_period_start_time": package.current_period_start_time,
+        "current_period_end_time": package.current_period_end_time,
+        "check_count_left": package.check_count_left,
+        "cancel_at_next": package.cancel_at_next,
+        "need_payment": package.need_payment,
+        "is_last_payment_failed": package.is_last_payment_failed,
+        "is_expired": package.is_expired(),
+        "update_time": package.update_time,
+        "create_time": package.create_time,
+    })
 
 
 # 管理员获取特定用户的所有套餐（分页）
@@ -236,16 +256,17 @@ def get_user_package_list(user, user_id):
     ret.items = [{
         "id": package.id,       
         "name": package.name,
-        "period_count": package.period_count,
         "period_type": package.period_type,
         "period_check_count": package.period_check_count,
         "price": package.price,
         "start_time": package.start_time,
-        "end_time": package.end_time,
         "current_period_start_time": package.current_period_start_time,
         "current_period_end_time": package.current_period_end_time,
-        "period_left": package.period_left,
         "check_count_left": package.check_count_left,
+        "cancel_at_next": package.cancel_at_next,
+        "need_payment": package.need_payment,
+        "is_last_payment_failed": package.is_last_payment_failed,
+        "is_expired": package.is_expired(),
         "update_time": package.update_time,
         "create_time": package.create_time,
     } for package in ret.items]
@@ -278,16 +299,17 @@ def get_deleted_user_package_list(user, user_id):
     return ok(data=[{
         "id": package.id,       
         "name": package.name,
-        "period_count": package.period_count,
         "period_type": package.period_type,
         "period_check_count": package.period_check_count,
         "price": package.price,
         "start_time": package.start_time,
-        "end_time": package.end_time,
         "current_period_start_time": package.current_period_start_time,
         "current_period_end_time": package.current_period_end_time,
-        "period_left": package.period_left,
         "check_count_left": package.check_count_left,
+        "cancel_at_next": package.cancel_at_next,
+        "need_payment": package.need_payment,
+        "is_last_payment_failed": package.is_last_payment_failed,
+        "is_expired": package.is_expired(),
         "update_time": package.update_time,
         "create_time": package.create_time,
     } for package in packages])
@@ -314,50 +336,84 @@ def recover_package(user, package_id):
 @admin_required
 def admin_modify_package(user, package_id):
     name = request.form.get('name')
-    period_count        = request.form.get('period_count')
     period_type         = request.form.get('period_type')
     period_check_count  = request.form.get('period_check_count')
     price               = request.form.get('price')
-    period_left         = request.form.get('period_left')
     check_count_left    = request.form.get('check_count_left')
+    need_payment        = request.form.get('need_payment')
+    cancel_at_next      = request.form.get('cancel_at_next')
     
-    current_app.logger.info(f"admin modify package user_id={user.id} package_id={package_id} name={name} period_count={period_count} period_type={period_type} period_check_count={period_check_count} price={price}")
+    current_app.logger.info(f"admin modify package user_id={user.id} package_id={package_id} name={name} period_type={period_type} period_check_count={period_check_count} price={price}")
 
-    if period_count and int(period_count) < 0:
-        return abort(ErrorCode.PARAMS_INVALID)
     if period_type and int(period_type) not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, PackagePeriodType.PERMANENT.id]:
         return abort(ErrorCode.PARAMS_INVALID)
     if period_check_count and int(period_check_count) < 0:
         return abort(ErrorCode.PARAMS_INVALID)
     if price and int(price) < 0:
         return abort(ErrorCode.PARAMS_INVALID)
-    if period_left and int(period_left) < 0:
-        return abort(ErrorCode.PARAMS_INVALID)
     if check_count_left and int(check_count_left) < 0:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if need_payment and int(need_payment) not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if cancel_at_next and int(cancel_at_next) not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
     
     package = models.Package.query.filter_by(id=package_id, is_deleted=0).first()
     if not package or package.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
     
+    # 没有付款方式的套餐不能设置为需要付款
+    if need_payment and int(need_payment) == 1 and package.stripe_payment_method_id is None:
+        return abort(ErrorCode.PARAMS_INVALID, "Need payment but no payment method for this package.")
+    
     if name: 
         package.name = name
-    if period_count: 
-        package.period_count = int(period_count)
     if period_type:
         package.period_type = int(period_type)
     if period_check_count:
         package.period_check_count = int(period_check_count)
     if price:
         package.price = int(price)
-    if period_left:
-        package.period_left = int(period_left)
     if check_count_left:
         package.check_count_left = int(check_count_left)
+    if need_payment:
+        package.need_payment = int(need_payment)
+    if cancel_at_next:
+        package.cancel_at_next = int(cancel_at_next)
     
     models.db.session.commit()
 
     package.user.check_quota()
+    models.db.session.commit()
+    return ok()
+
+
+# 用户取消套餐（下个周期取消）
+@package_bp.route('/package/<int:package_id>/cancel', methods=['POST'])
+@login_required
+def cancel_package(user, package_id):
+    current_app.logger.info(f"user cancel package user_id={user.id} package_id={package_id}")
+
+    package = models.Package.query.filter_by(id=package_id, is_deleted=0).first()
+    if not package or package.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    package.cancel_at_next = 1
+    models.db.session.commit()
+    return ok()
+
+
+# 用户恢复套餐（下个周期续订）
+@package_bp.route('/package/<int:package_id>/resume', methods=['POST'])
+@login_required
+def resume_package(user, package_id):
+    current_app.logger.info(f"user resume package user_id={user.id} package_id={package_id}")
+
+    package = models.Package.query.filter_by(id=package_id, is_deleted=0).first()
+    if not package or package.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    
+    package.cancel_at_next = 0
     models.db.session.commit()
     return ok()
 
@@ -372,32 +428,48 @@ def purchase_package(user, template_id):
     if not template or template.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
     
-    # 创建session
+    # 如果没有，为用户创建stripe customer
+    if user.stripe_customer_id is None:
+        customer = stripe.Customer.create(
+            name=f'{user.id}@webmonitor', 
+            email=user.email
+        )
+        user.stripe_customer_id = customer['id']
+        models.db.session.commit()
+        current_app.logger.info(f"create stripe customer_id={customer['id']} for user_id={user.id}")
+
+    # 创建付款session
     success_url = current_app.config['FRONTEND_BASE_URL'] + "/package/purchase/success?session_id={CHECKOUT_SESSION_ID}"
     cancel_url  = current_app.config['FRONTEND_BASE_URL'] + "/package/purchase/error?session_id={CHECKOUT_SESSION_ID}"
     session = stripe.checkout.Session.create(
+        customer=user.stripe_customer_id,
         payment_method_types=["card"],
-        line_items=[
-            {
-                "price": current_app.config['STRIPE_PRICE_ID'],
-                "quantity": template.price
-            }
-        ],
         mode="payment",
         success_url=success_url,
         cancel_url=cancel_url,
+        line_items=[{
+            'price_data': {
+                'currency': 'cny',
+                'product_data': {
+                    'name': template.name,
+                }, 
+                'unit_amount': template.price,  
+            },
+            'quantity': 1,
+        }],
+        payment_intent_data={
+            'setup_future_usage': 'off_session',
+            'metadata': {
+                'type': 'package_first_purchase',  
+                'user_id': user.id,
+                'template_name': template.name,
+                'template_period_type': template.period_type,
+                'template_period_check_count': template.period_check_count,
+                'template_price': template.price,
+            },
+        },
     )
     current_app.logger.info(f"create stripe session_id={session['id']}")
-
-    # 创建payment
-    payment = models.PackagePayment(
-        user_id     = user.id,
-        template_id = template_id,
-        session_id  = session["id"],
-        status      = PackagePaymentStatus.PENDING.id,
-    )
-    models.db.session.add(payment)
-    models.db.session.commit()
 
     return ok(data={ 
         "session_id" : session["id"],
@@ -405,10 +477,10 @@ def purchase_package(user, template_id):
     })
     
 
-# 用户套餐付款结束webhook
+# 套餐 stripe webhook
 @package_bp.route('/package/purchase/webhook', methods=['POST'])
 def purchase_package_webhook():
-    # 获取event
+    # 获取event和安全检查
     event = None
     payload = request.data
     sig_header = request.headers['STRIPE_SIGNATURE']
@@ -420,57 +492,72 @@ def purchase_package_webhook():
         raise e
     except stripe.error.SignatureVerificationError as e:
         raise e
-    
-    current_app.logger.info(f"webhook event type={event['type']}")
+    current_app.logger.info(f"stripe webhook get event type={event['type']}")
 
-    # 如果不是支付成功
-    if event['type'] != 'payment_intent.succeeded':
+    # 支付成功事件
+    if event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        payment_intent_id = payment_intent['id']
+        metadata = payment_intent['metadata']
+        current_app.logger.info(f"payment_intent.succeeded for payment_intent_id={payment_intent_id} metadata={metadata}")
+        
+        # 套餐首次购买
+        if metadata['type'] == 'package_first_purchase':
+            current_app.logger.info(f"package first purchase for user_id={metadata['user_id']} template_name={metadata['template_name']}")
+
+            user_id = int(metadata['user_id'])
+            template_name = metadata['template_name']
+            template_period_type = int(metadata['template_period_type'])
+            template_period_check_count = int(metadata['template_period_check_count'])
+            template_price = int(metadata['template_price'])
+
+            user = models.User.query.filter_by(id=user_id, is_deleted=0).first()
+            if not user or user.is_deleted == 1:
+                return abort(ErrorCode.NOT_FOUND)
+            
+            # 保存付款方式到用户
+            payment_method_id = payment_intent['payment_method']
+            stripe.PaymentMethod.attach(
+                payment_method_id,
+                customer=user.stripe_customer_id,
+            )
+            current_app.logger.info(f"attach payment_method_id={payment_method_id} to user_id={user.id}")
+
+            # 创建套餐
+            package = models.Package(
+                user_id                     = user.id,
+                name                        = template_name,
+                period_type                 = template_period_type,
+                period_check_count          = template_period_check_count,
+                price                       = template_price,
+                start_time                  = datetime.now(),
+                current_period_start_time   = datetime.now(),
+                current_period_end_time     = PackagePeriodType.get_next_time(template_period_type, datetime.now()),
+                check_count_left            = template_period_check_count,
+                cancel_at_next              = 0,
+                need_payment                = 1,
+                is_last_payment_failed      = 0,
+                stripe_payment_method_id    = payment_method_id,
+            )
+            models.db.session.add(package)
+            models.db.session.commit()
+            current_app.logger.info(f"create package_id={package.id} for user_id={user.id}")
+
+            user.check_quota()
+
+            # 创建支付成功记录
+            payment = models.PackagePayment(
+                stripe_payment_intent_id = payment_intent_id,
+                status = PackagePaymentStatus.SUCCEEDED.id,
+                package_id = package.id,
+            )
+            models.db.session.add(payment)
+            models.db.session.commit()
+            current_app.logger.info(f"create payment_id={payment.id} for package_id={package.id}")
+    
+    # 未处理的事件
+    else:
         abort(ErrorCode.PARAMS_INVALID, f"Unhandled webhook event type: {event['type']}")
-
-    # TODO 支付取消
-
-    # 支付成功，获取session_id查询Payment对象
-    payment_intent_id = event['data']['object']['id']
-    session = stripe.checkout.Session.list(payment_intent=payment_intent_id, limit=1)['data'][0]
-    session_id = session['id']
-
-    current_app.logger.info(f"payment success session_id={session_id}")
-
-    payment = models.PackagePayment.query.filter_by(session_id=session_id).first()
-    if not payment:
-        return abort(ErrorCode.NOT_FOUND)
-
-    user_id = payment.user_id
-    user = models.User.query.filter_by(id=user_id, is_deleted=0).first()
-    if not user or user.is_deleted == 1:
-        return abort(ErrorCode.NOT_FOUND)
-
-    template_id = payment.template_id
-    template = models.PackageTemplate.query.filter_by(id=template_id, is_deleted=0).first()
-    if not template or template.is_deleted == 1:
-        return abort(ErrorCode.NOT_FOUND)
-    
-    # 添加套餐
-    package = models.Package(
-        user_id                     = user_id,
-        name                        = template.name,
-        period_count                = template.period_count,
-        period_type                 = template.period_type,
-        period_check_count          = template.period_check_count,
-        price                       = template.price,
-    )
-    package.init(datetime.now())
-    package.update()
-
-    # 更新payment状态
-    payment.status = PackagePaymentStatus.SUCCEEDED.id
-    
-    models.db.session.add(package)
-    models.db.session.commit()
-
-    user.check_quota()
-    models.db.session.commit()
-
     return ok()
 
 
@@ -488,19 +575,21 @@ def admin_add_package(admin, template_id, user_id):
     if not template or template.is_deleted == 1:
         return abort(ErrorCode.NOT_FOUND)
     
-    # NO 扣费
-    
     package = models.Package(
         user_id                     = user.id,
         name                        = template.name,
-        period_count                = template.period_count,
         period_type                 = template.period_type,
         period_check_count          = template.period_check_count,
         price                       = template.price,
+        start_time                  = datetime.now(),
+        current_period_start_time   = datetime.now(),
+        current_period_end_time     = PackagePeriodType.get_next_time(template.period_type, datetime.now()),
+        check_count_left            = template.period_check_count,
+        cancel_at_next              = 0,
+        need_payment                = 0,
+        is_last_payment_failed      = 0,
+        stripe_payment_method_id    = None,
     )
-    package.init(datetime.now())
-    package.update()
-
     models.db.session.add(package)
     models.db.session.commit()
 
@@ -508,3 +597,110 @@ def admin_add_package(admin, template_id, user_id):
     models.db.session.commit()
 
     return ok()
+
+
+
+# 进行套餐的更新收款
+def package_recurring_charge(package):
+    current_app.logger.info(f"package recurring charge for package_id={package.id}")
+    try:
+        payment_intent = stripe.PaymentIntent.create(
+            amount=package.price,
+            currency='cny',
+            payment_method=package.stripe_payment_method_id,
+            customer=package.user.stripe_customer_id,
+            confirm=True, 
+            off_session=True,  
+            metadata={
+                'type': 'package_renewal',
+                'package_id': package.id,
+            }
+        )
+        return { "success": True, "payment_intent_id": payment_intent.id }
+    except stripe.error.StripeError as e:
+        return { "success": False, "error": e }
+    
+
+# 进行套餐的更新检查
+def check_package_update(package):
+    # 套餐需要更新
+    while datetime.now() >= package.current_period_end_time:
+        current_app.logger.info(f"package need update for package_id={package.id}, current_period_end_time={package.current_period_end_time}")
+
+        # 套餐上次付款失败
+        if package.is_last_payment_failed == 1:
+            current_app.logger.info(f"package last payment failed for package_id={package.id}")
+            # TODO ?
+            return
+
+        # 套餐被用户取消
+        if package.cancel_at_next == 1:
+            # 直接删除
+            package.is_deleted = 1
+            models.db.session.commit()
+            package.user.check_quota()
+            models.db.session.commit()
+            current_app.logger.info(f"package canceled for package_id={package.id}")
+            return
+        
+        # 套餐需要付款
+        if package.need_payment == 1:
+            # 尝试收款
+            result = package_recurring_charge(package)
+            # 付款失败
+            if not result['success']:
+                current_app.logger.info(f"package recurring charge failed for package_id={package.id}")
+                # 添加付款失败记录
+                package.is_last_payment_failed = 1
+                payment = models.PackagePayment(
+                    stripe_payment_intent_id = None,
+                    status = PackagePaymentStatus.FAILED.id,
+                    package_id = package.id,
+                    msg = result['error'],
+                )
+                models.db.session.add(payment)
+                # TODO 目前直接删除套餐
+                models.db.session.commit()
+                package.user.check_quota()
+                models.db.session.commit()
+                return
+            
+            # 套餐付款成功
+            else:   
+                current_app.logger.info(f"package recurring charge success for package_id={package.id}")
+                # 添加付款成功记录
+                package.is_last_payment_failed = 0
+                payment = models.PackagePayment(
+                    stripe_payment_intent_id = result['payment_intent_id'],
+                    status = PackagePaymentStatus.SUCCEEDED.id,
+                    package_id = package.id,
+                )
+                models.db.session.add(payment)
+                models.db.session.commit()
+
+        # 更新套餐
+        package.current_period_start_time = package.current_period_end_time
+        package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, package.current_period_end_time)
+        package.check_count_left = package.period_check_count
+        models.db.session.commit()
+
+        package.user.check_quota()
+        models.db.session.commit()
+
+        current_app.logger.info(f"package update for package_id={package.id} success, current_period_end_time={package.current_period_end_time}")
+
+
+# 套餐定期更新任务
+@scheduler.task('cron', id='package_update', second=f'*/5')
+def package_update_task():
+    with scheduler.app.app_context():
+        # current_app.logger.info(f"package update task at {datetime.now()}")
+        packages = models.Package.query.filter_by(is_deleted=0).all()
+        for package in packages:
+            try:
+                check_package_update(package)
+            except Exception as e:
+                import traceback
+                current_app.logger.error(f"check package update failed package_id={package.id} error={e}")
+                current_app.logger.error(traceback.format_exc())
+                continue

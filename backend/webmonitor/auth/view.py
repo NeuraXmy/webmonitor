@@ -85,14 +85,19 @@ def activate():
         current_app.logger.info(f"add initial package for user {user.id} with template {template.id}")
         package = models.Package(
             user_id                     = user.id,
-            name                        = f"初始套餐({template.name})",
-            period_count                = template.period_count,
+            name                        = template.name,
             period_type                 = template.period_type,
             period_check_count          = template.period_check_count,
             price                       = template.price,
+            start_time                  = datetime.now(),
+            current_period_start_time   = datetime.now(),
+            current_period_end_time     = PackagePeriodType.get_next_time(template.period_type, datetime.now()),
+            check_count_left            = template.period_check_count,
+            cancel_at_next              = 0,
+            need_payment                = 0,
+            is_last_payment_failed      = 0,
+            stripe_payment_method_id    = None,
         )
-        package.init(datetime.now())
-        package.update()
         models.db.session.add(package)
     models.db.session.commit()
 

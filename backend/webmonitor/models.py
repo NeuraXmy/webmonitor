@@ -49,10 +49,12 @@ class User(BaseModel):
     activated_on    = db.Column(db.DateTime, nullable=True)
     role            = db.Column(db.Integer, nullable=False) 
 
-    quota_exceeded  = db.Column(db.Integer, nullable=False, default=0)     # 配额是否超额
+    quota_exceeded  = db.Column(db.Integer, nullable=False, default=0)      # 配额是否超额
+    stripe_customer_id = db.Column(db.String(256), nullable=True)           # stripe的customer id
     
     spaces = db.relationship('Space', backref='owner', lazy=True)
     check_counts = db.relationship('UserCheckCount', backref='user', lazy=True)
+
 
     @property
     def password(self):
@@ -62,10 +64,20 @@ class User(BaseModel):
     def password(self, pwd):
         self.pwd = generate_password_hash(pwd)
 
+    # 检查密码是否正确
     def check_password(self, pwd):
         return check_password_hash(self.pwd, pwd)
 
-    # 增加检查次数
+
+    # 获取当前正在被使用的套餐（有效套餐中最早过期的一个）
+    def get_current_package(self):
+        available_packages = [p for p in self.packages if not p.is_expired()]
+        available_packages.sort(key=lambda p: p.current_period_end_time)
+        if len(available_packages) > 0:
+            return available_packages[0]
+        return None
+
+    # 增加检查次数，并且消耗套餐的配额（之后需要调用check_quota）
     def increase_check_count(self, check_state):
         current_app.logger.info(f"increase check count for user {self.id} with check_state {check_state}")
 
@@ -89,22 +101,18 @@ class User(BaseModel):
             db.session.add(today_check_count)
 
         # 消耗套餐的配额
-        for package in self.packages: 
-            package.update()
-        available_packages = [p for p in self.packages if not p.is_expired() and not p.is_quota_exceeded()]
-        available_packages.sort(key=lambda p: p.current_period_end_time)
-        if len(available_packages) > 0:
-            available_packages[0].check_count_left -= 1
-            current_app.logger.info(f"use package {available_packages[0].id} left check count {available_packages[0].check_count_left}")
-        
+        package = self.get_current_package()
+        if package is not None:
+            package.check_count_left -= 1
+            current_app.logger.info(f"use package {package.id} for user {self.id}, check_count_left={package.check_count_left}")
+
     # 进行配额检查, 如果超过配额, 暂停所有监控，否则恢复所有监控
+    # 在所有配额需要更新的地方调用：添加/删除套餐，套餐更新，套餐配额消耗
     def check_quota(self):
-        current_app.logger.info(f"check quotj a for user {self.id}, quota_exceeded={self.quota_exceeded}")
+        current_app.logger.info(f"check quota for user {self.id}, quota_exceeded={self.quota_exceeded}")
 
-        for package in self.packages:
-            package.update()
-
-        has_quota = any([p for p in self.packages if not p.is_expired() and not p.is_quota_exceeded()])
+        has_quota = (self.get_current_package() is not None)
+        
         if self.quota_exceeded == 0 and not has_quota:
             self.quota_exceeded = 1
             for space in self.spaces:
@@ -117,6 +125,7 @@ class User(BaseModel):
                 for watch in space.watches:
                     watch.quota_exceeded = 0
                     watch.sync_cdio_pause()
+
 
     def today_check_count(self):
         return sum([c.silent_count + c.notification_count + c.error_count for c in self.check_counts 
@@ -345,13 +354,30 @@ class WatchHistory(BaseModel):
 
 # 套餐周期类型枚举值
 class PackagePeriodType(Enum):
-    PERMANENT   = (0)
-    DAY         = (1)
-    MONTH       = (2)
-    YEAR        = (3)
+    PERMANENT   = (0)   # 永久
+    DAY         = (1)   # 日
+    MONTH       = (2)   # 月
+    YEAR        = (3)   # 年
+    TEST        = (4)   # 测试
+
     def __init__(self, id) -> None:
         self.id = id
 
+    # 获取下一个周期的开始时间
+    @staticmethod
+    def get_next_time(period_type_id, current_time):
+        if period_type_id == PackagePeriodType.PERMANENT.id:
+            return current_time + timedelta(days=365*1000)
+        elif period_type_id == PackagePeriodType.DAY.id:
+            return current_time + timedelta(days=1)
+        elif period_type_id == PackagePeriodType.MONTH.id:
+            return get_next_month_day(current_time)
+        elif period_type_id == PackagePeriodType.YEAR.id:
+            return get_next_year_day(current_time)
+        elif period_type_id == PackagePeriodType.TEST.id:
+            return current_time + timedelta(seconds=60)
+        return None
+        
 
 
 # 套餐模板模型
@@ -359,12 +385,11 @@ class PackageTemplate(BaseModel):
     __tablename__ = "t_package_template"
 
     name    = db.Column(db.String(32), nullable=False)
-    period_count        = db.Column(db.Integer, nullable=False, default=0)  # 套餐周期数
-    period_type         = db.Column(db.Integer, nullable=False, default=0)  # 套餐周期类型（永久、日、月、年）
+    period_type         = db.Column(db.Integer, nullable=False, default=0)  # 套餐周期类型
     period_check_count  = db.Column(db.Integer, nullable=False, default=0)  # 一次周期内给予的检查次数
-    price = db.Column(db.Integer, nullable=False, default=0)                # 套餐价格
+    price = db.Column(db.Integer, nullable=False, default=0)                # 套餐价格（单位为分人民币）
 
-    hide    = db.Column(db.Integer, nullable=False, default=0)              # 是否隐藏
+    hide    = db.Column(db.Integer, nullable=False, default=0)              # 是否对用户隐藏
     initial = db.Column(db.Integer, nullable=False, default=0)              # 是否是初始套餐
 
 
@@ -375,91 +400,42 @@ class Package(BaseModel):
 
     user_id     = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False)
 
-    name    = db.Column(db.String(32), nullable=False)
-    period_count        = db.Column(db.Integer, nullable=False, default=0)  # 套餐周期数
-    period_type         = db.Column(db.Integer, nullable=False, default=0)  # 套餐周期类型（永久、日、月、年）
+    name    = db.Column(db.String(32), nullable=False)                      
+    period_type         = db.Column(db.Integer, nullable=False, default=0)  # 套餐周期类型
     period_check_count  = db.Column(db.Integer, nullable=False, default=0)  # 一次周期内给予的检查次数
-    price = db.Column(db.Integer, nullable=False, default=0)                # 套餐价格
+    price = db.Column(db.Integer, nullable=False, default=0)                # 套餐价格（单位为分人民币）
 
-    start_time  = db.Column(db.DateTime, nullable=True)        # 开始时间
-    end_time    = db.Column(db.DateTime, nullable=True)        # 结束时间
+    start_time  = db.Column(db.DateTime, nullable=True)                # 开始时间
     current_period_start_time = db.Column(db.DateTime, nullable=True)  # 当前周期开始时间
     current_period_end_time   = db.Column(db.DateTime, nullable=True)  # 当前周期结束时间
-    period_left = db.Column(db.Integer, nullable=True)                 # 周期剩余次数
-    check_count_left = db.Column(db.Integer, nullable=True)            # 剩余检查次数
+    check_count_left = db.Column(db.Integer, nullable=True)            # 当前周期剩余检查次数
+
+    cancel_at_next           = db.Column(db.Integer, nullable=False, default=0)  # 是否在下个周期取消续订
+    need_payment             = db.Column(db.Integer, nullable=False, default=0)  # 是否需要付款
+    is_last_payment_failed   = db.Column(db.Integer, nullable=True, default=0)   # 上次付款是否失败
+
+    stripe_payment_method_id = db.Column(db.String(256), nullable=True)          # stripe的付款方式id
 
     user = db.relationship('User', backref='packages', lazy=True)
 
-    # 是否过期
+    # 套餐是否不可用（付款失败、配额超额、被删除）
     def is_expired(self):
-        return self.is_deleted == 1 or datetime.now() > self.end_time
-
-    # 是否超额
-    def is_quota_exceeded(self):
-        return self.check_count_left <= 0
-
-    # 初始化套餐
-    def init(self, start_time):
-        current_app.logger.info(f"init user package {self.id}")
-
-        self.start_time                = start_time
-        self.current_period_start_time = start_time
-        self.current_period_end_time   = start_time
-
-        if self.period_type == PackagePeriodType.PERMANENT.id:
-            self.period_count = 1
-            self.end_time = start_time + timedelta(days=365*100)
-        elif self.period_type == PackagePeriodType.DAY.id:
-            self.end_time = start_time + timedelta(days=self.period_count)
-        elif self.period_type == PackagePeriodType.MONTH.id:
-            self.end_time = start_time
-            for i in range(self.period_count):
-                self.end_time = get_next_month_day(self.end_time)
-        elif self.period_type == PackagePeriodType.YEAR.id:
-            self.end_time = start_time
-            for i in range(self.period_count):
-                self.end_time = get_next_year_day(self.end_time)
-        
-        self.check_count_left = 0
-        self.period_left = self.period_count
-
-    # 更新套餐状态
-    def update(self):
-        current_app.logger.info(f"update user package {self.id} current period from {self.current_period_start_time} to {self.current_period_end_time} left period {self.period_left}")
-
-        # 更新周期
-        now = datetime.now()
-        if now > self.current_period_end_time:
-            # 是否过期
-            if self.period_left <= 0:
-                current_app.logger.info(f"user package {self.id} is expired")
-                self.check_count_left = 0
-                return
-            
-            current_app.logger.info(f"user package {self.id} update period")
-            self.period_left -= 1
-            self.check_count_left = self.period_check_count
-
-            start = self.current_period_end_time
-            self.current_period_start_time = start
-            if self.period_type == PackagePeriodType.PERMANENT.id:
-                self.current_period_end_time = start + timedelta(days=365*100)
-            elif self.period_type == PackagePeriodType.DAY.id:
-                self.current_period_end_time = start + timedelta(days=1)
-            elif self.period_type == PackagePeriodType.MONTH.id:
-                self.current_period_end_time = get_next_month_day(start)
-            elif self.period_type == PackagePeriodType.YEAR.id:
-                self.current_period_end_time = get_next_year_day(start)
+        if self.is_deleted:
+            return True
+        if self.need_payment and self.is_last_payment_failed == 1:
+            return True
+        if self.check_count_left is not None and self.check_count_left <= 0:
+            return True
+        return False
 
 
-
-# 套餐付款状态
+# 套餐付款状态枚举值
 class PackagePaymentStatus(Enum):
-    CREATED     = (0)
-    PENDING     = (1)
-    SUCCEEDED   = (2)
-    CANCELED    = (3)
-    REFUND      = (4)
+    CREATED     = (0)   # 已创建
+    PENDING     = (1)   # 待付款
+    SUCCEEDED   = (2)   # 付款成功
+    FAILED      = (3)   # 付款失败
+    REFUND      = (4)   # 已退款
 
     def __init__(self, id) -> None:
         self.id = id
@@ -468,13 +444,11 @@ class PackagePaymentStatus(Enum):
 
 # 套餐付款模型
 class PackagePayment(BaseModel):
-    __tablename__ = "t_payment"
+    __tablename__ = "t_package_payment"
 
-    user_id     = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False)             # 用户id
-    template_id = db.Column(db.Integer, db.ForeignKey('t_package_template.id'), nullable=False) # 购买的套餐模板id
-    session_id  = db.Column(db.String(256), nullable=False)                                     # stripe的session id
+    stripe_payment_intent_id = db.Column(db.String(256), nullable=True)      # stripe的付款意图id
+    status = db.Column(db.Integer, nullable=False, default=0)                # 付款状态
+    msg    = db.Column(db.String(512), nullable=True)                        # 付款状态信息
 
-    status      = db.Column(db.Integer, nullable=False, default=0)  # 付款状态
-
-    user     = db.relationship('User',            backref='package_payments', lazy=True)
-    template = db.relationship('PackageTemplate', backref='package_payments', lazy=True)
+    package_id = db.Column(db.Integer, db.ForeignKey('t_package.id'), nullable=False)
+    package = db.relationship('Package', backref='payments', lazy=True)
