@@ -8,124 +8,133 @@
                     </span>
                 </div>
                 <div style="margin-top: 5px;" class="right-align">
+                    <span>Language:</span>
+                    <el-select v-model="language" placeholder="Select" @change="Changelanguage" style="width: 100px;margin-right: 10px;">
+                        <el-option
+                            v-for="item in languages"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value"
+                        />
+                    </el-select>
                     <el-button type="success"  @click="confirm_monitor" >{{ $t('select.add') }}</el-button>
                     <el-button type="primary" @click="RemoveIframe">{{ $t('select.exit') }}</el-button>
                 </div>
             </el-header>
-            <el-container v-loading.fullscreen.lock="fullscreenLoading">
-                <el-aside width="800px">
-                    <div class="form_style">
-                        <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
-                            <el-form-item :label="$t('select.monitorElements')">
-                                <el-col :span="20">
-                                    <el-input
-                                        v-for="(item, index) in filters"
-                                        :key="index"
-                                        v-model="item.element"
-                                        placeholder="Please input"
-                                        class="input-with-select"
-                                    >
-                                        <template #prepend>
-                                            <el-select v-model="item.option" placeholder="Select" @change="ChangeElement" style="width: 120px">
-                                                <el-option
-                                                    v-for="item in options"
-                                                    :key="item.value"
-                                                    :label="item.label"
-                                                    :value="item.value"
-                                                />
-                                            </el-select>
-                                        </template>
-                                        <template #append>
-                                            <el-button @click="deletefilter(index)"><el-icon><Close /></el-icon></el-button>
-                                        </template>
-                                    </el-input>
-                                </el-col>
-                                <!-- <el-col :span="20">
-                                    <el-select v-model="value" placeholder="Select" size="large" @change="ChangeElement">
-                                        <el-option
-                                        v-for="item in options"
-                                        :key="item.value"
-                                        :label="item.label"
-                                        :value="item.value"
-                                        />
-                                    </el-select>
-                                </el-col>
-                                <el-col :span="20">
-                                    <el-input type="textarea" :rows="6" v-model="addMonitorForm.include_filters"  placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
-                                </el-col> -->
+                <el-container v-loading.fullscreen.lock="fullscreenLoading">
+                    <el-aside width="800px">
+                        <div class="form_style">
+                            <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+                                <el-form-item :label="$t('select.monitorElements')">
+                                    <el-col :span="20">
+                                        <el-input
+                                            v-for="(item, index) in filters"
+                                            :key="index"
+                                            v-model="item.element"
+                                            placeholder="Please input"
+                                            class="input-with-select"
+                                        >
+                                            <template #prepend>
+                                                <el-select v-model="item.option" placeholder="Select" @change="ChangeElement" style="width: 120px">
+                                                    <el-option
+                                                        v-for="item in options"
+                                                        :key="item.value"
+                                                        :label="item.label"
+                                                        :value="item.value"
+                                                    />
+                                                </el-select>
+                                            </template>
+                                            <template #append>
+                                                <el-button @click="deletefilter(index)"><el-icon><Close /></el-icon></el-button>
+                                            </template>
+                                        </el-input>
+                                    </el-col>
+                                    <!-- <el-col :span="20">
+                                        <el-select v-model="value" placeholder="Select" size="large" @change="ChangeElement">
+                                            <el-option
+                                            v-for="item in options"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value"
+                                            />
+                                        </el-select>
+                                    </el-col>
+                                    <el-col :span="20">
+                                        <el-input type="textarea" :rows="6" v-model="addMonitorForm.include_filters"  placeholder="请输入监控元素（XPath/CssSelector）, 例如：xpath://body/div/span[contains(@class,example-class]"></el-input>
+                                    </el-col> -->
+                                </el-form-item>
+                                <el-form-item :label="$t('select.selectSpace')">
+                                    <el-col :span="20">
+                                        <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
+                                        <el-select v-model="space_name" placeholder="Select" @change="ChangeSpace">
+                                            <el-option
+                                            v-for="item in space_names"
+                                            :key="item.value"
+                                            :label="item.label"
+                                            :value="item.value"
+                                            />
+                                        </el-select>
+                                    </el-col>
+                                </el-form-item>
+                                <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorName')" prop="name">
+                                    <el-col :span="20">
+                                        <el-input v-model="addMonitorForm.name" :placeholder="$t('placeholders.monitorName')"></el-input>
+                                    </el-col>
+                                </el-form-item>
+                                <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorDesc')" prop="desc">
+                                    <el-col :span="20">
+                                        <el-input v-model="addMonitorForm.desc" :placeholder="$t('placeholders.monitorDescription')"></el-input>
+                                    </el-col>
+                                </el-form-item>
+                                <el-form-item :label="$t('monitor.dialogs.addMonitor.url')" prop="url">
+                                    <el-col :span="20">
+                                        <el-input v-model="addMonitorForm.url" :placeholder="$t('placeholders.monitorUrl')"></el-input>
+                                    </el-col>
+                                </el-form-item> 
+                                <el-form-item :label="$t('monitor.dialogs.addMonitor.keyword')">
+                                    <el-col :span="20">
+                                        <el-input v-model="addMonitorForm.trigger_text" :placeholder="$t('placeholders.monitorKeywords')"></el-input>
+                                    </el-col>
+                                </el-form-item>
+                                <el-form-item :label="$t('monitor.dialogs.addMonitor.refreshTime')">
+                                <el-form-item prop="time_between_check_weeks" style="width:120px;">
+                                        <el-input v-model="addMonitorForm.time_between_check_weeks">
+                                            <template #append>{{$t('monitor.dialogs.weekly')}}</template>
+                                        </el-input>
+                                </el-form-item>
+                                <el-form-item prop="time_between_check_days" style="width:120px;">
+                                        <el-input v-model="addMonitorForm.time_between_check_days">
+                                            <template #append>{{$t('monitor.dialogs.day')}}</template>
+                                        </el-input>
+                                </el-form-item>
+                                <el-form-item prop="time_between_check_hours" style="width:120px;">
+                                        <el-input v-model="addMonitorForm.time_between_check_hours">
+                                            <template #append>{{$t('monitor.dialogs.hour')}}</template>
+                                        </el-input>
+                                </el-form-item>
+                                <el-form-item prop="time_between_check_minutes" style="width:120px;">
+                                        <el-input v-model="addMonitorForm.time_between_check_minutes">
+                                            <template #append>{{$t('monitor.dialogs.minute')}}</template>
+                                        </el-input>
+                                </el-form-item>
+                                <el-form-item prop="time_between_check_seconds" style="width:120px;">
+                                        <el-input v-model="addMonitorForm.time_between_check_seconds">
+                                            <template #append>{{$t('monitor.dialogs.second')}}</template>
+                                        </el-input>
+                                </el-form-item>
                             </el-form-item>
-                            <el-form-item :label="$t('select.selectSpace')">
-                                <el-col :span="20">
-                                    <!-- <el-input v-model="addMonitorForm.element" placeholder="请输入网址"></el-input> -->
-                                    <el-select v-model="space_name" placeholder="Select" @change="ChangeSpace">
-                                        <el-option
-                                        v-for="item in space_names"
-                                        :key="item.value"
-                                        :label="item.label"
-                                        :value="item.value"
-                                        />
-                                    </el-select>
-                                </el-col>
-                            </el-form-item>
-                            <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorName')" prop="name">
-                                <el-col :span="20">
-                                    <el-input v-model="addMonitorForm.name" :placeholder="$t('placeholders.monitorName')"></el-input>
-                                </el-col>
-                            </el-form-item>
-                            <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorDesc')" prop="desc">
-                                <el-col :span="20">
-                                    <el-input v-model="addMonitorForm.desc" :placeholder="$t('placeholders.monitorDescription')"></el-input>
-                                </el-col>
-                            </el-form-item>
-                            <el-form-item :label="$t('monitor.dialogs.addMonitor.url')" prop="url">
-                                <el-col :span="20">
-                                    <el-input v-model="addMonitorForm.url" :placeholder="$t('placeholders.monitorUrl')"></el-input>
-                                </el-col>
-                            </el-form-item> 
-                            <el-form-item :label="$t('monitor.dialogs.addMonitor.keyword')">
-                                <el-col :span="20">
-                                    <el-input v-model="addMonitorForm.trigger_text" :placeholder="$t('placeholders.monitorKeywords')"></el-input>
-                                </el-col>
-                            </el-form-item>
-                            <el-form-item :label="$t('monitor.dialogs.addMonitor.refreshTime')">
-                            <el-form-item prop="time_between_check_weeks" style="width:120px;">
-                                    <el-input v-model="addMonitorForm.time_between_check_weeks">
-                                        <template #append>{{$t('monitor.dialogs.weekly')}}</template>
-                                    </el-input>
-                            </el-form-item>
-                            <el-form-item prop="time_between_check_days" style="width:120px;">
-                                    <el-input v-model="addMonitorForm.time_between_check_days">
-                                        <template #append>{{$t('monitor.dialogs.day')}}</template>
-                                    </el-input>
-                            </el-form-item>
-                            <el-form-item prop="time_between_check_hours" style="width:120px;">
-                                    <el-input v-model="addMonitorForm.time_between_check_hours">
-                                        <template #append>{{$t('monitor.dialogs.hour')}}</template>
-                                    </el-input>
-                            </el-form-item>
-                            <el-form-item prop="time_between_check_minutes" style="width:120px;">
-                                    <el-input v-model="addMonitorForm.time_between_check_minutes">
-                                        <template #append>{{$t('monitor.dialogs.minute')}}</template>
-                                    </el-input>
-                            </el-form-item>
-                            <el-form-item prop="time_between_check_seconds" style="width:120px;">
-                                    <el-input v-model="addMonitorForm.time_between_check_seconds">
-                                        <template #append>{{$t('monitor.dialogs.second')}}</template>
-                                    </el-input>
-                            </el-form-item>
-                        </el-form-item>
-                            <el-form-item :label="$t('monitor.dialogs.addMonitor.notificationEmail')" prop="notification_email">
-                                <el-col :span="20">
-                                    <el-input v-model="addMonitorForm.notification_email"></el-input>
-                                </el-col>
-                            </el-form-item>
-                        </el-form>
-                    </div>
-                </el-aside>
-                <el-main>
-                    <el-input type="textarea" :rows="20"  v-model="SelectText"></el-input>
-                </el-main>
-            </el-container>
+                                <el-form-item :label="$t('monitor.dialogs.addMonitor.notificationEmail')" prop="notification_email">
+                                    <el-col :span="20">
+                                        <el-input v-model="addMonitorForm.notification_email"></el-input>
+                                    </el-col>
+                                </el-form-item>
+                            </el-form>
+                        </div>
+                    </el-aside>
+                    <el-main>
+                        <el-input type="textarea" :rows="20"  v-model="SelectText"></el-input>
+                    </el-main>
+                </el-container>
         </el-container>
         <el-dialog
             v-model="okLogin"
@@ -218,6 +227,17 @@ export default{
                     label: 'CssSelector',
                 }
             ],
+            languages:[
+                {
+                    value: 1,
+                    label: 'English',
+                },
+                {
+                    value: 2,
+                    label: '简体中文',
+                }
+            ],
+            language:2,
             addMonitor:false,
             addMonitorForm:{
                 name:'',
@@ -304,7 +324,7 @@ export default{
             this.Element = e.data;
             this.addMonitorForm.url = e.data.baseURI;
             this.SelectText = e.data.selectText;
-            if(e.data.xpath === ''){
+            if(e.data.xpath === '' || e.data.xpath === undefined){
                 this.getUser();
                 this.getMonitorSpaceList();
             }else{
@@ -315,7 +335,9 @@ export default{
                         break;
                     }
                 }
+                console.log(e.data.xpath)
                 if(ok){
+                    // if(this.okLogin === true) return ;
                     this.okAddElement = true;
                 }
                 
@@ -378,10 +400,10 @@ export default{
             console.log(this.addMonitorForm.include_filters)
             // console.log(document.cookie)
             this.$refs.MonitorRef.validate(async valid => {
-                console.log(this.space_id)
-                console.log(valid)
+                // console.log(this.space_id)
+                // console.log(valid)
                 if(!valid) return 
-                console.log(this.addMonitorForm)
+                // console.log(this.addMonitorForm)
                 this.fullscreenLoading = true
                 let data = this.$qs.stringify(this.addMonitorForm)
                 const {data: res} = await this.$axios.post('/space/'+this.space_id+'/watch',data,
@@ -406,13 +428,10 @@ export default{
             if(res.status !== 200){
                 this.okLogin = true
                 this.fullscreenLoading = false
-                // return this.$message.error(res.msg)
             }
             this.fullscreenLoading = false
             // this.$message.success(res.msg)
-            console.log(res.data)
             for(let i = 0; i < res.data.items.length; i ++){
-                console.log(res.data.items[i].id)
                 this.space_names.push({
                     value: res.data.items[i].id,
                     label: res.data.items[i].name
@@ -425,7 +444,7 @@ export default{
             this.addMonitorForm.time_between_check_minutes = '0'
             this.addMonitorForm.time_between_check_seconds = '0'
             this.addMonitorForm.time_between_check_weeks = '0'
-            console.log(res.data)
+            // console.log(res.data)
         //   this.space_names = res.data
         },
         //获取用户邮箱
@@ -473,8 +492,11 @@ export default{
             this.SelectText = ''
             this.filters = []
         },
-        
-
+        //改变语言类型
+        Changelanguage(){
+            if(this.language === 1) this.$i18n.locale = 'en'
+            else this.$i18n.locale = 'zh'
+        }
           
     }
 }

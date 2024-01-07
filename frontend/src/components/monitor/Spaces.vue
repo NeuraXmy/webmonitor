@@ -76,7 +76,7 @@
                                     @change="CloseMonitor(scope.row)"/>
                             </template>
                         </el-table-column>
-                        <el-table-column fixed="right" prop="edit" label="Edit" width="280">
+                        <el-table-column fixed="right" prop="edit" label="Edit" width="300">
                             <template #default="scope">
                                 <el-button size="small" @click="WatchEdit(scope.row)"
                                     >{{$t('buttons.edit')}}</el-button
@@ -405,11 +405,6 @@ export default{
                 //     name: '默认空间',
                 //     id: '1',
                 //     content: 'Tab 1 content',
-                // },
-                // {
-                //     name: 'Tab 2',
-                //     id: '2',
-                //     content: 'Tab 2 content',
                 // },
             ],
             spacesValue:'',
@@ -910,38 +905,41 @@ export default{
             }
         },
         //默认新增监控
-        async addMonitorUrl(){
+        addMonitorUrl(){
             if(this.add_space_name === ''){
                 alert("请选择监控标签/空间！");
                 return ;
             }
-            this.addMonitorForm.desc = ''
-            this.addMonitorForm.element = ''
-            this.addMonitorForm.include_filters = ''
-            this.addMonitorForm.notification_email = sessionStorage.getItem('email')
-            this.addMonitorForm.trigger_text = ''
-            this.addMonitorForm.name = '默认监控'
-            this.addMonitorForm.time_between_check_days = '0'
-            this.addMonitorForm.time_between_check_hours = '1'
-            this.addMonitorForm.time_between_check_minutes = '0'
-            this.addMonitorForm.time_between_check_seconds = '0'
-            this.addMonitorForm.time_between_check_weeks = '0'
-            this.loading = true
-            let data = this.$qs.stringify(this.addMonitorForm)
-            const {data: res} = await this.$axios.post('/space/'+this.add_space_name+'/watch',data,
-            {
-                headers : {
-                    'token': sessionStorage.getItem('token')
+            this.$refs.MonitorRef.validate(async valid => {
+                if(!valid) return 
+                this.addMonitorForm.desc = ''
+                this.addMonitorForm.element = ''
+                this.addMonitorForm.include_filters = ''
+                this.addMonitorForm.notification_email = sessionStorage.getItem('email')
+                this.addMonitorForm.trigger_text = ''
+                this.addMonitorForm.name = '默认监控'
+                this.addMonitorForm.time_between_check_days = '0'
+                this.addMonitorForm.time_between_check_hours = '1'
+                this.addMonitorForm.time_between_check_minutes = '0'
+                this.addMonitorForm.time_between_check_seconds = '0'
+                this.addMonitorForm.time_between_check_weeks = '0'
+                this.loading = true
+                let data = this.$qs.stringify(this.addMonitorForm)
+                const {data: res} = await this.$axios.post('/space/'+this.add_space_name+'/watch',data,
+                {
+                    headers : {
+                        'token': sessionStorage.getItem('token')
+                    }
+                })
+                if(res.status ===200){
+                    this.addMonitorForm.url = ''
+                    this.add_space_name = ''
+                    this.RefreshMonitorManage(this.space_id)
+                }else{
+                    this.$message.error(res.msg);
                 }
+                this.loading = false
             })
-            if(res.status ===200){
-                this.addMonitorForm.url = ''
-                this.add_space_name = ''
-                this.RefreshMonitorManage(this.space_id)
-            }else{
-                this.$message.error(res.msg);
-            }
-            this.loading = false
         },
         //默认新增>编辑
         addMonitor_Edit(){

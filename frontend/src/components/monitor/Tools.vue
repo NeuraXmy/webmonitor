@@ -11,7 +11,7 @@
         <h2>{{ $t('tools.elementSelector') }}</h2>
         <p>{{ $t('tools.xpathOrCssSelector') }}</p>
         <p>{{ $t('tools.exampleSelector') }}</p>
-        <code>{{ $t('tools.exampleCode') }}</code>
+        <code>xpath://body/div/span[contains(@class, "example-class")]</code>
         <p>{{ $t('tools.copySelectors') }}</p>
         <h3>{{ $t('tools.instance') }}</h3>
         <p>{{ $t('tools.openUrl') }}<a href="https://top.baidu.com/board?platform=pc&sa=pcindex_entry">https://top.baidu.com/board?platform=pc&sa=pcindex_entry</a></p>

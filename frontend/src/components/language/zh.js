@@ -175,7 +175,7 @@ export default{
         elementSelector: '元素选择器',
         selectorTypes: '选择器类型',
         xpathOrCssSelector: '元素选择器类型可以选择 Xpath 或 Css selector。',
-        exampleSelector: '一行一个元素选择器，每一行的格式为：选择器类型{选择器内容}，例如：',
+        exampleSelector: '一行一个元素选择器，每一行的格式为：选择器类型:选择器内容，例如：',
         exampleCode: 'xpath://body/div/span[contains(@class, "example-class")]',
         copySelectors: '可以借助浏览器 F12 直接 copy 这两种选择器，或者系统提供的小书签工具。',
         instance: '实例',
