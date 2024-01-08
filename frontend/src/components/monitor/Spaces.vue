@@ -517,7 +517,7 @@ export default{
             add_space_name:'',
             refreshID:'',
             refreshButton:[],
-            timer: null
+            // timer: null
         }
     },
     async created(){
@@ -742,6 +742,7 @@ export default{
                 this.refreshButton.push({
                     text: '刷新',
                     disabled: false,
+                    time: null
                 })
             }
         },
@@ -882,13 +883,15 @@ export default{
             this.refreshButton[index].text = 30
             this.refreshButton[index].disabled = true
             this.refreshButton[index].text --;  //启动定时器
-            this.timer = setInterval(() =>{
+            this.refreshButton[index].timer = setInterval(() =>{
                  //创建定时器
                 if(this.refreshButton[index].text === 0){
-                    this.clearTimer();  //关闭定时器
+                    clearInterval(this.refreshButton[index].timer)  //关闭定时器
+
                     this.refreshButton[index].text = '刷新'
                     this.refreshButton[index].disabled = false
-                    this.RefreshMonitorManage(this.space_id)
+                    this.refreshButton[index].timer = null;
+                    // this.RefreshMonitorManage(this.space_id)
                     // this.$router.push('/login');
                 }else{
                     this.refreshButton[index].text --;
