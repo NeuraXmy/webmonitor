@@ -87,11 +87,18 @@
                                     @click="DeleteWatch(scope.row)"
                                     >{{$t('buttons.delete')}}</el-button
                                 >
-                                <el-button
+                                <!-- <el-button
                                     size="small"
                                     type="info"
                                     @click="RefreshWatch(scope.row)"
                                     >{{$t('buttons.refresh')}}</el-button
+                                > -->
+                                <el-button
+                                    size="small"
+                                    type="info"
+                                    :disabled="this.refreshButton[scope.$index].disabled"
+                                    @click="RefreshWatch(scope.$index, scope.row.id)"
+                                    >{{ refreshButton[scope.$index].text }}</el-button
                                 >
                                 <el-button
                                     size="small"
@@ -187,29 +194,29 @@
             :title="$t('buttons.addMonitor')"
             width="40%"
         >
-            <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+            <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="100px" class="form_style">
                 <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorName')" prop="name">
-                    <el-col :span="20">
+                    <el-col :span="21">
                         <el-input v-model="addMonitorForm.name" :placeholder="$t('placeholders.monitorName')"></el-input>
                     </el-col>
                 </el-form-item>
                 <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorDesc')" prop="desc">
-                    <el-col :span="20">
+                    <el-col :span="21">
                         <el-input v-model="addMonitorForm.desc" :placeholder="$t('placeholders.monitorDescription')"></el-input>
                     </el-col>
                 </el-form-item>
                 <el-form-item :label="$t('monitor.dialogs.addMonitor.url')" prop="url">
-                    <el-col :span="20">
+                    <el-col :span="21">
                         <el-input v-model="addMonitorForm.url" :placeholder="$t('placeholders.monitorUrl')"></el-input>
                     </el-col>
                 </el-form-item>
                 <el-form-item :label="$t('monitor.dialogs.addMonitor.keyword')">
-                    <el-col :span="20">
+                    <el-col :span="21">
                         <el-input v-model="addMonitorForm.trigger_text" :placeholder="$t('placeholders.monitorKeywords')"></el-input>
                     </el-col>
                 </el-form-item>
                 <el-form-item :label="$t('monitor.dialogs.addMonitor.element')">
-                    <el-col :span="20">
+                    <el-col :span="21">
                         <el-select v-model="this.value" placeholder="Select" size="large" @change="ChangeElement">
                             <el-option
                                 v-for="item in options"
@@ -249,7 +256,7 @@
                     </el-form-item>
                 </el-form-item>
                 <el-form-item :label="$t('monitor.dialogs.addMonitor.notificationEmail')" prop="notification_email">
-                    <el-col :span="20">
+                    <el-col :span="21">
                         <el-input v-model="addMonitorForm.notification_email"></el-input>
                     </el-col>
                 </el-form-item>
@@ -269,29 +276,29 @@
         :title="$t('buttons.editMonitor')"
         width="40%"
     >
-        <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+        <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="100px" class="form_style">
             <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorName')" prop="name">
-                <el-col :span="20">
+                <el-col :span="21">
                     <el-input v-model="addMonitorForm.name" :placeholder="$t('placeholders.monitorName')"></el-input>
                 </el-col>
             </el-form-item>
             <el-form-item :label="$t('monitor.dialogs.addMonitor.monitorDesc')" prop="desc">
-                <el-col :span="20">
+                <el-col :span="21">
                     <el-input v-model="addMonitorForm.desc" :placeholder="$t('placeholders.monitorDescription')"></el-input>
                 </el-col>
             </el-form-item>
             <el-form-item :label="$t('monitor.dialogs.addMonitor.url')" prop="url">
-                <el-col :span="20">
+                <el-col :span="21">
                     <el-input v-model="addMonitorForm.url" :placeholder="$t('placeholders.monitorUrl')"></el-input>
                 </el-col>
             </el-form-item>
             <el-form-item :label="$t('monitor.dialogs.addMonitor.keyword')">
-                <el-col :span="20">
+                <el-col :span="21">
                     <el-input v-model="addMonitorForm.trigger_text" :placeholder="$t('placeholders.monitorKeywords')"></el-input>
                 </el-col>
             </el-form-item>
             <el-form-item :label="$t('monitor.dialogs.addMonitor.element')">
-                <el-col :span="20">
+                <el-col :span="21">
                     <el-select v-model="this.value" placeholder="Select" size="large" @change="ChangeElement">
                         <el-option
                             v-for="item in options"
@@ -331,7 +338,7 @@
                 </el-form-item>
             </el-form-item>
             <el-form-item :label="$t('monitor.dialogs.addMonitor.notificationEmail')" prop="notification_email">
-                <el-col :span="20">
+                <el-col :span="21">
                     <el-input v-model="addMonitorForm.notification_email"></el-input>
                 </el-col>
             </el-form-item>
@@ -507,7 +514,10 @@ export default{
             okDisabled: false,
             okquota_exceeded: false,
             quota_exceeded:false,
-            add_space_name:''
+            add_space_name:'',
+            refreshID:'',
+            refreshButton:[],
+            timer: null
         }
     },
     async created(){
@@ -704,6 +714,13 @@ export default{
                     }
                 }
             }
+            this.refreshButton = []
+            for(let i = 0; i < res.data.items.length; i++){
+                this.refreshButton.push({
+                    text: '刷新',
+                    disabled: false,
+                })
+            }
             console.log(res.data)
         },
         //刷新监控列表
@@ -719,6 +736,14 @@ export default{
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.TotalPages = res.data.total
             this.MonitorList = res.data.items
+
+            this.refreshButton = []
+            for(let i = 0; i < res.data.items.length; i++){
+                this.refreshButton.push({
+                    text: '刷新',
+                    disabled: false,
+                })
+            }
         },
         //用户在某个space下创建监控
         addMonitorList(){
@@ -827,12 +852,15 @@ export default{
             })
         },
         //用户立刻刷新监控
-        async RefreshWatch(row){
-            this.loading = true
+        async RefreshWatch(index, id){
+            // console.log(index)
+            // this.loading = true
+            this.RefreshTime(index, id)
+            this.refreshID = id
             let data={
                 'token': sessionStorage.getItem('token')
             }
-            const {data: res} = await this.$axios.post('/watch/'+row.id+'/check',data,
+            const {data: res} = await this.$axios.post('/watch/'+this.refreshID+'/check',data,
             {
                 headers : {
                     'token': sessionStorage.getItem('token')
@@ -842,10 +870,35 @@ export default{
                 this.loading = false
                 this.okquota_exceeded = true
                 this.quota_exceeded = true
-                return  this.$message.error(res.msg)
+                return this.$message.error(res.msg)
             }
-            this.RefreshMonitorManage(this.space_id)
-            this.loading = false
+            // this.RefreshMonitorManage(this.space_id)
+            // this.loading = false
+        },
+        //倒计时
+        RefreshTime(index, id){
+            console.log(index)
+            this.refreshID = id
+            this.refreshButton[index].text = 30
+            this.refreshButton[index].disabled = true
+            this.refreshButton[index].text --;  //启动定时器
+            this.timer = setInterval(() =>{
+                 //创建定时器
+                if(this.refreshButton[index].text === 0){
+                    this.clearTimer();  //关闭定时器
+                    this.refreshButton[index].text = '刷新'
+                    this.refreshButton[index].disabled = false
+                    this.RefreshMonitorManage(this.space_id)
+                    // this.$router.push('/login');
+                }else{
+                    this.refreshButton[index].text --;
+                }
+            },1000);
+        },
+        clearTimer(){
+            //清除定时器
+            clearInterval(this.timer);
+            this.timer = null;
         },
         //改变多选框
         ChangeElement(){

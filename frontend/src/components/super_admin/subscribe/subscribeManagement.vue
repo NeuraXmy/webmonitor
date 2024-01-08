@@ -238,6 +238,12 @@ export default{
     
     components: { Search,Plus,Delete,Edit,Top,Bottom },
     data(){
+        const validPrice = (rule, value, callback) => {
+            if(value >= 500){
+                return callback()
+            }
+            return callback(new Error('价格至少500分'))
+        }
         return {
             PackageList:[
                 {
@@ -259,7 +265,8 @@ export default{
                     {required:true, message: '请输入周期', trigger:'blur'}
                 ],
                 price:[
-                    {required:true, message: '请输入价格', trigger:'blur'}
+                    {required:true, message: '请输入价格', trigger:'blur'},
+                    {required:true, validator: validPrice, trigger:'blur'}
                 ],
                 period_check_count:[
                     {required:true, message: '请输入监控次数', trigger:'blur'}
@@ -423,7 +430,7 @@ export default{
             this.PackageForm.name = '';
             this.PackageForm.period_type = 0;
             this.PackageForm.period_count = 1;
-            this.PackageForm.price = 0;
+            this.PackageForm.price = 500;
             this.PackageForm.period_check_count = 0;
             this.PackageForm.hide = 0
             this.PackageForm.initial = 0

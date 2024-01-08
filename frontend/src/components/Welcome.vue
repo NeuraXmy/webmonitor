@@ -1,5 +1,22 @@
 <template>
     <div class="row mb-3 mb-md-0">
+        <el-card style="width: 100%;margin-bottom: 10px;">
+            <h3>当前套餐</h3>
+            <div v-if="using !== null">
+                <div class="slider-demo-block">
+                    <span class="demonstration">使用情况</span>
+                    <el-slider v-model="using" disabled />
+                </div>
+                <span style="font-size: 14px;">已用次数{{using}} / 总次数{{Package.period_check_count}}</span>
+            </div>
+            <div v-if="using === null">
+                <div class="slider-demo-block">
+                    <span class="demonstration">当前无套餐</span>
+                    <el-slider v-model="using" disabled />
+                </div>
+                <span style="font-size: 14px;">已用次数0 / 总次数0</span>
+            </div>
+        </el-card>
         <div class="col-xl-12">
             <div class="block block-rounded js-appear-enabled">
                 <div class="block-header block-header-default">
@@ -59,10 +76,40 @@ import { Reading,Monitor,ShoppingBag,Link } from '@element-plus/icons-vue'
 
 export default{
     components: { Reading,Monitor,ShoppingBag,Link },
+    data(){
+        return {
+            using:null,
+            Package:{
+                period_check_count:null
+            }
+        }
+    },
+    created(){
+        this.getPackage()
+    },
+    methods:{
+        //获得正在使用的套餐
+        async getPackage(){
+            // this.loading = true
+            const {data: res} = await this.$axios.get('/package/using',
+            {
+                headers : {
+                    'token': sessionStorage.getItem('token')
+                }
+            })
+            if(res.status !== 200) return  this.$message.error(res.msg)
+            this.$message.success(res.msg)
+            console.log(res)
+            this.Package = res.data
+            this.using = this.Package.period_check_count - this.Package.check_count_left
+            // this.loading = false
+            // this.Package = res.data.items
+        },
+    }
 }
 </script>
 
-<style>
+<style scoped>
 .row {
     display: flex;
     flex-wrap: wrap;
@@ -146,5 +193,25 @@ export default{
 }
 .si-book-open:before {
     content: "\E04C"
+}
+.slider-demo-block {
+  display: flex;
+  align-items: center;
+}
+.slider-demo-block .el-slider {
+  margin-top: 0;
+  margin-left: 12px;
+}
+.slider-demo-block .demonstration {
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  line-height: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0;
+}
+.slider-demo-block .demonstration + .el-slider {
+  flex: 0 0 70%;
 }
 </style>
