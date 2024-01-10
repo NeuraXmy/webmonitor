@@ -548,7 +548,11 @@ def purchase_package_webhook():
             # 创建支付成功记录
             payment = models.PackagePayment(
                 stripe_payment_intent_id = payment_intent_id,
+                name = f'{template_name} 首次购买',
                 status = PackagePaymentStatus.SUCCEEDED.id,
+                msg = '',
+                pay_time = datetime.now(),
+                amount = template_price,
                 package_id = package.id,
             )
             models.db.session.add(payment)
@@ -655,8 +659,11 @@ def check_package_update(package):
                 payment = models.PackagePayment(
                     stripe_payment_intent_id = None,
                     status = PackagePaymentStatus.FAILED.id,
-                    package_id = package.id,
+                    name = f'{package.name} 续费',
                     msg = result['error'],
+                    amount = package.price,
+                    pay_time = datetime.now(),
+                    package_id = package.id,
                 )
                 models.db.session.add(payment)
                 # TODO 目前直接删除套餐
@@ -672,15 +679,22 @@ def check_package_update(package):
                 package.is_last_payment_failed = 0
                 payment = models.PackagePayment(
                     stripe_payment_intent_id = result['payment_intent_id'],
+                    name = f'{package.name} 续费',
                     status = PackagePaymentStatus.SUCCEEDED.id,
+                    msg = '',
+                    amount = package.price,
+                    pay_time = datetime.now(),
                     package_id = package.id,
                 )
                 models.db.session.add(payment)
                 models.db.session.commit()
 
         # 更新套餐
-        package.current_period_start_time = package.current_period_end_time
-        package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, package.current_period_end_time)
+        start = package.current_period_start_time
+        if package.period_type == PackagePeriodType.TEST.id:
+            start = datetime.now()
+        package.current_period_start_time = start
+        package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, start)
         package.check_count_left = package.period_check_count
         models.db.session.commit()
 
@@ -694,7 +708,7 @@ def check_package_update(package):
 @scheduler.task('cron', id='package_update', second=f'*/5')
 def package_update_task():
     with scheduler.app.app_context():
-        # current_app.logger.info(f"package update task at {datetime.now()}")
+        current_app.logger.info(f"package update task at {datetime.now()}")
         packages = models.Package.query.filter_by(is_deleted=0).all()
         for package in packages:
             try:
@@ -704,3 +718,29 @@ def package_update_task():
                 current_app.logger.error(f"check package update failed package_id={package.id} error={e}")
                 current_app.logger.error(traceback.format_exc())
                 continue
+
+
+
+# 用户或管理员获取自己的套餐付款记录（分页）
+@package_bp.route('/package/<int:package_id>/payment', methods=['GET'])
+@login_required
+def get_package_payment_list(user, package_id):
+    current_app.logger.info(f"user or admin get package payment list user_id={user.id} package_id={package_id}")
+    package = models.Package.query.filter_by(id=package_id, is_deleted=0).first()
+    if not package or package.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    if package.user_id != user.id and user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+
+    ret = paginate(models.PackagePayment.query.filter_by(package_id=package_id))
+    ret.items = [{
+        "id": payment.id,       
+        "name": payment.name,
+        "status": payment.status,
+        "msg": payment.msg,
+        "pay_time": payment.pay_time,
+        "amount": payment.amount,
+        "update_time": payment.update_time,
+        "create_time": payment.create_time,
+    } for payment in ret.items]
+    return ok(data=ret)

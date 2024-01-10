@@ -375,7 +375,7 @@ class PackagePeriodType(Enum):
         elif period_type_id == PackagePeriodType.YEAR.id:
             return get_next_year_day(current_time)
         elif period_type_id == PackagePeriodType.TEST.id:
-            return current_time + timedelta(seconds=60)
+            return current_time + timedelta(minutes=1)
         return None
         
 
@@ -447,8 +447,12 @@ class PackagePayment(BaseModel):
     __tablename__ = "t_package_payment"
 
     stripe_payment_intent_id = db.Column(db.String(256), nullable=True)      # stripe的付款意图id
-    status = db.Column(db.Integer, nullable=False, default=0)                # 付款状态
-    msg    = db.Column(db.String(512), nullable=True)                        # 付款状态信息
+
+    name     = db.Column(db.String(32), nullable=False)                        # 付款描述
+    status   = db.Column(db.Integer, nullable=False, default=0)                # 付款状态
+    msg      = db.Column(db.String(512), nullable=True)                        # 付款状态信息
+    pay_time = db.Column(db.DateTime, nullable=True)                           # 付款时间
+    amount   = db.Column(db.Integer, nullable=False, default=0)                # 付款金额（单位为分人民币）
 
     package_id = db.Column(db.Integer, db.ForeignKey('t_package.id'), nullable=False)
     package = db.relationship('Package', backref='payments', lazy=True)
