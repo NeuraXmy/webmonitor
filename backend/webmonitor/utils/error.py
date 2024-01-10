@@ -35,6 +35,7 @@ class ErrorCode(Enum):
 
     # ---------------------- 11xx package ---------------------- #
     PACKAGE_NOT_NEED_PAYMENT   = (200, 1100, "套餐不需要支付")
+    PACKAGE_CANCELED           = (200, 1101, "套餐已取消")
 
 
     def __init__(self, http_status, code, msg) -> None:

@@ -770,6 +770,10 @@ def change_package_payment_method(user, package_id):
     if not package.need_payment:
         return abort(ErrorCode.PACKAGE_NOT_NEED_PAYMENT)
     
+    # 取消的套餐不能修改支付方式
+    if package.cancel_at_next:
+        return abort(ErrorCode.PACKAGE_CANCELED)
+    
     # 不应该出现这种情况
     if not user.stripe_customer_id:
         return abort(ErrorCode.NOT_FOUND, "User has no stripe customer id.")
