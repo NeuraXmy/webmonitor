@@ -3,11 +3,6 @@
         <el-container>
             <el-header>
                 <div style="margin-top: 15px;">
-                    <span>
-                        {{ $t('select.selectElements') }}
-                    </span>
-                </div>
-                <div style="margin-top: 5px;" class="right-align">
                     <span>Language:</span>
                     <el-select v-model="language" placeholder="Select" @change="Changelanguage" style="width: 100px;margin-right: 10px;">
                         <el-option
@@ -20,11 +15,17 @@
                     <el-button type="success"  @click="confirm_monitor" >{{ $t('select.add') }}</el-button>
                     <el-button type="primary" @click="RemoveIframe">{{ $t('select.exit') }}</el-button>
                 </div>
+                <div style="margin-top: 5px;" class="right-align">
+                    <span>
+                        {{ $t('select.selectElements') }}
+                    </span>
+                </div>
             </el-header>
+            <el-scrollbar>
                 <el-container v-loading.fullscreen.lock="fullscreenLoading">
                     <el-aside width="800px">
                         <div class="form_style">
-                            <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="80px" class="form_style">
+                            <el-form ref="MonitorRef" :rules="MonitorRules" :model="addMonitorForm" label-width="100px" class="form_style">
                                 <el-form-item :label="$t('select.monitorElements')">
                                     <el-col :span="20">
                                         <el-input
@@ -135,6 +136,7 @@
                         <el-input type="textarea" :rows="20"  v-model="SelectText"></el-input>
                     </el-main>
                 </el-container>
+            </el-scrollbar>
         </el-container>
         <el-dialog
             v-model="okLogin"

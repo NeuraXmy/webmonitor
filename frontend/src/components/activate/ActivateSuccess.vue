@@ -33,13 +33,13 @@ export default{
             },1000);
         },
         loading(){
-          //启动定时器
-          this.countdown--;  //定时器减1
+            //启动定时器
+            this.countdown--;  //定时器减1
         },
         clearTimer(){
-           //清除定时器
-           clearInterval(this.timer);
-           this.timer = null;
+            //清除定时器
+            clearInterval(this.timer);
+            this.timer = null;
         }
     },
 };
