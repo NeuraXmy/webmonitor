@@ -460,6 +460,7 @@ def purchase_package(user, template_id):
         payment_intent_data={
             'setup_future_usage': 'off_session',
             'metadata': {
+                'url': current_app.config['FRONTEND_BASE_URL'],
                 'type': 'package_first_purchase',  
                 'user_id': user.id,
                 'template_name': template.name,
@@ -499,8 +500,13 @@ def purchase_package_webhook():
         payment_intent = event['data']['object']
         payment_intent_id = payment_intent['id']
         metadata = payment_intent['metadata']
+
+        # 不是本域名的事件不处理
+        if 'url' not in metadata or metadata['url'] != current_app.config['FRONTEND_BASE_URL']:
+            return ok() 
+
         current_app.logger.info(f"payment_intent.succeeded for payment_intent_id={payment_intent_id} metadata={metadata}")
-        
+
         # 套餐首次购买
         if metadata['type'] == 'package_first_purchase':
             current_app.logger.info(f"package first purchase for user_id={metadata['user_id']} template_name={metadata['template_name']}")
@@ -548,7 +554,11 @@ def purchase_package_webhook():
             # 创建支付成功记录
             payment = models.PackagePayment(
                 stripe_payment_intent_id = payment_intent_id,
+                name = f'{template_name} 首次购买',
                 status = PackagePaymentStatus.SUCCEEDED.id,
+                msg = '',
+                pay_time = datetime.now(),
+                amount = template_price,
                 package_id = package.id,
             )
             models.db.session.add(payment)
@@ -612,6 +622,7 @@ def package_recurring_charge(package):
             confirm=True, 
             off_session=True,  
             metadata={
+                'url': current_app.config['FRONTEND_BASE_URL'],
                 'type': 'package_renewal',
                 'package_id': package.id,
             }
@@ -619,7 +630,7 @@ def package_recurring_charge(package):
         return { "success": True, "payment_intent_id": payment_intent.id }
     except stripe.error.StripeError as e:
         return { "success": False, "error": e }
-    
+
 
 # 进行套餐的更新检查
 def check_package_update(package):
@@ -630,7 +641,7 @@ def check_package_update(package):
         # 套餐上次付款失败
         if package.is_last_payment_failed == 1:
             current_app.logger.info(f"package last payment failed for package_id={package.id}")
-            # TODO ?
+            # 不做处理，等待用户重新付款
             return
 
         # 套餐被用户取消
@@ -650,16 +661,19 @@ def check_package_update(package):
             # 付款失败
             if not result['success']:
                 current_app.logger.info(f"package recurring charge failed for package_id={package.id}")
-                # 添加付款失败记录
+                # 记录付款失败状态
                 package.is_last_payment_failed = 1
+                # 添加付款失败记录
                 payment = models.PackagePayment(
                     stripe_payment_intent_id = None,
                     status = PackagePaymentStatus.FAILED.id,
-                    package_id = package.id,
+                    name = f'{package.name} 续费',
                     msg = result['error'],
+                    amount = package.price,
+                    pay_time = datetime.now(),
+                    package_id = package.id,
                 )
                 models.db.session.add(payment)
-                # TODO 目前直接删除套餐
                 models.db.session.commit()
                 package.user.check_quota()
                 models.db.session.commit()
@@ -672,15 +686,22 @@ def check_package_update(package):
                 package.is_last_payment_failed = 0
                 payment = models.PackagePayment(
                     stripe_payment_intent_id = result['payment_intent_id'],
+                    name = f'{package.name} 续费',
                     status = PackagePaymentStatus.SUCCEEDED.id,
+                    msg = '',
+                    amount = package.price,
+                    pay_time = datetime.now(),
                     package_id = package.id,
                 )
                 models.db.session.add(payment)
                 models.db.session.commit()
 
         # 更新套餐
-        package.current_period_start_time = package.current_period_end_time
-        package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, package.current_period_end_time)
+        start = package.current_period_start_time
+        if package.period_type == PackagePeriodType.TEST.id:
+            start = datetime.now()
+        package.current_period_start_time = start
+        package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, start)
         package.check_count_left = package.period_check_count
         models.db.session.commit()
 
@@ -694,7 +715,7 @@ def check_package_update(package):
 @scheduler.task('cron', id='package_update', second=f'*/5')
 def package_update_task():
     with scheduler.app.app_context():
-        # current_app.logger.info(f"package update task at {datetime.now()}")
+        current_app.logger.info(f"package update task at {datetime.now()}")
         packages = models.Package.query.filter_by(is_deleted=0).all()
         for package in packages:
             try:
@@ -704,3 +725,119 @@ def package_update_task():
                 current_app.logger.error(f"check package update failed package_id={package.id} error={e}")
                 current_app.logger.error(traceback.format_exc())
                 continue
+
+
+
+# 用户或管理员获取自己的套餐付款记录（分页）
+@package_bp.route('/package/<int:package_id>/payment', methods=['GET'])
+@login_required
+def get_package_payment_list(user, package_id):
+    current_app.logger.info(f"user or admin get package payment list user_id={user.id} package_id={package_id}")
+    package = models.Package.query.filter_by(id=package_id, is_deleted=0).first()
+    if not package or package.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    if package.user_id != user.id and user.role != 1:
+        return abort(ErrorCode.FORBIDDEN)
+
+    ret = paginate(models.PackagePayment.query.filter_by(package_id=package_id).order_by(models.PackagePayment.pay_time.desc()))
+    ret.items = [{
+        "id": payment.id,       
+        "name": payment.name,
+        "status": payment.status,
+        "msg": payment.msg,
+        "pay_time": payment.pay_time,
+        "amount": payment.amount,
+        "update_time": payment.update_time,
+        "create_time": payment.create_time,
+    } for payment in ret.items]
+    return ok(data=ret)
+
+
+# 修改特定套餐的支付方式
+@package_bp.route('/package/<int:package_id>/payment_method', methods=['PUT'])
+@login_required
+def change_package_payment_method(user, package_id):
+    payment_method = request.form.get('payment_method')
+    current_app.logger.info(f"user change package payment method user_id={user.id} package_id={package_id} payment_method={payment_method}")
+
+    package = models.Package.query.filter_by(id=package_id, is_deleted=0).first()
+    if not package or package.is_deleted == 1:
+        return abort(ErrorCode.NOT_FOUND)
+    if package.user_id != user.id:
+        return abort(ErrorCode.FORBIDDEN)
+    
+    # 不需要付款的套餐不能修改支付方式
+    if not package.need_payment:
+        return abort(ErrorCode.PACKAGE_NOT_NEED_PAYMENT)
+    
+    # 取消的套餐不能修改支付方式
+    if package.cancel_at_next:
+        return abort(ErrorCode.PACKAGE_CANCELED)
+    
+    # 不应该出现这种情况
+    if not user.stripe_customer_id:
+        return abort(ErrorCode.NOT_FOUND, "User has no stripe customer id.")
+
+    # 绑定
+    current_app.logger.info(f"attach payment_method_id={payment_method} to customer_id={user.stripe_customer_id}")
+    stripe.PaymentMethod.attach(
+        payment_method,
+        customer=user.stripe_customer_id,
+    )
+
+    # 更新套餐
+    package.stripe_payment_method_id = payment_method
+    models.db.session.commit()
+
+    # 如果上次续费失败，立即尝试续费
+    if package.is_last_payment_failed == 1:
+        current_app.logger.info(f"retry package recurring charge for package_id={package.id}")
+        result = package_recurring_charge(package)
+        # 付款失败
+        if not result['success']:
+            current_app.logger.info(f"package recurring charge failed for package_id={package.id}")
+            # 记录付款失败状态
+            package.is_last_payment_failed = 1
+            # 添加付款失败记录
+            payment = models.PackagePayment(
+                stripe_payment_intent_id = None,
+                status = PackagePaymentStatus.FAILED.id,
+                name = f'{package.name} 续费',
+                msg = result['error'],
+                amount = package.price,
+                pay_time = datetime.now(),
+                package_id = package.id,
+            )
+            models.db.session.add(payment)
+            models.db.session.commit()
+            package.user.check_quota()
+            models.db.session.commit()
+            
+        # 套餐付款成功
+        else:   
+            current_app.logger.info(f"package recurring charge success for package_id={package.id}")
+            # 添加付款成功记录
+            package.is_last_payment_failed = 0
+            payment = models.PackagePayment(
+                stripe_payment_intent_id = result['payment_intent_id'],
+                name = f'{package.name} 续费',
+                status = PackagePaymentStatus.SUCCEEDED.id,
+                msg = '',
+                amount = package.price,
+                pay_time = datetime.now(),
+                package_id = package.id,
+            )
+            models.db.session.add(payment)
+            models.db.session.commit()
+
+            # 更新套餐（从当前时间开始）
+            start = datetime.now()
+            package.current_period_start_time = start
+            package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, start)
+            package.check_count_left = package.period_check_count
+            models.db.session.commit()
+
+            package.user.check_quota()
+            models.db.session.commit()
+
+    return ok()

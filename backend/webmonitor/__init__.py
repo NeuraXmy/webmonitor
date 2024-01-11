@@ -12,9 +12,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(config_map["development"])
 
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        from webmonitor.utils.apscheduler import register_scheduler
-        register_scheduler(app)
+    #if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    from webmonitor.utils.apscheduler import register_scheduler
+    register_scheduler(app)
 
     register_database(app)
     register_blueprints(app)
