@@ -11,17 +11,29 @@
                     <el-table-column prop="create_time" :label="$t('orders.createTime')" width="200" />
                     <el-table-column prop="name" :label="$t('orders.packageName')" width="100" />
                     <el-table-column prop="period_type" :label="$t('orders.period')" width="60" />
-                    <el-table-column prop="period_check_count" :label="$t('orders.monitorTotalCount')" width="150" />
-                    <el-table-column prop="price" :label="$t('orders.orderAmount')" width="100" />
-                    <el-table-column prop="check_count_left" :label="$t('orders.monitorRemainingCount')" width="150" />
+                    <el-table-column prop="period_check_count" :label="$t('orders.monitorTotalCount')" width="100" />
+                    <el-table-column prop="price" :label="$t('orders.orderAmount')" width="80" />
+                    <el-table-column prop="check_count_left" :label="$t('orders.monitorRemainingCount')" width="120" />
                     <el-table-column prop="current_period_end_time" label="有效期（下次续费时间）" width="200" />
-                    <el-table-column prop="edit" label="操作" width="100">
+                    <el-table-column prop="is_last_payment_failed" label="支付状态" width="90" >
+                        <template #default="scope">
+                            <span v-if="scope.row.is_last_payment_failed === 0">支付成功</span>
+                            <span v-else>支付失败</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="edit" label="操作" width="250">
                         <template #default="scope">
                             <el-button v-if="scope.row.cancel_at_next === 0" size="small" @click="this.okUnsubscribe = true, this.UnsubscribeID = scope.row.id"
                                 >立即停用</el-button
                             >
                             <el-button v-if="scope.row.cancel_at_next === 1" size="small" @click="this.okResubscribe = true, this.UnsubscribeID = scope.row.id"
                                 >立即启用</el-button
+                            >
+                            <el-button size="primary" link @click="getPayment(scope.row)"
+                                >查看详情</el-button
+                            >
+                            <el-button size="success" link @click="update_payment_method(scope.row)"
+                                >更换支付</el-button
                             >
                         </template> 
                     </el-table-column>
@@ -71,6 +83,7 @@
 </template>
 
 <script>
+// import { loadStripe } from '@stripe/stripe-js';
 export default {
     data(){
         return {
@@ -91,10 +104,12 @@ export default {
             },
             okUnsubscribe:false,
             UnsubscribeID:'',
-            okResubscribe:false
+            okResubscribe:false,
+            stripe:null,
+            card:null
         }
     },
-    created(){
+    async created(){
         this.getOrderList()
     },
     methods: {
@@ -169,7 +184,16 @@ export default {
             }else{
                 this.$message.error(res.msg);
             }
-        }
+        },
+        getPayment(row){
+            window.sessionStorage.setItem('package_id',row.id);
+            this.$router.push('/pay')
+        },
+        //更新支付方式
+        update_payment_method(row){
+            window.sessionStorage.setItem('package_id',row.id);
+            this.$router.push('/paymentMethod')
+        },
     }
 };
 </script>

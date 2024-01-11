@@ -28,6 +28,7 @@ import SubscribePackage from '../components/subscribe/SubscribePackage.vue'
 import SubscribeSuccess from '../components/subscribe/SubscribeSuccess.vue'
 import SubscribeCancel from '../components/subscribe/SubscribeCancel.vue'
 import Orders from '../components/subscribe/orders.vue'
+import paymentMethod from '../components/subscribe/paymentMethod.vue'
 import subscribeManagement from '../components/super_admin/subscribe/subscribeManagement.vue'
 import userSubscribe from '../components/super_admin/subscribe/userSubscribe.vue'
 import Pay from '../components/subscribe/pay.vue'
@@ -60,7 +61,8 @@ const routes = [
             {path: '/tools', component: Tools },
             {path: '/SubscribePackage', component: SubscribePackage },
             {path: '/orders', component: Orders },
-            {path: '/pay', component: Pay }
+            {path: '/pay', component: Pay },
+            {path: '/paymentMethod', component: paymentMethod }
         ]
     },
     { 
