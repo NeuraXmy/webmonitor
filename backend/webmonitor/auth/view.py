@@ -6,6 +6,7 @@ from webmonitor.utils.error import ErrorCode, abort, ok
 from webmonitor.utils.token import generate_token, verify_token
 from webmonitor.utils.send_email import send_email
 from datetime import datetime
+from webmonitor.user.view import generate_invitation_code, add_invitation_bonus
 
 
 # 用户注册
@@ -14,8 +15,9 @@ def register():
     email       = request.form.get('email')
     password    = request.form.get('password')
     nickname    = request.form.get('nickname')
+    code        = request.form.get('invitation_code')
 
-    current_app.logger.info(f"user register with email={email}, password={password}, nickname={nickname}")
+    current_app.logger.info(f"user register with email={email}, password={password}, nickname={nickname}, invitation_code={code}")
 
     if not all([email, password, nickname]):
         abort(ErrorCode.PARAMS_INCOMPLETE)
@@ -27,18 +29,35 @@ def register():
     if len(nickname) < 2:
         abort(ErrorCode.PARAMS_INVALID, msg="昵称长度不能小于2")
 
+    # 检测邀请码是否有效
+    if code is not None and code.strip() == '':
+        code = None
+    if code is not None:
+        inviter = models.User.query.filter_by(inviter_code=code, is_deleted=0).first()
+        if not inviter:
+            abort(ErrorCode.INVITATION_CODE_INVALID)
+
     user = models.User.query.filter_by(email=email).first()
     # 用户已经存在并且已经激活
     if user and user.activated:
         abort(ErrorCode.USER_ALREADY_EXISTS)
     # 如果用户不存在则创建
     if not user:
-        user = models.User(email=email, password=password, nickname=nickname, role=0, quota_exceeded=0)
+        user = models.User(
+            email=email, 
+            password=password, 
+            nickname=nickname, 
+            role=0, 
+            quota_exceeded=0,
+            inviter_code=generate_invitation_code(),
+            invitee_code=code,
+        )
         models.db.session.add(user)
     # 如果用户存在则更新信息
     else:
         user.password = password
         user.nickname = nickname
+        user.invitee_code = code
     models.db.session.commit()
 
     user = models.User.query.filter_by(email=email).first()
@@ -70,6 +89,12 @@ def activate():
         return abort(ErrorCode.USER_NOT_FOUND)
     if user.activated:
         return abort(ErrorCode.USER_ALREADY_ACTIVATED)
+    
+    # 检测邀请码是否有效
+    if user.invitee_code is not None:
+        inviter = models.User.query.filter_by(inviter_code=user.invitee_code, is_deleted=0).first()
+        if not inviter:
+            abort(ErrorCode.INVITATION_CODE_INVALID)
     
     # 激活用户
     user.activated = True
@@ -103,6 +128,14 @@ def activate():
 
     user.check_quota()
     models.db.session.commit()
+
+    # 添加邀请奖励
+    if user.invitee_code is not None:
+        add_invitation_bonus(inviter, user)
+
+        invitation = models.UserInvitation(inviter_id=inviter.id, invitee_id=user.id, invitee_email=user.email)
+        models.db.session.add(invitation)
+        models.db.session.commit()
     
     url = current_app.config['FRONTEND_BASE_URL'] + '/activate_success'
     return redirect(url)

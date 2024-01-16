@@ -31,6 +31,8 @@ def get_package_template_list(user):
             "create_time": template.create_time,
             "hide": template.hide,
             "initial": template.initial,
+            "inviter_package": template.inviter_package,
+            "invitee_package": template.invitee_package,
         } for template in ret.items]
 
     else:
@@ -59,16 +61,24 @@ def create_package_template(user):
     price               = request.form.get('price')
     hide                = request.form.get('hide')
     initial             = request.form.get('initial')
+    inviter_package     = request.form.get('inviter_package')
+    invitee_package     = request.form.get('invitee_package')
     
-    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
+    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_type={period_type} \
+                            period_check_count={period_check_count} price={price} hide={hide} initial={initial}" \
+                            f"inviter_package={inviter_package} invitee_package={invitee_package}")
 
-    if not all([name, period_type, period_check_count, price, hide, initial]):
+    if not all([name, period_type, period_check_count, price, hide, initial, inviter_package, invitee_package]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
+    
     period_type         = int(period_type)
     period_check_count  = int(period_check_count)
     price               = int(price)
     hide                = int(hide) 
     initial             = int(initial) 
+    inviter_package     = int(inviter_package)
+    invitee_package     = int(invitee_package)
+
     if period_type not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, 
                            PackagePeriodType.PERMANENT.id, PackagePeriodType.TEST.id]:
         return abort(ErrorCode.PARAMS_INVALID)
@@ -80,6 +90,10 @@ def create_package_template(user):
         return abort(ErrorCode.PARAMS_INVALID)
     if initial not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
+    if inviter_package not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if invitee_package not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
     
     template = models.PackageTemplate(
         name=name,
@@ -88,6 +102,8 @@ def create_package_template(user):
         price=price,
         hide=hide,
         initial=initial,
+        inviter_package=inviter_package,
+        invitee_package=invitee_package,
     )
     
     models.db.session.add(template)
@@ -105,8 +121,12 @@ def modify_package_template(user, template_id):
     price               = request.form.get('price')
     hide                = request.form.get('hide')
     initial             = request.form.get('initial')
+    inviter_package     = request.form.get('inviter_package')
+    invitee_package     = request.form.get('invitee_package')
     
-    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
+    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} \
+                              period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} \
+                              initial={initial} inviter_package={inviter_package} invitee_package={invitee_package}")
 
     if period_type and int(period_type) not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, 
                                                 PackagePeriodType.PERMANENT.id, PackagePeriodType.TEST.id]:
@@ -118,6 +138,10 @@ def modify_package_template(user, template_id):
     if hide and int(hide) not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
     if initial and int(initial) not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if inviter_package and int(inviter_package) not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if invitee_package and int(invitee_package) not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
     
     template = models.PackageTemplate.query.filter_by(id=template_id, is_deleted=0).first()
@@ -136,6 +160,10 @@ def modify_package_template(user, template_id):
         template.hide = int(hide)
     if initial:
         template.initial = int(initial)
+    if inviter_package:
+        template.inviter_package = int(inviter_package)
+    if invitee_package:
+        template.invitee_package = int(invitee_package)
     
     models.db.session.commit()
     return ok()

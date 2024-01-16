@@ -32,6 +32,9 @@ class ErrorCode(Enum):
     SAPCE_RESTORE_FAIL           = (200, 900, "用户被软删除，无法恢复空间")
 
     # ---------------------- 10xx user ---------------------- #
+    HAVE_BEEN_INVITED            = (200, 1000, "已经被邀请")
+    INVITATION_CODE_INVALID      = (200, 1001, "邀请码无效")
+    CANNOT_INVIT_SELF            = (200, 1002, "无法邀请自己")
 
     # ---------------------- 11xx package ---------------------- #
     PACKAGE_NOT_NEED_PAYMENT   = (200, 1100, "套餐不需要支付")
