@@ -62,6 +62,9 @@
                 <el-menu-item index="orders">
                     <span><el-icon><ShoppingCart /></el-icon>{{ $t('home.order') }}</span>
                 </el-menu-item>
+                <!-- <el-menu-item index="pay">
+                    <span><el-icon><List /></el-icon>{{ $t('home.pay') }}</span>
+                </el-menu-item> -->
                 <el-menu-item index="tools">
                     <span><el-icon><Tools /></el-icon>{{ $t('home.tool') }}</span>
                 </el-menu-item>
@@ -75,13 +78,12 @@
     </el-container>
 </template>
 
-
 <script>
-import { Menu,Compass,Tools,Monitor,ShoppingBag,ShoppingCart } from '@element-plus/icons-vue'
+import { Menu,Compass,Tools,Monitor,ShoppingBag,ShoppingCart,List } from '@element-plus/icons-vue'
 import Cookies from 'universal-cookie';
 
 export default{
-    components: { Menu,Compass,Tools,Monitor,ShoppingBag,ShoppingCart },
+    components: { Menu,Compass,Tools,Monitor,ShoppingBag,ShoppingCart,List },
     data(){
         return {
             okadmin:1,

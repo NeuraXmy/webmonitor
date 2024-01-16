@@ -314,8 +314,8 @@ export default{
     },
     mounted(){
         window.addEventListener("message", (e) => {
-            console.log(e.data)
-            console.log(e.data.baseURI);
+            // console.log(e.data)
+            // console.log(e.data.baseURI);
             // this.verify_authenticity_token = e.data.verify_authenticity_token;
             this.verify_authenticity_token = this.getCookie('verify_authenticity_token')
 
@@ -337,7 +337,7 @@ export default{
                         break;
                     }
                 }
-                console.log(e.data.xpath)
+                // console.log(e.data.xpath)
                 if(ok){
                     // if(this.okLogin === true) return ;
                     this.okAddElement = true;
@@ -360,10 +360,10 @@ export default{
         },
         ChangeSpace(){
             this.space_id = this.space_name
-            console.log(this.space_id)
+            // console.log(this.space_id)
         },
         ChangeElement(event){
-            console.log(event)
+            // console.log(event)
             for(let i = 0; i < this.filters.length; i ++){
                 console.log(this.filters[i].option)
                 if(event === this.filters[i].option && event === 'XPath'){
@@ -385,7 +385,7 @@ export default{
         },
         //删除单个元素
         deletefilter(event){
-            console.log(event)
+            // console.log(event)
             this.filters.splice(event, 1);
         },
         async confirm_monitor(){

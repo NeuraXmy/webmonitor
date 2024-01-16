@@ -10,7 +10,8 @@ export default{
         monitor: "All Monitors",
         subscribe: "Subscribe",
         order: "My Orders",
-        tool: "Tools"
+        tool: "Tools",
+        pay: "Payment Details"
     },
     table: {
         username: 'Username',

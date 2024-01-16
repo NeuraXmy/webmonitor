@@ -10,7 +10,8 @@ export default{
         monitor: "监控",
         subscribe: "购买订阅",
         order: "我的订单",
-        tool: "工具"
+        tool: "工具",
+        pay: "支付详单"
     },
     table: {
         username: '用户名',
