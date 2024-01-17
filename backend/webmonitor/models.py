@@ -51,6 +51,9 @@ class User(BaseModel):
 
     quota_exceeded  = db.Column(db.Integer, nullable=False, default=0)      # 配额是否超额
     stripe_customer_id = db.Column(db.String(256), nullable=True)           # stripe的customer id
+
+    inviter_code = db.Column(db.String(32), nullable=True)          # 自己的邀请码
+    invitee_code = db.Column(db.String(32), nullable=True)          # 使用的邀请码 NULL表示没有使用邀请码
     
     spaces = db.relationship('Space', backref='owner', lazy=True)
     check_counts = db.relationship('UserCheckCount', backref='user', lazy=True)
@@ -150,6 +153,19 @@ class User(BaseModel):
     def this_month_notification_count(self):
         return sum([c.notification_count for c in self.check_counts
                     if c.date.month == datetime.now().month])
+
+
+
+# 用户邀请记录模型
+class UserInvitation(BaseModel):
+    __tablename__ = "t_user_invitation"
+
+    inviter_id = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False) # 邀请者id
+    invitee_id = db.Column(db.Integer, db.ForeignKey('t_user.id'), nullable=False) # 被邀请者id
+    invitee_email = db.Column(db.String(64), nullable=False)                       # 被邀请者邮箱
+
+    inviter = db.relationship('User', foreign_keys=[inviter_id], backref='invitations', lazy=True)
+    invitee = db.relationship('User', foreign_keys=[invitee_id], backref='invited_by', lazy=True)
 
 
 
@@ -354,14 +370,22 @@ class WatchHistory(BaseModel):
 
 # 套餐周期类型枚举值
 class PackagePeriodType(Enum):
-    PERMANENT   = (0)   # 永久
-    DAY         = (1)   # 日
-    MONTH       = (2)   # 月
-    YEAR        = (3)   # 年
-    TEST        = (4)   # 测试
+    PERMANENT   = (0, '单次永久')   
+    DAY         = (1, '日付')   
+    MONTH       = (2, '月付')  
+    YEAR        = (3, '年付') 
+    TEST        = (4, '测试')
 
-    def __init__(self, id) -> None:
+    def __init__(self, id, desc) -> None:
         self.id = id
+        self.desc = desc
+    
+    @staticmethod
+    def get_desc_by_id(id):
+        for period_type in PackagePeriodType:
+            if period_type.id == id:
+                return period_type.desc
+        return None
 
     # 获取下一个周期的开始时间
     @staticmethod
@@ -392,6 +416,9 @@ class PackageTemplate(BaseModel):
     hide    = db.Column(db.Integer, nullable=False, default=0)              # 是否对用户隐藏
     initial = db.Column(db.Integer, nullable=False, default=0)              # 是否是初始套餐
 
+    inviter_package = db.Column(db.Integer, nullable=False, default=0)      # 是否赠送给邀请者
+    invitee_package = db.Column(db.Integer, nullable=False, default=0)      # 是否赠送给被邀请者
+
 
 
 # 用户套餐模型
@@ -413,6 +440,8 @@ class Package(BaseModel):
     cancel_at_next           = db.Column(db.Integer, nullable=False, default=0)  # 是否在下个周期取消续订
     need_payment             = db.Column(db.Integer, nullable=False, default=0)  # 是否需要付款
     is_last_payment_failed   = db.Column(db.Integer, nullable=True, default=0)   # 上次付款是否失败
+
+    current_period_notified = db.Column(db.Integer, nullable=False, default=0)   # 当前周期是否已经通知过
 
     stripe_payment_method_id = db.Column(db.String(256), nullable=True)          # stripe的付款方式id
 

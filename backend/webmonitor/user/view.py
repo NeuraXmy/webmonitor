@@ -8,6 +8,66 @@ from webmonitor.utils.send_email import send_email
 from webmonitor.utils.auth import login_required
 import webmonitor.utils.watch as watch_utils
 from webmonitor.utils.page import paginate
+from random import randint
+from datetime import datetime
+from webmonitor.models import PackagePeriodType
+
+# 生成邀请码
+def generate_invitation_code():
+    # 随机24个字符a-zA-Z
+    code = ''
+    for i in range(20):
+        code += chr(randint(65, 90) if randint(0, 1) else randint(97, 122))
+    return code
+
+
+# 添加邀请奖励
+def add_invitation_bonus(inviter, invitee):
+    inviter_templates = models.PackageTemplate.query.filter_by(is_deleted=0, inviter_package=1).all()
+    for template in inviter_templates:
+        current_app.logger.info(f"add inviter bonus for user {inviter.id} with template {template.id}")
+        package = models.Package(
+            user_id                     = inviter.id,
+            name                        = template.name,
+            period_type                 = template.period_type,
+            period_check_count          = template.period_check_count,
+            price                       = template.price,
+            start_time                  = datetime.now(),
+            current_period_start_time   = datetime.now(),
+            current_period_end_time     = PackagePeriodType.get_next_time(template.period_type, datetime.now()),
+            check_count_left            = template.period_check_count,
+            cancel_at_next              = 0,
+            need_payment                = 0,
+            is_last_payment_failed      = 0,
+            stripe_payment_method_id    = None,
+        )
+        models.db.session.add(package)
+
+    invitee_templates = models.PackageTemplate.query.filter_by(is_deleted=0, invitee_package=1).all()
+    for template in invitee_templates:
+        current_app.logger.info(f"add invitee bonus for user {invitee.id} with template {template.id}")
+        package = models.Package(
+            user_id                     = invitee.id,
+            name                        = template.name,
+            period_type                 = template.period_type,
+            period_check_count          = template.period_check_count,
+            price                       = template.price,
+            start_time                  = datetime.now(),
+            current_period_start_time   = datetime.now(),
+            current_period_end_time     = PackagePeriodType.get_next_time(template.period_type, datetime.now()),
+            check_count_left            = template.period_check_count,
+            cancel_at_next              = 0,
+            need_payment                = 0,
+            is_last_payment_failed      = 0,
+            stripe_payment_method_id    = None,
+        )
+        models.db.session.add(package)
+
+    models.db.session.commit()
+
+    invitee.check_quota()
+    inviter.check_quota()
+    models.db.session.commit()
 
 
 # 用户获取自己信息
@@ -30,6 +90,8 @@ def get_user_info(user):
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
         'quota_exceeded': user.quota_exceeded,
+        'invited': user.invitee_code is not None,
+        'invitation_code': user.inviter_code,
     }
     return ok(data=ret)
 
@@ -107,6 +169,8 @@ def get_certain_user_info(user, user_id):
         'this_month_check_count': user.this_month_check_count(),
         'this_month_notification_count': user.this_month_notification_count(),
         'quota_exceeded': user.quota_exceeded,
+        'invited': user.invitee_code is not None,
+        'invitation_code': user.inviter_code,
     }
     return ok(data=ret)
 
@@ -334,4 +398,58 @@ def get_users_softdeleted(user):
     for user in ret.items:
         user['spaces'] = len(models.Space.query.filter_by(owner_id=user['id']).all())
     return ok(data=ret)
+
+
+# 用户获取自己邀请列表（分页）
+@user_bp.route('/user/invitations', methods=['GET'])
+@login_required
+def get_invitation_list(user):
+    current_app.logger.info(f"user get invitations with user_id={user.id}")
+    ret = paginate(models.UserInvitation.query.filter_by(inviter_id=user.id) \
+                   .order_by(models.UserInvitation.create_time.desc()))
+    ret.items = [{
+        'email': invitation.invitee_email,
+        'create_time': invitation.create_time,
+    } for invitation in ret.items]
+    return ok(data=ret)
+
+
+# 用户刷新邀请码
+@user_bp.route('/user/invitation_code', methods=['PUT'])
+@login_required
+def refresh_invitation_code(user):
+    current_app.logger.info(f"user refresh invitation code with user_id={user.id}")
+    user.inviter_code = generate_invitation_code()
+    models.db.session.commit()
+    return ok(data={
+        'invitation_code': user.inviter_code
+    })
+
+
+# 用户使用邀请码
+@user_bp.route('/user/invitation_code', methods=['POST'])
+@login_required
+def use_invitation_code(user):
+    code = request.form.get('invitation_code')
+    current_app.logger.info(f"user use invitation code with user_id={user.id}, code={code}")
+
+    if not code:
+        return abort(ErrorCode.PARAMS_INCOMPLETE)
+    if user.invitee_code is not None:
+        return abort(ErrorCode.HAVE_BEEN_INVITED)
+
+    inviter = models.User.query.filter_by(inviter_code=code, is_deleted=0).first()
+    if inviter.id == user.id:
+        return abort(ErrorCode.CANNOT_INVIT_SELF)
+    if not inviter: 
+        return abort(ErrorCode.INVITATION_CODE_INVALID)
     
+    user.invitee_code = code
+    
+    invitation = models.UserInvitation(inviter_id=inviter.id, invitee_id=user.id, invitee_email=user.email)
+    models.db.session.add(invitation)
+    models.db.session.commit()
+
+    add_invitation_bonus(inviter, user)
+    return ok()
+

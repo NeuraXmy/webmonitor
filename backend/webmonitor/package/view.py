@@ -10,7 +10,48 @@ from webmonitor.utils.page import paginate
 from datetime import datetime, timedelta
 from webmonitor.utils.apscheduler import scheduler
 import stripe
+from webmonitor.utils.send_email import send_email
 
+
+def send_package_recurring_success_email(package, user):
+    send_email(to=user.email, subject="Webmonitor 套餐续费成功", template='package/recurring_success.html',
+               user_name=user.name, 
+               package_name=package.name, 
+               package_price=f"{package.price/100:.2f} CNY", 
+               package_period_type=PackagePeriodType.get_desc_by_id(package.period_type),
+               recurring_time = package.current_period_start_time.strftime("%Y-%m-%d %H:%M:%S"),
+               next_recurring_time = package.current_period_end_time.strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+def send_package_recurring_failed_email(package, user):
+    send_email(to=user.email, subject="Webmonitor 套餐续费失败", template='package/recurring_failed.html',
+                user_name=user.name,
+                package_name=package.name,
+                recurring_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    )
+
+def send_package_recurring_notify_email(package, user):
+    send_email(to=user.email, subject="Webmonitor 套餐续费提醒", template='package/recurring_notify.html',
+                user_name=user.name,
+                package_name=package.name,
+                package_price=f"{package.price/100:.2f} CNY", 
+                package_period_type=PackagePeriodType.get_desc_by_id(package.period_type),
+                recurring_time = package.current_period_end_time.strftime("%Y-%m-%d %H:%M:%S"),
+    )
+
+# 获取某个套餐的通知时间
+def get_package_notify_time(package):
+    if package.period_type == PackagePeriodType.DAY.id:
+        return package.current_period_end_time - timedelta(hours=3)
+    elif package.period_type == PackagePeriodType.MONTH.id:
+        return package.current_period_end_time - timedelta(days=1)
+    elif package.period_type == PackagePeriodType.YEAR.id:
+        return package.current_period_end_time - timedelta(days=3)
+    elif package.period_type == PackagePeriodType.PERMANENT.id:
+        return package.current_period_end_time + timedelta(weeks=99999)
+    elif package.period_type == PackagePeriodType.TEST.id:
+        return package.current_period_end_time - timedelta(seconds=20)
+    return None
 
 
 # 用户或管理员获取所有的套餐模板（分页）
@@ -31,6 +72,8 @@ def get_package_template_list(user):
             "create_time": template.create_time,
             "hide": template.hide,
             "initial": template.initial,
+            "inviter_package": template.inviter_package,
+            "invitee_package": template.invitee_package,
         } for template in ret.items]
 
     else:
@@ -59,16 +102,24 @@ def create_package_template(user):
     price               = request.form.get('price')
     hide                = request.form.get('hide')
     initial             = request.form.get('initial')
+    inviter_package     = request.form.get('inviter_package')
+    invitee_package     = request.form.get('invitee_package')
     
-    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
+    current_app.logger.info(f"admin create package template user_id={user.id} name={name} period_type={period_type} \
+                            period_check_count={period_check_count} price={price} hide={hide} initial={initial}" \
+                            f"inviter_package={inviter_package} invitee_package={invitee_package}")
 
-    if not all([name, period_type, period_check_count, price, hide, initial]):
+    if not all([name, period_type, period_check_count, price, hide, initial, inviter_package, invitee_package]):
         return abort(ErrorCode.PARAMS_INCOMPLETE)
+    
     period_type         = int(period_type)
     period_check_count  = int(period_check_count)
     price               = int(price)
     hide                = int(hide) 
     initial             = int(initial) 
+    inviter_package     = int(inviter_package)
+    invitee_package     = int(invitee_package)
+
     if period_type not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, 
                            PackagePeriodType.PERMANENT.id, PackagePeriodType.TEST.id]:
         return abort(ErrorCode.PARAMS_INVALID)
@@ -80,6 +131,10 @@ def create_package_template(user):
         return abort(ErrorCode.PARAMS_INVALID)
     if initial not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
+    if inviter_package not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if invitee_package not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
     
     template = models.PackageTemplate(
         name=name,
@@ -88,6 +143,8 @@ def create_package_template(user):
         price=price,
         hide=hide,
         initial=initial,
+        inviter_package=inviter_package,
+        invitee_package=invitee_package,
     )
     
     models.db.session.add(template)
@@ -105,8 +162,12 @@ def modify_package_template(user, template_id):
     price               = request.form.get('price')
     hide                = request.form.get('hide')
     initial             = request.form.get('initial')
+    inviter_package     = request.form.get('inviter_package')
+    invitee_package     = request.form.get('invitee_package')
     
-    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} initial={initial}")
+    current_app.logger.info(f"admin modify package template user_id={user.id} template_id={template_id} name={name} \
+                              period_type={period_type} period_check_count={period_check_count} price={price} hide={hide} \
+                              initial={initial} inviter_package={inviter_package} invitee_package={invitee_package}")
 
     if period_type and int(period_type) not in [PackagePeriodType.DAY.id, PackagePeriodType.MONTH.id, PackagePeriodType.YEAR.id, 
                                                 PackagePeriodType.PERMANENT.id, PackagePeriodType.TEST.id]:
@@ -118,6 +179,10 @@ def modify_package_template(user, template_id):
     if hide and int(hide) not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
     if initial and int(initial) not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if inviter_package and int(inviter_package) not in [0, 1]:
+        return abort(ErrorCode.PARAMS_INVALID)
+    if invitee_package and int(invitee_package) not in [0, 1]:
         return abort(ErrorCode.PARAMS_INVALID)
     
     template = models.PackageTemplate.query.filter_by(id=template_id, is_deleted=0).first()
@@ -136,6 +201,10 @@ def modify_package_template(user, template_id):
         template.hide = int(hide)
     if initial:
         template.initial = int(initial)
+    if inviter_package:
+        template.inviter_package = int(inviter_package)
+    if invitee_package:
+        template.invitee_package = int(invitee_package)
     
     models.db.session.commit()
     return ok()
@@ -634,6 +703,17 @@ def package_recurring_charge(package):
 
 # 进行套餐的更新检查
 def check_package_update(package):
+    # 套餐是否需要通知
+    if package.is_last_payment_failed == 0 and package.cancel_at_next == 0 and package.need_payment == 1 and package.current_period_notified == 0:
+        time = get_package_notify_time(package)
+        if time and datetime.now() >= time:
+            current_app.logger.info(f"package need notify for package_id={package.id}")
+            send_package_recurring_notify_email(package, package.user)
+            package.current_period_notified = 1
+            models.db.session.commit()
+            current_app.logger.info(f"package notify for package_id={package.id} success")
+
+
     # 套餐需要更新
     while datetime.now() >= package.current_period_end_time:
         current_app.logger.info(f"package need update for package_id={package.id}, current_period_end_time={package.current_period_end_time}")
@@ -677,6 +757,7 @@ def check_package_update(package):
                 models.db.session.commit()
                 package.user.check_quota()
                 models.db.session.commit()
+                send_package_recurring_failed_email(package, package.user)
                 return
             
             # 套餐付款成功
@@ -695,6 +776,7 @@ def check_package_update(package):
                 )
                 models.db.session.add(payment)
                 models.db.session.commit()
+                send_package_recurring_success_email(package, package.user)
 
         # 更新套餐
         start = package.current_period_start_time
@@ -812,6 +894,7 @@ def change_package_payment_method(user, package_id):
             models.db.session.commit()
             package.user.check_quota()
             models.db.session.commit()
+            send_package_recurring_failed_email(package, package.user)
             
         # 套餐付款成功
         else:   
@@ -839,5 +922,6 @@ def change_package_payment_method(user, package_id):
 
             package.user.check_quota()
             models.db.session.commit()
+            send_package_recurring_success_email(package, package.user)
 
     return ok()
