@@ -10,7 +10,48 @@ from webmonitor.utils.page import paginate
 from datetime import datetime, timedelta
 from webmonitor.utils.apscheduler import scheduler
 import stripe
+from webmonitor.utils.send_email import send_email
 
+
+def send_package_recurring_success_email(package, user):
+    send_email(to=user.email, subject="Webmonitor 套餐续费成功", template='package/recurring_success.html',
+               user_name=user.name, 
+               package_name=package.name, 
+               package_price=f"{package.price/100:.2f} CNY", 
+               package_period_type=PackagePeriodType.get_desc_by_id(package.period_type),
+               recurring_time = package.current_period_start_time.strftime("%Y-%m-%d %H:%M:%S"),
+               next_recurring_time = package.current_period_end_time.strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+def send_package_recurring_failed_email(package, user):
+    send_email(to=user.email, subject="Webmonitor 套餐续费失败", template='package/recurring_failed.html',
+                user_name=user.name,
+                package_name=package.name,
+                recurring_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    )
+
+def send_package_recurring_notify_email(package, user):
+    send_email(to=user.email, subject="Webmonitor 套餐续费提醒", template='package/recurring_notify.html',
+                user_name=user.name,
+                package_name=package.name,
+                package_price=f"{package.price/100:.2f} CNY", 
+                package_period_type=PackagePeriodType.get_desc_by_id(package.period_type),
+                recurring_time = package.current_period_end_time.strftime("%Y-%m-%d %H:%M:%S"),
+    )
+
+# 获取某个套餐的通知时间
+def get_package_notify_time(package):
+    if package.period_type == PackagePeriodType.DAY.id:
+        return package.current_period_end_time - timedelta(hours=3)
+    elif package.period_type == PackagePeriodType.MONTH.id:
+        return package.current_period_end_time - timedelta(days=1)
+    elif package.period_type == PackagePeriodType.YEAR.id:
+        return package.current_period_end_time - timedelta(days=3)
+    elif package.period_type == PackagePeriodType.PERMANENT.id:
+        return package.current_period_end_time + timedelta(weeks=99999)
+    elif package.period_type == PackagePeriodType.TEST.id:
+        return package.current_period_end_time - timedelta(seconds=20)
+    return None
 
 
 # 用户或管理员获取所有的套餐模板（分页）
@@ -662,6 +703,17 @@ def package_recurring_charge(package):
 
 # 进行套餐的更新检查
 def check_package_update(package):
+    # 套餐是否需要通知
+    if package.is_last_payment_failed == 0 and package.cancel_at_next == 0 and package.need_payment == 1 and package.current_period_notified == 0:
+        time = get_package_notify_time(package)
+        if time and datetime.now() >= time:
+            current_app.logger.info(f"package need notify for package_id={package.id}")
+            send_package_recurring_notify_email(package, package.user)
+            package.current_period_notified = 1
+            models.db.session.commit()
+            current_app.logger.info(f"package notify for package_id={package.id} success")
+
+
     # 套餐需要更新
     while datetime.now() >= package.current_period_end_time:
         current_app.logger.info(f"package need update for package_id={package.id}, current_period_end_time={package.current_period_end_time}")
@@ -705,6 +757,7 @@ def check_package_update(package):
                 models.db.session.commit()
                 package.user.check_quota()
                 models.db.session.commit()
+                send_package_recurring_failed_email(package, package.user)
                 return
             
             # 套餐付款成功
@@ -723,6 +776,7 @@ def check_package_update(package):
                 )
                 models.db.session.add(payment)
                 models.db.session.commit()
+                send_package_recurring_success_email(package, package.user)
 
         # 更新套餐
         start = package.current_period_start_time
@@ -840,6 +894,7 @@ def change_package_payment_method(user, package_id):
             models.db.session.commit()
             package.user.check_quota()
             models.db.session.commit()
+            send_package_recurring_failed_email(package, package.user)
             
         # 套餐付款成功
         else:   
@@ -867,5 +922,6 @@ def change_package_payment_method(user, package_id):
 
             package.user.check_quota()
             models.db.session.commit()
+            send_package_recurring_success_email(package, package.user)
 
     return ok()
