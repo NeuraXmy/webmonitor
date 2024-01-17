@@ -12,7 +12,14 @@
                 <el-table v-loading="loading" :data="PackageList" style="width: 100%">
                     <el-table-column prop="id" label="ID" width="150" />
                     <el-table-column prop="name" label="套餐名称" width="150" />
-                    <el-table-column prop="period_type" label="周期" width="150" />
+                    <el-table-column prop="period_type" label="周期" width="100" >
+                        <template #default="scope">
+                            <span v-if="scope.row.period_type === 0">一次性</span>
+                            <span v-if="scope.row.period_type === 1">日付</span>
+                            <span v-if="scope.row.period_type === 2">月付</span>
+                            <span v-if="scope.row.period_type === 3">年付</span>
+                        </template>
+                    </el-table-column>
                     <!-- <el-table-column prop="period_count" label="周期数" width="150" /> -->
                     <el-table-column prop="period_check_count" label="监控次数" width="200" />
                     <el-table-column prop="price" label="价格(分)" width="100" />
@@ -27,7 +34,7 @@
                                 inline-prompt
                                 active-text="ON"
                                 inactive-text="OFF"
-                                @click="hidePackage(scope.row)"/>
+                                @click="RevisePackage(scope.row)"/>
                         </template>
                     </el-table-column>
                     <el-table-column prop="initial" label="初始套餐" width="80" >
@@ -41,7 +48,35 @@
                                 inline-prompt
                                 active-text="ON"
                                 inactive-text="OFF"
-                                @click="initialPackage(scope.row)"/>
+                                @click="RevisePackage(scope.row)"/>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="inviter_package:" label="赠送邀请者" width="80" >
+                        <template #default="scope">
+                            <el-switch
+                                v-model="scope.row.inviter_package"
+                                :active-value = 1
+                                :inactive-value = 0
+                                active-color="#02538C"
+                                inactive-color="#B9B9B9"
+                                inline-prompt
+                                active-text="ON"
+                                inactive-text="OFF"
+                                @click="RevisePackage(scope.row)"/>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="invitee_package:" label="赠送被邀请者" width="80" >
+                        <template #default="scope">
+                            <el-switch
+                                v-model="scope.row.invitee_package"
+                                :active-value = 1
+                                :inactive-value = 0
+                                active-color="#02538C"
+                                inactive-color="#B9B9B9"
+                                inline-prompt
+                                active-text="ON"
+                                inactive-text="OFF"
+                                @click="RevisePackage(scope.row)"/>
                         </template>
                     </el-table-column>
                     <el-table-column prop="edit" label="操作" width="230">
@@ -55,7 +90,7 @@
                                 @click="DeletePackage(scope.row)"
                                 >删除</el-button
                             >
-                            <el-button class="operatBtn" size="small"
+                            <!-- <el-button class="operatBtn" size="small"
                                 :disabled="scope.$index===0"
                                 @click="moveUp(scope.$index,scope.row)">
                                 <el-icon><Top /></el-icon>
@@ -64,7 +99,7 @@
                                 :disabled="scope.$index===(PackageList.length-1)"
                                 @click="moveDown(scope.$index,scope.row)">
                                 <el-icon><Bottom /></el-icon>
-                            </el-button>
+                            </el-button> -->
                         </template>
                     </el-table-column>
                 </el-table>
@@ -331,12 +366,6 @@ export default{
             this.loading = false
             this.TotalPages = res.data.total
             this.PackageList = res.data.items
-            for(let i = 0; i < this.PackageList.length; i++){
-                if(this.PackageList[i].period_type === 0) this.PackageList[i].period_type = "一次性";
-                else if(this.PackageList[i].period_type === 1) this.PackageList[i].period_type = "日付";
-                else if(this.PackageList[i].period_type === 2) this.PackageList[i].period_type = "月付";
-                else if(this.PackageList[i].period_type === 3) this.PackageList[i].period_type = "年付";
-            }
             // console.log(this.PackageList)
         },
         //获得单个套餐信息
@@ -381,18 +410,7 @@ export default{
             this.Package_id = row.id;
             for(let i = 0; i < this.PackageList.length; i++){
                 if(this.PackageList[i].id === row.id){
-                    this.PackageForm.name = this.PackageList[i].name;
-                    this.PackageForm.period_type = this.PackageList[i].period_type;
-                    this.PackageForm.period_count = this.PackageList[i].period_count;
-                    this.PackageForm.price = this.PackageList[i].price;
-                    this.PackageForm.period_check_count = this.PackageList[i].period_check_count;
-                    this.PackageForm.hide = this.PackageList[i].hide
-                    this.PackageForm.initial = this.PackageList[i].initial;
-
-                    if(this.PackageForm.period_type === "一次性") this.PackageForm.period_type = 0;
-                    else if(this.PackageForm.period_type === "日付") this.PackageForm.period_type = 1;
-                    else if(this.PackageForm.period_type === "月付") this.PackageForm.period_type = 2;
-                    else if(this.PackageForm.period_type === "年付") this.PackageForm.period_type = 3;
+                    this.PackageForm = this.PackageList[i];
                     break;
                 }
             }
@@ -467,73 +485,17 @@ export default{
             this.queryPage.size = val
             this.getPackagesList()
         },
-        async hidePackage(row){
-            console.log(row)
+        //修改包状态
+        async RevisePackage(row){
             this.Package_id = row.id;
-            // console.log(this.PackageList)
             for(let i = 0; i < this.PackageList.length; i++){
                 if(this.PackageList[i].id === row.id){
-                    this.PackageForm.name = this.PackageList[i].name;
-                    this.PackageForm.period_type = this.PackageList[i].period_type;
-                    this.PackageForm.period_count = this.PackageList[i].period_count;
-                    this.PackageForm.price = this.PackageList[i].price;
-                    this.PackageForm.period_check_count = this.PackageList[i].period_check_count;
-                    this.PackageForm.hide = this.PackageList[i].hide
-                    this.PackageForm.initial = this.PackageList[i].initial;
-                    console.log(this.PackageList[i])
-                    
-                    if(this.PackageForm.period_type === "一次性") this.PackageForm.period_type = 0;
-                    else if(this.PackageForm.period_type === "日付") this.PackageForm.period_type = 1;
-                    else if(this.PackageForm.period_type === "月付") this.PackageForm.period_type = 2;
-                    else if(this.PackageForm.period_type === "年付") this.PackageForm.period_type = 3;
+                    this.PackageForm = this.PackageList[i];
                     break;
                 }
             }
             this.loading = true
             // console.log(this.PackageForm.hide)
-            // this.PackageForm.hide ^= 1;
-            // else if(this.PackageForm.hide === 1) this.PackageForm.hide = 0;
-            console.log(this.PackageForm.hide)
-            let data = this.$qs.stringify(this.PackageForm)
-            const {data: res} = await this.$axios.put('/package/template/'+row.id,data,
-            {
-                headers : {
-                    'token': sessionStorage.getItem('token')
-                }
-            })
-            if(res.status ===200){
-                this.getPackagesList()
-            }else{
-                this.$message.error(res.message);
-            }
-            this.loading = false
-        },
-        async initialPackage(row){
-            // console.log(row)
-            this.Package_id = row.id;
-            console.log(this.PackageList)
-            for(let i = 0; i < this.PackageList.length; i++){
-                if(this.PackageList[i].id === row.id){
-                    console.log(this.PackageList[i])
-                    this.PackageForm.name = this.PackageList[i].name;
-                    this.PackageForm.period_type = this.PackageList[i].period_type;
-                    this.PackageForm.period_count = this.PackageList[i].period_count;
-                    this.PackageForm.price = this.PackageList[i].price;
-                    this.PackageForm.period_check_count = this.PackageList[i].period_check_count;
-                    this.PackageForm.hide = this.PackageList[i].hide
-                    this.PackageForm.initial = this.PackageList[i].initial;
-                    
-                    if(this.PackageForm.period_type === "一次性") this.PackageForm.period_type = 0;
-                    else if(this.PackageForm.period_type === "日付") this.PackageForm.period_type = 1;
-                    else if(this.PackageForm.period_type === "月付") this.PackageForm.period_type = 2;
-                    else if(this.PackageForm.period_type === "年付") this.PackageForm.period_type = 3;
-                    break;
-                }
-            }
-            this.loading = true
-            // if(this.PackageForm.initial === 0) this.PackageForm.initial = 1;
-            // else if(this.PackageForm.initial === 1) this.PackageForm.initial = 0;
-            console.log(this.PackageForm)
             let data = this.$qs.stringify(this.PackageForm)
             const {data: res} = await this.$axios.put('/package/template/'+row.id,data,
             {

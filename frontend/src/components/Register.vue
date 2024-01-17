@@ -31,6 +31,9 @@
             <el-form-item prop="nickname">
                 <el-input v-model="userForm.nickname" :placeholder="$t('label.nickname')"></el-input>
             </el-form-item>
+            <el-form-item>
+                <el-input v-model="userForm.invite" :placeholder="$t('label.invite')"></el-input>
+            </el-form-item>
             <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
             <!-- <cfturnstile
               :sitekey="sitekey"
@@ -65,7 +68,8 @@ export default {
       userForm:{
           email:'',
           password:'',
-          nickname:''
+          nickname:'',
+          invitation_code: ''
       },
       userRules:{
           email:[

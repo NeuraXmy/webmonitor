@@ -11,7 +11,8 @@ export default{
         subscribe: "Subscribe",
         order: "My Orders",
         tool: "Tools",
-        pay: "Payment Details"
+        pay: "Payment Details",
+        invite: "My invitation(Optional)"
     },
     table: {
         username: 'Username',
@@ -26,7 +27,8 @@ export default{
     label: {
         nickname: "Nickname",
         spaceDec: "Space Description",
-        url: "URL"
+        url: "URL",
+        invite: "Invitation code"
     },
     tabs: {
         addMonitorURL: "Add New Monitoring URL",

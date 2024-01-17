@@ -11,7 +11,8 @@ export default{
         subscribe: "购买订阅",
         order: "我的订单",
         tool: "工具",
-        pay: "支付详单"
+        pay: "支付详单",
+        invite: "我的邀请"
     },
     table: {
         username: '用户名',
@@ -26,7 +27,8 @@ export default{
     label: {
         nickname: "昵称",
         spaceDec: "空间说明",
-        url: "网址"
+        url: "网址",
+        invite: "邀请码(选填)"
     },
     tabs: {
         addMonitorURL: "添加新的监控网址",

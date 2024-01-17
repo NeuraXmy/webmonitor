@@ -32,6 +32,7 @@ import paymentMethod from '../components/subscribe/paymentMethod.vue'
 import subscribeManagement from '../components/super_admin/subscribe/subscribeManagement.vue'
 import userSubscribe from '../components/super_admin/subscribe/userSubscribe.vue'
 import Pay from '../components/subscribe/pay.vue'
+import Invite from '../components/invite/invite.vue'
 // import ElementPlus from 'element-plus';
 // import '../assets/css/global.css'
 
@@ -62,7 +63,8 @@ const routes = [
             {path: '/SubscribePackage', component: SubscribePackage },
             {path: '/orders', component: Orders },
             {path: '/pay', component: Pay },
-            {path: '/paymentMethod', component: paymentMethod }
+            {path: '/paymentMethod', component: paymentMethod },
+            {path: '/invite', component: Invite }
         ]
     },
     { 
