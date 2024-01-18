@@ -10,7 +10,7 @@
                 </el-col>
             </el-form-item>
         </el-form>
-        <el-text class="mx-1" size="small">邀请好友一起使用系统，您的邀请码一旦被新用户绑定，双非都会获得监控次数，使用您的邀请码人数越多，您获得的监控次数也会累加，一个用户只能绑定一次邀请码。</el-text>
+        <el-text class="mx-1" size="small">邀请好友一起使用系统，您的邀请码一旦被新用户绑定，双方都会获得监控次数，使用您的邀请码人数越多，您获得的监控次数也会累加，一个用户只能绑定一次邀请码。</el-text>
     </el-card>
     <el-card style="margin-top: 20px;">
         <div style="display: flex; justify-content: space-between;">
@@ -114,7 +114,7 @@ export default{
             this.loading = false
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
-            console.log(res)
+            // console.log(res)
             this.InvitionCode = res.data.invitation_code
             this.invited = res.data.invited
         },

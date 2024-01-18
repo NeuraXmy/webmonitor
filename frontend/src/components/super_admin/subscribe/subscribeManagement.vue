@@ -1,7 +1,7 @@
 <template>
     <div>
         <el-breadcrumb>
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item>套餐管理</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card>
@@ -120,7 +120,7 @@
       title="新增套餐"
       width="40%"
     >
-        <el-form ref="PackageRef" :rules="PackageRules" :model="PackageForm" label-width="80px" class="form_style">
+        <el-form ref="PackageRef" :rules="PackageRules" :model="PackageForm" label-width="100px" class="form_style">
             <el-form-item label="套餐名称" prop="name">
                 <el-col :span="20">
                     <el-input v-model="PackageForm.name" placeholder="请输入套餐名称"></el-input>
@@ -176,6 +176,34 @@
                 <el-col :span="20">
                     <el-switch
                         v-model="PackageForm.initial"
+                        :active-value = 1
+                        :inactive-value = 0
+                        active-color="#02538C"
+                        inactive-color="#B9B9B9"
+                        inline-prompt
+                        active-text="ON"
+                        inactive-text="OFF"
+                    />
+                </el-col>
+            </el-form-item>
+            <el-form-item label="赠送邀请者" prop="inviter_package">
+                <el-col :span="20">
+                    <el-switch
+                        v-model="PackageForm.inviter_package"
+                        :active-value = 1
+                        :inactive-value = 0
+                        active-color="#02538C"
+                        inactive-color="#B9B9B9"
+                        inline-prompt
+                        active-text="ON"
+                        inactive-text="OFF"
+                    />
+                </el-col>
+            </el-form-item>
+            <el-form-item label="赠送被邀请者" prop="invitee_package">
+                <el-col :span="20">
+                    <el-switch
+                        v-model="PackageForm.invitee_package"
                         :active-value = 1
                         :inactive-value = 0
                         active-color="#02538C"
