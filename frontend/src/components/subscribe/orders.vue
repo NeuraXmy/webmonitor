@@ -44,14 +44,14 @@
                             <el-button size="primary" link @click="getPayment(scope.row)"
                                 >查看详情</el-button
                             >
-                            <el-button size="success" link @click="update_payment_method(scope.row)"
+                            <el-button v-if="scope.row.period_type !== 0" size="success" link @click="update_payment_method(scope.row)"
                                 >更换支付</el-button
                             >
                             <el-button v-if="scope.row.cancel_at_next === 0 && scope.row.period_type !== 0" size="small" type="danger" @click="this.okUnsubscribe = true, this.UnsubscribeID = scope.row.id"
                                 >取消订阅</el-button
                             >
                             <el-button v-if="scope.row.cancel_at_next === 1 && scope.row.period_type !== 0" size="small" type="info" @click="this.okResubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >恢复订阅</el-button
+                                >恢复订阅</el-button    
                             >
                         </template> 
                     </el-table-column>
