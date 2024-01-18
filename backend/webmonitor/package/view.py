@@ -15,28 +15,31 @@ from webmonitor.utils.send_email import send_email
 
 def send_package_recurring_success_email(package, user):
     send_email(to=user.email, subject="Webmonitor 套餐续费成功", template='package/recurring_success.html',
-               user_name=user.name, 
+               user_name=user.nickname, 
                package_name=package.name, 
                package_price=f"{package.price/100:.2f} CNY", 
-               package_period_type=PackagePeriodType.get_desc_by_id(package.period_type),
+               package_period=PackagePeriodType.get_desc_by_id(package.period_type),
                recurring_time = package.current_period_start_time.strftime("%Y-%m-%d %H:%M:%S"),
-               next_recurring_time = package.current_period_end_time.strftime("%Y-%m-%d %H:%M:%S")
+               next_recurring_time = package.current_period_end_time.strftime("%Y-%m-%d %H:%M:%S"),
+               url=current_app.config['FRONTEND_BASE_URL']
     )
 
 def send_package_recurring_failed_email(package, user):
     send_email(to=user.email, subject="Webmonitor 套餐续费失败", template='package/recurring_failed.html',
-                user_name=user.name,
+                user_name=user.nickname,
                 package_name=package.name,
                 recurring_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                url=current_app.config['FRONTEND_BASE_URL']
     )
 
 def send_package_recurring_notify_email(package, user):
     send_email(to=user.email, subject="Webmonitor 套餐续费提醒", template='package/recurring_notify.html',
-                user_name=user.name,
+                user_name=user.nickname,
                 package_name=package.name,
                 package_price=f"{package.price/100:.2f} CNY", 
-                package_period_type=PackagePeriodType.get_desc_by_id(package.period_type),
+                package_period=PackagePeriodType.get_desc_by_id(package.period_type),
                 recurring_time = package.current_period_end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                url=current_app.config['FRONTEND_BASE_URL']
     )
 
 # 获取某个套餐的通知时间
@@ -785,6 +788,7 @@ def check_package_update(package):
         package.current_period_start_time = start
         package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, start)
         package.check_count_left = package.period_check_count
+        package.current_period_notified = 0
         models.db.session.commit()
 
         package.user.check_quota()
@@ -918,6 +922,7 @@ def change_package_payment_method(user, package_id):
             package.current_period_start_time = start
             package.current_period_end_time = PackagePeriodType.get_next_time(package.period_type, start)
             package.check_count_left = package.period_check_count
+            package.current_period_notified = 0
             models.db.session.commit()
 
             package.user.check_quota()
