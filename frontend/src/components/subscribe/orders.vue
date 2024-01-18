@@ -7,14 +7,32 @@
         <el-card>
             <el-row>
                 <el-table v-loading="loading" :data="OrderList" style="width: 100%">
+                    <el-table-column prop="is_expired" label="套餐状态" width="90" >
+                        <template #default="scope">
+                            <el-alert v-if="scope.row.is_expired === false"  type="success" :closable="false" show-icon />
+                            <el-alert v-if="scope.row.is_expired === true"  type="error" :closable="false" show-icon />
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="id" :label="$t('orders.id')" width="50" />
                     <el-table-column prop="create_time" :label="$t('orders.createTime')" width="200" />
                     <el-table-column prop="name" :label="$t('orders.packageName')" width="100" />
-                    <el-table-column prop="period_type" :label="$t('orders.period')" width="60" />
+                    <el-table-column prop="period_type" :label="$t('orders.period')" width="60" >
+                        <template #default="scope">
+                            <span v-if="scope.row.period_type === 0">一次性</span>
+                            <span v-if="scope.row.period_type === 1">日付</span>
+                            <span v-if="scope.row.period_type === 2">月付</span>
+                            <span v-if="scope.row.period_type === 3">年付</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="period_check_count" :label="$t('orders.monitorTotalCount')" width="100" />
                     <el-table-column prop="price" :label="$t('orders.orderAmount')" width="80" />
                     <el-table-column prop="check_count_left" :label="$t('orders.monitorRemainingCount')" width="120" />
-                    <el-table-column prop="current_period_end_time" label="有效期（下次续费时间）" width="200" />
+                    <el-table-column prop="current_period_end_time" label="有效期（下次续费时间）" width="200" >
+                        <template #default="scope">
+                            <span v-if="scope.row.period_type === 0">永久</span>
+                            <span v-if="scope.row.period_type !== 0">{{ scope.row.current_period_end_time }}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="is_last_payment_failed" label="支付状态" width="90" >
                         <template #default="scope">
                             <span v-if="scope.row.is_last_payment_failed === 0 && scope.row.need_payment === 1">支付成功</span>
@@ -23,25 +41,19 @@
                     </el-table-column>
                     <el-table-column prop="edit" label="操作" width="250">
                         <template #default="scope">
-                            <el-button v-if="scope.row.cancel_at_next === 0" size="small" @click="this.okUnsubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >取消订阅</el-button
-                            >
-                            <el-button v-if="scope.row.cancel_at_next === 1" size="small" @click="this.okResubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >恢复订阅</el-button
-                            >
                             <el-button size="primary" link @click="getPayment(scope.row)"
                                 >查看详情</el-button
                             >
                             <el-button size="success" link @click="update_payment_method(scope.row)"
                                 >更换支付</el-button
                             >
+                            <el-button v-if="scope.row.cancel_at_next === 0 && scope.row.period_type !== 0" size="small" type="danger" @click="this.okUnsubscribe = true, this.UnsubscribeID = scope.row.id"
+                                >取消订阅</el-button
+                            >
+                            <el-button v-if="scope.row.cancel_at_next === 1 && scope.row.period_type !== 0" size="small" type="info" @click="this.okResubscribe = true, this.UnsubscribeID = scope.row.id"
+                                >恢复订阅</el-button
+                            >
                         </template> 
-                    </el-table-column>
-                    <el-table-column prop="is_expired" label="套餐状态" width="90" >
-                        <template #default="scope">
-                            <el-alert v-if="scope.row.is_expired === false"  type="success" :closable="false" show-icon />
-                            <el-alert v-if="scope.row.is_expired === true"  type="error" :closable="false" show-icon />
-                        </template>
                     </el-table-column>
                 </el-table>
                 <el-pagination
@@ -136,10 +148,10 @@ export default {
             this.OrderList = res.data.items
             for(let i = 0; i < this.OrderList.length; i++){
                 this.OrderList[i].price /= 100.0
-                if(this.OrderList[i].period_type === 0) this.OrderList[i].period_type = "一次性";
-                else if(this.OrderList[i].period_type === 1) this.OrderList[i].period_type = "日付";
-                else if(this.OrderList[i].period_type === 2) this.OrderList[i].period_type = "月付";
-                else if(this.OrderList[i].period_type === 3) this.OrderList[i].period_type = "年付";
+                //if(this.OrderList[i].period_type === 0) this.OrderList[i].period_type = "一次性";
+                // else if(this.OrderList[i].period_type === 1) this.OrderList[i].period_type = "日付";
+                // else if(this.OrderList[i].period_type === 2) this.OrderList[i].period_type = "月付";
+                // else if(this.OrderList[i].period_type === 3) this.OrderList[i].period_type = "年付";
             }
         },
         //获得套餐页号
