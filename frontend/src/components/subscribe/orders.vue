@@ -17,17 +17,17 @@
                     <el-table-column prop="current_period_end_time" label="有效期（下次续费时间）" width="200" />
                     <el-table-column prop="is_last_payment_failed" label="支付状态" width="90" >
                         <template #default="scope">
-                            <span v-if="scope.row.is_last_payment_failed === 0">支付成功</span>
-                            <span v-else>支付失败</span>
+                            <span v-if="scope.row.is_last_payment_failed === 0 && scope.row.need_payment === 1">支付成功</span>
+                            <span v-if="scope.row.is_last_payment_failed === 1 && scope.row.need_payment === 1">支付失败</span>
                         </template>
                     </el-table-column>
                     <el-table-column prop="edit" label="操作" width="250">
                         <template #default="scope">
                             <el-button v-if="scope.row.cancel_at_next === 0" size="small" @click="this.okUnsubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >立即停用</el-button
+                                >取消订阅</el-button
                             >
                             <el-button v-if="scope.row.cancel_at_next === 1" size="small" @click="this.okResubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >立即启用</el-button
+                                >恢复订阅</el-button
                             >
                             <el-button size="primary" link @click="getPayment(scope.row)"
                                 >查看详情</el-button
@@ -36,6 +36,12 @@
                                 >更换支付</el-button
                             >
                         </template> 
+                    </el-table-column>
+                    <el-table-column prop="is_expired" label="套餐状态" width="90" >
+                        <template #default="scope">
+                            <el-alert v-if="scope.row.is_expired === false"  type="success" :closable="false" show-icon />
+                            <el-alert v-if="scope.row.is_expired === true"  type="error" :closable="false" show-icon />
+                        </template>
                     </el-table-column>
                 </el-table>
                 <el-pagination
@@ -55,7 +61,7 @@
         width="30%"
         align-center
         >
-        <span>停用成功后，次月起停止套餐扣费。</span>
+        <span>取消订阅成功后，当前套餐额度不会取消，次月起停止套餐扣费，并且会在下一个周期开始时被取消，在套餐被取消前可以重新启用。</span>
         <template #footer>
             <span class="dialog-footer">
             <el-button @click="okUnsubscribe = false">{{$t('packages.cancel')}}</el-button>
@@ -70,7 +76,7 @@
         width="30%"
         align-center
         >
-        <span>启用成功后，若当月为执行扣款，系统会补充执行。</span>
+        <span>恢复订阅成功后，若当月为执行扣款，系统会补充执行。</span>
         <template #footer>
             <span class="dialog-footer">
             <el-button @click="okResubscribe = false">{{$t('packages.cancel')}}</el-button>
@@ -198,5 +204,10 @@ export default {
 };
 </script>
 <style>
-
+.el-alert {
+  margin: 20px 0 0;
+}
+.el-alert:first-child {
+  margin: 0;
+}
 </style>

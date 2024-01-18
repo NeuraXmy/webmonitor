@@ -5,7 +5,7 @@
             <div v-if="using !== null">
                 <div class="slider-demo-block">
                     <span class="demonstration">使用情况</span>
-                    <el-slider v-model="using" disabled />
+                    <el-slider v-model="using" disabled :max="max_use"/>
                 </div>
                 <span style="font-size: 14px;">已用次数{{using}} / 总次数{{Package.period_check_count}}</span>
             </div>
@@ -81,7 +81,8 @@ export default{
             using:null,
             Package:{
                 period_check_count:null
-            }
+            },
+            max_use:100
         }
     },
     created(){
@@ -102,6 +103,7 @@ export default{
             console.log(res)
             this.Package = res.data
             this.using = this.Package.period_check_count - this.Package.check_count_left
+            this.max_use = this.Package.period_check_count
             // this.loading = false
             // this.Package = res.data.items
         },
