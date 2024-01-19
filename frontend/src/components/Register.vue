@@ -32,7 +32,7 @@
                 <el-input v-model="userForm.nickname" :placeholder="$t('label.nickname')"></el-input>
             </el-form-item>
             <el-form-item>
-                <el-input v-model="userForm.invite" :placeholder="$t('label.invite')"></el-input>
+                <el-input v-model="userForm.invitation_code" :placeholder="$t('label.invite')"></el-input>
             </el-form-item>
             <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
             <!-- <cfturnstile
@@ -86,8 +86,9 @@ export default {
       sitekey:'50c11cc1-e8f1-4076-aac4-80099d040f90'
     };
   },
-  setup() {
-    
+  created(){
+      let params = new URLSearchParams(window.location.search);
+      this.userForm.invitation_code = params.get('invitation_code');
   },
   methods:{
     restForm(){

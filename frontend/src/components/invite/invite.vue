@@ -15,7 +15,7 @@
     <el-card style="margin-top: 20px;">
         <div style="display: flex; justify-content: space-between;">
             <div>
-                <span>我的邀请码  
+                <span>邀请码     
                     <el-text class="mx-1" size="small">{{ InvitionCode }}</el-text>
                     <el-button type="primary" link @click="copyInvitationCode">复制</el-button>
                 </span>
@@ -23,6 +23,12 @@
             <div style="display: flex; justify-content: flex-end;">
                 <el-button type="primary" round @click="CreateInvition" :loading="Create_Code_loading">生成邀请码</el-button>
             </div>
+        </div>
+        <div>
+            <span>邀请链接  
+                <el-text class="mx-1" size="small">{{ InvitionLink }}</el-text>
+                <el-button type="primary" link @click="copyInvitationLink">复制</el-button>
+            </span>
         </div>
     </el-card>
     <el-card style="margin-top: 20px;">
@@ -77,7 +83,8 @@ export default{
                 ]
             },
             verify_Code_loading: false,
-            invited: false
+            invited: false,
+            InvitionLink: null
         }
     },
     created(){
@@ -117,6 +124,7 @@ export default{
             // console.log(res)
             this.InvitionCode = res.data.invitation_code
             this.invited = res.data.invited
+            this.InvitionLink = 'https://app.changenotify.net/register?invitation_code=' + this.InvitionCode
         },
         //生成邀请链接
         async CreateInvition(){
@@ -133,6 +141,7 @@ export default{
             this.$message.success(res.msg)
             // console.log(res)
             this.InvitionCode = res.data.invitation_code
+            this.InvitionLink = 'https://app.changenotify.net/register?invitation_code=' + this.InvitionCode
         },
         //验证邀请码
         async verifyInvition(){
@@ -149,7 +158,6 @@ export default{
             if(res.status !== 200) return this.$message.error(res.msg)
             this.$message.success(res.msg)
             this.getInviteCode();
-            
         },
         copyInvitationCode() {
             /* 创建一个临时输入框元素 */
@@ -169,6 +177,25 @@ export default{
 
             /* 提示复制成功 */
             this.$message.success('邀请码已复制！');
+        },
+        copyInvitationLink(){
+            /* 创建一个临时输入框元素 */
+            const tempInput = document.createElement('input');
+            tempInput.value = this.InvitionLink;
+            document.body.appendChild(tempInput);
+
+            /* 选择文本内容 */
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999); /* 兼容移动设备 */
+
+            /* 复制文本内容到剪贴板 */
+            document.execCommand('copy');
+
+            /* 移除临时输入框 */
+            document.body.removeChild(tempInput);
+
+            /* 提示复制成功 */
+            this.$message.success('邀请链接已复制！');
         },
         handleSizeInviteChange(val){
             this.queryPage.size = val
