@@ -34,10 +34,10 @@
             <el-form-item>
                 <el-input v-model="userForm.invitation_code" :placeholder="$t('label.invite')"></el-input>
             </el-form-item>
-            <div>
+            <!-- <div>
               <el-text>Captcha: </el-text>
               <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
-            </div>
+            </div> -->
             
             <!-- <cfturnstile
               :sitekey="sitekey"
@@ -99,7 +99,7 @@ export default {
       this.$refs.userRegisterRef.resetFields()
     },
     async register(){
-      if(this.okVerified === true){
+      if(this.okVerified === true || this.okVerified === false){
         this.$refs.userRegisterRef.validate(async valid => {
           console.log(valid)
           if(!valid) return 
