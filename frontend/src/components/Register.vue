@@ -2,7 +2,7 @@
   <div class="login-body">
     <div class="login-container">
       <div class="head">
-        <img class="logo" src="../../public/changenotify.png" />
+        <!-- <img class="logo" src="../../public/changenotify.png" /> -->
         <div class="name">
           <div class="title">{{ $t('name') }}</div>
         </div>
