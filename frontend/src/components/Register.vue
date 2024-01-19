@@ -34,12 +34,16 @@
             <el-form-item>
                 <el-input v-model="userForm.invitation_code" :placeholder="$t('label.invite')"></el-input>
             </el-form-item>
-            <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
+            <div>
+              <el-text>Captcha: </el-text>
+              <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
+            </div>
+            
             <!-- <cfturnstile
               :sitekey="sitekey"
               @verify="verify"
             /> -->
-            <el-form-item>
+            <el-form-item style="margin-top: 20px;">
                 <el-button type="primary" @click="register">{{ $t('register') }}</el-button>
                 <el-button @click="restForm">{{ $t('restForm') }}</el-button>
             </el-form-item>
@@ -146,7 +150,7 @@ export default {
 }
 .login-container {
     width: 420px;
-    height: 600px;
+    height: 650px;
     background-color: #fff;
     border-radius: 4px;
     box-shadow: 0px 21px 41px 0px rgba(0, 0, 0, 0.2);
