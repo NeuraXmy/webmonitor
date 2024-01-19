@@ -34,15 +34,14 @@
             <el-form-item>
                 <el-input v-model="userForm.invitation_code" :placeholder="$t('label.invite')"></el-input>
             </el-form-item>
+            <div>
+              <el-text>Captcha: </el-text>
+              <div ref="recaptchaContainer" class="g-recaptcha" data-sitekey="6LcqoRMpAAAAAIYDSZpLccz_w7axiDZ9EvUaFaqt" @data-callback="recaptchaVerified"></div>
+            </div>
             <!-- <div>
               <el-text>Captcha: </el-text>
-              <vue-hcaptcha :sitekey="sitekey" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
+              <vue-hcaptcha :sitekey="50c11cc1-e8f1-4076-aac4-80099d040f90" @verify="verify" @challengeExpired="challengeExpired"></vue-hcaptcha>
             </div> -->
-            
-            <!-- <cfturnstile
-              :sitekey="sitekey"
-              @verify="verify"
-            /> -->
             <el-form-item style="margin-top: 20px;">
                 <el-button type="primary" @click="register">{{ $t('register') }}</el-button>
                 <el-button @click="restForm">{{ $t('restForm') }}</el-button>
@@ -54,12 +53,13 @@
 </template>
 
 <script>
-import vueRecaptcha from 'vue3-recaptcha2';
-import cfturnstile from 'cfturnstile-vue3'
-import VueHcaptcha from '@hcaptcha/vue3-hcaptcha';
+// import vueRecaptcha from 'vue3-recaptcha2';
+// import { VueReCaptcha, useReCaptcha } from 'vue-recaptcha-v3'
+// import cfturnstile from 'cfturnstile-vue3'
+// import VueHcaptcha from '@hcaptcha/vue3-hcaptcha';
 
 export default {
-  components: { vueRecaptcha,cfturnstile,VueHcaptcha },
+  // components: { VueReCaptcha,cfturnstile,VueHcaptcha },
   data() {
     const validEmail = (rule, value, callback) => {
       const EmailReg = /^^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/
@@ -87,21 +87,32 @@ export default {
           ]
       },
       okVerified: false,
-      sitekey:'50c11cc1-e8f1-4076-aac4-80099d040f90'
+      sitekey:'6LcqoRMpAAAAAIYDSZpLccz_w7axiDZ9EvUaFaqt',
     };
+  },
+  setup() {
+    // const sitekey = '6LcqoRMpAAAAAIYDSZpLccz_w7axiDZ9EvUaFaqt';
+    // return {
+    //   sitekey
+    // }
   },
   created(){
       let params = new URLSearchParams(window.location.search);
       this.userForm.invitation_code = params.get('invitation_code');
+  },
+  mounted() {
+    this.$refs.recaptchaContainer.innerHTML = "";
+    // 初始化reCAPTCHA
+    this.initRecaptcha();
   },
   methods:{
     restForm(){
       this.$refs.userRegisterRef.resetFields()
     },
     async register(){
-      if(this.okVerified === true || this.okVerified === false){
+      if(this.okVerified === true){
         this.$refs.userRegisterRef.validate(async valid => {
-          console.log(valid)
+          // console.log(valid)
           if(!valid) return 
           const {data: res} = await this.$axios.post('/auth/register',this.$qs.stringify(this.userForm))
           if(res.status ===200){
@@ -120,15 +131,6 @@ export default {
       }
       
     },
-    verify(token) {
-        // console.log(token)
-        // console.log("-----")
-        this.okVerified = true;
-    },
-    challengeExpired(){
-      // this.okVerified = false;
-      // console.log("-----");
-    },
     login(){
       this.$router.push('/login')
     },
@@ -136,6 +138,18 @@ export default {
         // console.log(val)
         if(val === "2-1") this.$i18n.locale = 'en'
         else this.$i18n.locale = 'zh'
+    },
+   initRecaptcha() {
+      // 使用reCAPTCHA API初始化
+      grecaptcha.render(this.$refs.recaptchaContainer, {
+        sitekey: '6LcqoRMpAAAAAIYDSZpLccz_w7axiDZ9EvUaFaqt',
+        callback: this.recaptchaVerified,
+      });
+    },
+    recaptchaVerified(response) {
+      // 处理reCAPTCHA验证成功的情况
+      this.okVerified = true;
+      // console.log("reCAPTCHA Verified:", response);
     },
   }
 }
