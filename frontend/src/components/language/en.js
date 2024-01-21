@@ -277,5 +277,19 @@ export default{
         create_time: 'Created Time',
         email: 'Email',
         please_fill_out_code: 'Please Enter the Other Party Invitation Code'
+    },
+    welcome: {
+        current_package: 'Current Package',
+        usage: 'Usage',
+        used_times: 'Used Times',
+        total_times: 'Total Times',
+        no_package_available: 'No Package Available',
+        quick_actions: 'Quick Actions',
+        add_monitoring: 'Add Monitoring',
+        add_monitoring_description: 'Quickly add monitoring for experience',
+        view_tutorials: 'View Tutorials',
+        view_tutorials_description: 'Learn how to use changenotify',
+        purchase_subscription: 'Purchase Subscription',
+        purchase_subscription_description: 'Purchase subscription for your current plan'
     }
 }

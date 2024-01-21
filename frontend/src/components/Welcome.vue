@@ -1,26 +1,26 @@
 <template>
     <div class="row mb-3 mb-md-0">
         <el-card style="width: 100%;margin-bottom: 10px;">
-            <h3>当前套餐</h3>
+            <h3>{{ $t('welcome.current_package') }}</h3>
             <div v-if="using !== null">
                 <div class="slider-demo-block">
-                    <span class="demonstration">使用情况</span>
+                    <span class="demonstration">{{ $t('welcome.usage') }}</span>
                     <el-slider v-model="using" disabled :max="max_use"/>
                 </div>
-                <span style="font-size: 14px;">已用次数{{using}} / 总次数{{Package.period_check_count}}</span>
+                <span style="font-size: 14px;">{{ $t('welcome.used_times') }}{{using}} / {{ $t('welcome.total_times') }}{{Package.period_check_count}}</span>
             </div>
             <div v-if="using === null">
                 <div class="slider-demo-block">
-                    <span class="demonstration">当前无套餐</span>
+                    <span class="demonstration">{{ $t('welcome.no_package_available') }}</span>
                     <el-slider v-model="using" disabled />
                 </div>
-                <span style="font-size: 14px;">已用次数0 / 总次数0</span>
+                <span style="font-size: 14px;">{{ $t('welcome.used_times') }}0 / {{ $t('welcome.total_times') }}0</span>
             </div>
         </el-card>
         <div class="col-xl-12">
             <div class="block block-rounded js-appear-enabled">
                 <div class="block-header block-header-default">
-                    <h3 class="block-title"><el-icon><Link /></el-icon>快捷操作</h3>
+                    <h3 class="block-title"><el-icon><Link /></el-icon>{{ $t('welcome.quick_actions') }}</h3>
                 </div>
                 <div class="block-content p-0">
                     <div class="justify-content-md-between align-items-md-center">
@@ -29,8 +29,8 @@
                                 <div class="v2board-shortcuts-item">
                                     <el-container>
                                         <el-aside width="200px">
-                                            <div>添加监控</div>
-                                            <div class="description">快速添加监控进行体验</div>
+                                            <div>{{ $t('welcome.add_monitoring') }}</div>
+                                            <div class="description">{{ $t('welcome.add_monitoring_description') }}</div>
                                         </el-aside>
                                         <el-main>
                                             <i class="nav-main-link-icon " style="float: right;"><el-icon size="30px"><Monitor /></el-icon></i>
@@ -42,8 +42,8 @@
                                 <div class="v2board-shortcuts-item">
                                     <el-container>
                                         <el-aside width="200px">
-                                            <div>查看教程</div>
-                                            <div class="description">学习如何使用 changenotify</div>
+                                            <div>{{ $t('welcome.view_tutorials') }}</div>
+                                            <div class="description">{{ $t('welcome.view_tutorials_description') }}</div>
                                         </el-aside>
                                         <el-main>
                                             <i class="nav-main-link-icon " style="float: right;"><el-icon size="30px"><Reading /></el-icon></i>
@@ -55,8 +55,8 @@
                                 <div class="v2board-shortcuts-item">
                                     <el-container>
                                         <el-aside width="200px">
-                                            <div>购买订阅</div>
-                                            <div class="description">对您当前的订阅进行购买</div>
+                                            <div>{{ $t('welcome.purchase_subscription') }}</div>
+                                            <div class="description">{{ $t('welcome.purchase_subscription_description') }}</div>
                                         </el-aside>
                                         <el-main>
                                             <i class="nav-main-link-icon " style="float: right;"><el-icon size="30px"><ShoppingBag /></el-icon></i>
@@ -105,7 +105,6 @@ export default{
             this.using = this.Package.period_check_count - this.Package.check_count_left
             this.max_use = this.Package.period_check_count
             // this.loading = false
-            // this.Package = res.data.items
         },
     }
 }

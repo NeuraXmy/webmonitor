@@ -277,5 +277,19 @@ export default{
         create_time: '创建时间',
         email: '邮箱',
         please_fill_out_code: '请输入对方邀请码'
+    },
+    welcome:{
+        current_package: '当前套餐',
+        usage: '使用情况',
+        used_times: '已用次数',
+        total_times: '总次数',
+        no_package_available: '当前无套餐',
+        quick_actions: '快捷操作',
+        add_monitoring: '添加监控',
+        add_monitoring_description: '快速添加监控进行体验',
+        view_tutorials: '查看教程',
+        view_tutorials_description: '学习如何使用 changenotify',
+        purchase_subscription: '购买订阅',
+        purchase_subscription_description: '对您当前的订阅进行购买'
     }
 }

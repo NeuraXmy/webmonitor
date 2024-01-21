@@ -46,10 +46,6 @@
                 text-color="#fff"
                 :router="true"
             >
-                <!-- <el-sub-menu index="1">
-                <template #title>
-                    <span><el-icon><Menu /></el-icon>任务管理</span>
-                </template> -->
                 <el-menu-item index="spaces">
                     <span><el-icon><Compass /></el-icon>{{ $t('home.space') }}</span>
                 </el-menu-item>
@@ -68,7 +64,6 @@
                 <el-menu-item index="tools">
                     <span><el-icon><Tools /></el-icon>{{ $t('home.tool') }}</span>
                 </el-menu-item>
-                <!-- </el-sub-menu> -->
             </el-menu>
         </el-aside>
         <el-main>
@@ -101,10 +96,6 @@ export default{
             this.setCookie("verify_authenticity_token", "")
         },
         setCookie(name , value){
-            // var date= new Date(); 
-            // date.setDate(date.getDate()+time); 
-            // document.cookie = name + "=" + value + ";expires=" + date; 
-            // console.log(document.cookie)
             const cookies = new Cookies();
                 const options = {
                 secure: true,
@@ -116,7 +107,6 @@ export default{
             this.$router.push('/admin')
         },
         handleSelect(val){
-            // console.log(val)
             if(val === "2-1") this.$i18n.locale = 'en'
             else this.$i18n.locale = 'zh'
         },
