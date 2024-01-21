@@ -229,27 +229,27 @@
                     </el-col>
                 </el-form-item>
                 <el-form-item :label="$t('monitor.dialogs.addMonitor.refreshTime')">
-                    <el-form-item prop="time_between_check_weeks" style="width:81px;">
+                    <el-form-item prop="time_between_check_weeks" style="width:85px;">
                         <el-input v-model="addMonitorForm.time_between_check_weeks">
                             <template #append>{{$t('monitor.dialogs.weekly')}}</template>
                         </el-input>
                     </el-form-item>
-                    <el-form-item prop="time_between_check_days" style="width:81px;">
+                    <el-form-item prop="time_between_check_days" style="width:85px;">
                         <el-input v-model="addMonitorForm.time_between_check_days">
                             <template #append>{{$t('monitor.dialogs.day')}}</template>
                         </el-input>
                     </el-form-item>
-                    <el-form-item prop="time_between_check_hours" style="width:81px;">
+                    <el-form-item prop="time_between_check_hours" style="width:85px;">
                         <el-input v-model="addMonitorForm.time_between_check_hours">
                             <template #append>{{$t('monitor.dialogs.hour')}}</template>
                         </el-input>
                     </el-form-item>
-                    <el-form-item prop="time_between_check_minutes" style="width:81px;">
+                    <el-form-item prop="time_between_check_minutes" style="width:85px;">
                         <el-input v-model="addMonitorForm.time_between_check_minutes">
                             <template #append>{{$t('monitor.dialogs.minute')}}</template>
                         </el-input>
                     </el-form-item>
-                    <el-form-item prop="time_between_check_seconds" style="width:81px;">
+                    <el-form-item prop="time_between_check_seconds" style="width:85px;">
                         <el-input v-model="addMonitorForm.time_between_check_seconds">
                             <template #append>{{$t('monitor.dialogs.second')}}</template>
                         </el-input>
@@ -311,27 +311,27 @@
                 </el-col>
             </el-form-item>
             <el-form-item :label="$t('monitor.dialogs.addMonitor.refreshTime')">
-                <el-form-item prop="time_between_check_weeks" style="width:81px;">
+                <el-form-item prop="time_between_check_weeks" style="width:85px;">
                     <el-input v-model="addMonitorForm.time_between_check_weeks">
                         <template #append>{{$t('monitor.dialogs.weekly')}}</template>
                     </el-input>
                 </el-form-item>
-                <el-form-item prop="time_between_check_days" style="width:81px;">
+                <el-form-item prop="time_between_check_days" style="width:85px;">
                     <el-input v-model="addMonitorForm.time_between_check_days">
                         <template #append>{{$t('monitor.dialogs.day')}}</template>
                     </el-input>
                 </el-form-item>
-                <el-form-item prop="time_between_check_hours" style="width:81px;">
+                <el-form-item prop="time_between_check_hours" style="width:85px;">
                     <el-input v-model="addMonitorForm.time_between_check_hours">
                         <template #append>{{$t('monitor.dialogs.hour')}}</template>
                     </el-input>
                 </el-form-item>
-                <el-form-item prop="time_between_check_minutes" style="width:81px;">
+                <el-form-item prop="time_between_check_minutes" style="width:85px;">
                     <el-input v-model="addMonitorForm.time_between_check_minutes">
                         <template #append>{{$t('monitor.dialogs.minute')}}</template>
                     </el-input>
                 </el-form-item>
-                <el-form-item prop="time_between_check_seconds" style="width:81px;">
+                <el-form-item prop="time_between_check_seconds" style="width:85px;">
                     <el-input v-model="addMonitorForm.time_between_check_seconds">
                         <template #append>{{$t('monitor.dialogs.second')}}</template>
                     </el-input>
@@ -392,7 +392,7 @@ export default{
     data(){
         const vaildateEmail = (rule, value, callback) => {
             let EmailReg = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
-            console.log("++++")
+            // console.log("++++")
             if(EmailReg.test(value)){
                 return callback()
             } 
@@ -400,7 +400,7 @@ export default{
         }
         const vaildateUrl = (rule, value, callback) => {
             let UrlReg = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i
-            console.log("++++")
+            // console.log("++++")
             if(UrlReg.test(value)){
                 return callback()
             } 
@@ -557,7 +557,7 @@ export default{
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
             this.TotalPages = res.data.total
-            console.log(res.data)
+            // console.log(res.data)
             for(let i = 0; i < res.data.items.length; i++){
                 this.spaces.push({
                     name: res.data.items[i].name,
@@ -568,7 +568,7 @@ export default{
             }
             // this.MonitorSpaceList = res.data.items
             this.loading = false
-            console.log(this.MonitorSpaceList)
+            // console.log(this.MonitorSpaceList)
             // this.JumpMonitorManage()
         },
         //获取某个space下的监控列表
@@ -619,7 +619,7 @@ export default{
         //确认编辑空间
         EditSpaceConfirm(){
             this.$refs.addSpaceRef.validate(async valid => {
-                console.log(valid)
+                // console.log(valid)
                 if(!valid) return 
                 this.okEditSpace=false
                 this.loading = true
@@ -663,7 +663,7 @@ export default{
         },
         //改变空间
         changeSpace(event){
-            console.log(event.index)
+            // console.log(event.index)
             this.space_id = this.spaces[event.index].id;
             this.JumpMonitorManage()
         },
@@ -693,7 +693,7 @@ export default{
             // this.space_id=sessionStorage.getItem('space_id')
             this.loading = true
         //   this.okMonitor=false
-            console.log("11111")
+            // console.log("11111")
             const {data: res} = await this.$axios.get('/space/'+this.space_id+'/watches',
             {
                 params: this.queryPage,
@@ -721,7 +721,7 @@ export default{
                     disabled: false,
                 })
             }
-            console.log(res.data)
+            // console.log(res.data)
         },
         //刷新监控列表
         async RefreshMonitorManage(val){
@@ -749,7 +749,7 @@ export default{
         //用户在某个space下创建监控
         addMonitorList(){
             this.$refs.MonitorRef.validate(async valid => {
-                console.log(valid)
+                // console.log(valid)
                 if(!valid) return 
                 this.addMonitor=false
                 this.loading = true
@@ -826,12 +826,12 @@ export default{
                 this.value = 'XPath/CssSelector';
                 this.okDisabled = false
             }
-            console.log(res.data);
+            // console.log(res.data);
         },
         //用户修改监控
         WatchEditConfirm(){
             this.$refs.MonitorRef.validate(async valid => {
-                console.log(valid)
+                // console.log(valid)
                 if(!valid) return 
                 this.EditMonitor=false
                 this.loading = true
@@ -878,7 +878,7 @@ export default{
         },
         //倒计时
         RefreshTime(index, id){
-            console.log(index)
+            // console.log(index)
             this.refreshID = id
             this.refreshButton[index].text = 30
             this.refreshButton[index].disabled = true
@@ -905,7 +905,7 @@ export default{
         },
         //改变多选框
         ChangeElement(){
-            console.log(this.value)
+            // console.log(this.value)
             if(this.value === '1'){
                 this.okDisabled = true
                 this.addMonitorForm.include_filters = ""
@@ -927,7 +927,6 @@ export default{
         },
         //点击检查记录按钮
         WatchHistory(row){
-            console.log(row)
             sessionStorage.setItem('watch_id',row.id);
             sessionStorage.setItem('watch_url',row.url);
             sessionStorage.setItem('back_spacesValue',this.spacesValue)
@@ -943,7 +942,7 @@ export default{
                 }
                 return ;
             }
-            console.log(row)
+            // console.log(row)
             let data = this.$qs.stringify(row)
             const {data: res} = await this.$axios.post('/watch/'+row.id+'/state',data,
             {

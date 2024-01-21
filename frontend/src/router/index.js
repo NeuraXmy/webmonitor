@@ -5,8 +5,8 @@ import Home from '../components/Home.vue'
 import Register from '../components/Register.vue'
 import Admin from '../components/super_admin/Admin.vue'
 import Welcome from '../components/Welcome.vue'
-import Monitor from '../components/monitor/Monitor.vue'
-import Space from '../components/monitor/space.vue'
+// import Monitor from '../components/monitor/Monitor.vue'
+// import Space from '../components/monitor/space.vue'
 import SelectMonitor from '../components/monitor/SelectMonitor.vue'
 import CheckHistory from '../components/monitor/CheckHistory.vue'
 import Activate from '../components/activate/Activate.vue'
@@ -54,8 +54,6 @@ const routes = [
         redirect: '/welcome',
         children:[
             {path: '/welcome', component: Welcome },
-            {path: '/monitor_list', component: Monitor },
-            {path: '/space', component: Space },
             {path: '/CheckHistory', component: CheckHistory },
             {path: '/spaces', component: Spaces },
             {path: '/monitors', component: Monitors },

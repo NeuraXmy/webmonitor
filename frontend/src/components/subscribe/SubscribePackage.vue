@@ -26,7 +26,10 @@
                         <div class="block-content bg-gray-light">
                             <div class="py-2">
                                 <p class="h1 mb-2">¥ {{ item.price }}</p>
-                                <p class="h6 text-muted">{{ item.period_type }}</p>
+                                <p class="h6 text-muted" v-if="item.period_type === '一次性'">{{ $t('orders.disposable') }}</p>
+                                <p class="h6 text-muted" v-if="item.period_type === '日付'">{{ $t('orders.Daily_pay') }}</p>
+                                <p class="h6 text-muted" v-if="item.period_type === '月付'">{{ $t('orders.Monthly_pay') }}</p>
+                                <p class="h6 text-muted" v-if="item.period_type === '年付'">{{ $t('orders.yearly_pay') }}</p>
                             </div>
                         </div>
                         <div class="block-content py-3">
@@ -105,7 +108,7 @@ export default {
             this.PackageList = res.data.items
             this.PackagesCycle = []
             this.PackagesFrequency = []
-            console.log(res.data.items)
+            // console.log(res.data.items)
             for(let i = 0; i < this.PackageList.length; i++){
                 if(this.PackageList[i].hide === 1) continue;
                 this.PackageList[i].price/=100.0;
@@ -145,7 +148,7 @@ export default {
             }else{
                 this.$message.error(res.msg);
             }
-            console.log(res)
+            // console.log(res)
             // this.loading = false
         },
         onChangeCycle(){

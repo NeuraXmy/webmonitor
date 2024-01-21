@@ -87,7 +87,7 @@ export default{
             this.$message.success(res.msg)
             
             this.loading = false
-            console.log(res.data.items)
+            // console.log(res.data.items)
             for(let i = 0; i < res.data.items.length; i++){
                 this.Histories.push({
                     content: res.data.items[i].check_state,
@@ -109,7 +109,7 @@ export default{
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
-            console.log(res.data)
+            // console.log(res.data)
             // this.check_html.push({
             //     diff: res.data.content
             // })
@@ -123,7 +123,7 @@ export default{
             if(sessionStorage.getItem('front') === 'monitors') this.$router.push('/monitors')
         },
         async handleChange(event){
-            console.log(event)
+            // console.log(event)
             if(this.history_id === this.Histories[event].check_id) return ;
             this.history_id = this.Histories[event].check_id
             // console.log(this.history_id)

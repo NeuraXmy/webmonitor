@@ -1,11 +1,11 @@
 <template>
     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
         <div style="flex: 1;"></div>
-        <span class="active"><el-icon size="100px"><Close /></el-icon>支付失败！</span>
+        <span class="active"><el-icon size="100px"><Close /></el-icon>{{ $t('orders.payment_cancel') }}</span>
         <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
             <div style="margin-top: 20px;">
-                <el-button type="primary" @click="Re_order()">重新下单</el-button>
-                <el-button type="primary" @click="back_home()">返回主页</el-button>
+                <el-button type="primary" @click="Re_order()">{{ $t('orders.re_order') }}</el-button>
+                <el-button type="primary" @click="back_home()">{{ $t('orders.back_home') }}</el-button>
             </div>
             
         </div>

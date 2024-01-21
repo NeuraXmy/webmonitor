@@ -399,11 +399,9 @@ export default{
                 if(this.filters[i].option === 'CssSelector')
                     this.addMonitorForm.include_filters = this.addMonitorForm.include_filters + this.filters[i].cssSelector + '\n';
             }
-            console.log(this.addMonitorForm.include_filters)
+            // console.log(this.addMonitorForm.include_filters)
             // console.log(document.cookie)
             this.$refs.MonitorRef.validate(async valid => {
-                // console.log(this.space_id)
-                // console.log(valid)
                 if(!valid) return 
                 // console.log(this.addMonitorForm)
                 this.fullscreenLoading = true

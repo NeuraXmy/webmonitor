@@ -62,9 +62,6 @@
                 <el-menu-item index="orders">
                     <span><el-icon><ShoppingCart /></el-icon>{{ $t('home.order') }}</span>
                 </el-menu-item>
-                <!-- <el-menu-item index="pay">
-                    <span><el-icon><List /></el-icon>{{ $t('home.pay') }}</span>
-                </el-menu-item> -->
                 <el-menu-item index="invite">
                     <span><el-icon><User /></el-icon>{{ $t('home.invite') }}</span>
                 </el-menu-item>

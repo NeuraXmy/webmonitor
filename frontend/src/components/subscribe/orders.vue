@@ -7,7 +7,7 @@
         <el-card>
             <el-row>
                 <el-table v-loading="loading" :data="OrderList" style="width: 100%">
-                    <el-table-column prop="is_expired" label="套餐状态" width="90" >
+                    <el-table-column prop="is_expired" :label="$t('orders.package_state')" width="90" >
                         <template #default="scope">
                             <el-alert v-if="scope.row.is_expired === false"  type="success" :closable="false" show-icon />
                             <el-alert v-if="scope.row.is_expired === true"  type="error" :closable="false" show-icon />
@@ -16,42 +16,42 @@
                     <el-table-column prop="id" :label="$t('orders.id')" width="50" />
                     <el-table-column prop="create_time" :label="$t('orders.createTime')" width="200" />
                     <el-table-column prop="name" :label="$t('orders.packageName')" width="100" />
-                    <el-table-column prop="period_type" :label="$t('orders.period')" width="60" >
+                    <el-table-column prop="period_type" :label="$t('orders.period')" width="90" >
                         <template #default="scope">
-                            <span v-if="scope.row.period_type === 0">一次性</span>
-                            <span v-if="scope.row.period_type === 1">日付</span>
-                            <span v-if="scope.row.period_type === 2">月付</span>
-                            <span v-if="scope.row.period_type === 3">年付</span>
+                            <span v-if="scope.row.period_type === 0">{{ $t('orders.disposable') }}</span>
+                            <span v-if="scope.row.period_type === 1">{{ $t('orders.Daily_pay') }}</span>
+                            <span v-if="scope.row.period_type === 2">{{ $t('orders.Monthly_pay') }}</span>
+                            <span v-if="scope.row.period_type === 3">{{ $t('orders.yearly_pay') }}</span>
                         </template>
                     </el-table-column>
                     <el-table-column prop="period_check_count" :label="$t('orders.monitorTotalCount')" width="100" />
                     <el-table-column prop="price" :label="$t('orders.orderAmount')" width="80" />
                     <el-table-column prop="check_count_left" :label="$t('orders.monitorRemainingCount')" width="120" />
-                    <el-table-column prop="current_period_end_time" label="有效期（下次续费时间）" width="200" >
+                    <el-table-column prop="current_period_end_time" :label="$t('orders.current_period_end_time')" width="200" >
                         <template #default="scope">
-                            <span v-if="scope.row.period_type === 0">永久</span>
+                            <span v-if="scope.row.period_type === 0">{{ $t('orders.perpetual') }}</span>
                             <span v-if="scope.row.period_type !== 0">{{ scope.row.current_period_end_time }}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="is_last_payment_failed" label="支付状态" width="90" >
+                    <el-table-column prop="is_last_payment_failed" :label="$t('orders.payment_state')" width="100" >
                         <template #default="scope">
-                            <span v-if="scope.row.is_last_payment_failed === 0 && scope.row.need_payment === 1">支付成功</span>
-                            <span v-if="scope.row.is_last_payment_failed === 1 && scope.row.need_payment === 1">支付失败</span>
+                            <span v-if="scope.row.is_last_payment_failed === 0 && scope.row.need_payment === 1">{{ $t('orders.payment_success') }}</span>
+                            <span v-if="scope.row.is_last_payment_failed === 1 && scope.row.need_payment === 1">{{ $t('orders.payment_cancel') }}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="edit" label="操作" width="250">
+                    <el-table-column prop="edit" :label="$t('orders.edit')" width="400">
                         <template #default="scope">
                             <el-button size="primary" link @click="getPayment(scope.row)"
-                                >查看详情</el-button
+                                >{{ $t('orders.detail') }}</el-button
                             >
                             <el-button v-if="scope.row.period_type !== 0" size="success" link @click="update_payment_method(scope.row)"
-                                >更换支付</el-button
+                                >{{ $t('orders.change_payment') }}</el-button
                             >
                             <el-button v-if="scope.row.cancel_at_next === 0 && scope.row.period_type !== 0" size="small" type="danger" @click="this.okUnsubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >取消订阅</el-button
+                                >{{ $t('orders.cancel_subscribe') }}</el-button
                             >
                             <el-button v-if="scope.row.cancel_at_next === 1 && scope.row.period_type !== 0" size="small" type="info" @click="this.okResubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >恢复订阅</el-button    
+                                >{{ $t('orders.recover_subscribe') }}</el-button    
                             >
                         </template> 
                     </el-table-column>
@@ -73,7 +73,7 @@
         width="30%"
         align-center
         >
-        <span>取消订阅成功后，当前套餐额度不会取消，次月起停止套餐扣费，并且会在下一个周期开始时被取消，在套餐被取消前可以重新启用。</span>
+        <span>{{ $t('orders.Unsubscribe') }}</span>
         <template #footer>
             <span class="dialog-footer">
             <el-button @click="okUnsubscribe = false">{{$t('packages.cancel')}}</el-button>
@@ -88,7 +88,7 @@
         width="30%"
         align-center
         >
-        <span>恢复订阅成功后，若当月为执行扣款，系统会补充执行。</span>
+        <span>{{ $t('orders.Resubscribe') }}</span>
         <template #footer>
             <span class="dialog-footer">
             <el-button @click="okResubscribe = false">{{$t('packages.cancel')}}</el-button>
@@ -142,7 +142,7 @@ export default {
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
-            console.log(res)
+            // console.log(res)
             this.loading = false
             this.TotalPages = res.data.total
             this.OrderList = res.data.items

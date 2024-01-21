@@ -488,7 +488,7 @@
           //用户在某个space下创建监控
           addMonitorList(){
             this.$refs.MonitorRef.validate(async valid => {
-                console.log(valid)
+                // console.log(valid)
                 if(!valid) return 
                 this.addMonitor=false
                 this.loading = true
@@ -566,12 +566,11 @@
                 this.value = 'XPath/CssSelector';
                 this.okDisabled = false
               }
-              console.log(res.data);
+            //   console.log(res.data);
           },
           //用户修改监控
           WatchEditConfirm(){
             this.$refs.MonitorRef.validate(async valid => {
-                console.log(valid)
                 if(!valid) return 
                 this.EditMonitor=false
                 this.loading = true
@@ -583,9 +582,6 @@
                     }
                 })
                 if(res.status ===200){
-                    // this.EditMonitor=false
-                    // this.loading = true
-                    // this.RefreshMonitorManage(this.space_id)
                     this.JumpMonitorManage()
                 }else{
                     this.$message.error(res.message);
@@ -611,8 +607,6 @@
                     this.quota_exceeded = true
                     return  this.$message.error(res.msg)
                 }
-              
-            //   this.RefreshMonitorManage(this.space_id)
               this.JumpMonitorManage()
               this.loading = false
               this.okReflashWatch = true
@@ -634,7 +628,7 @@
         },
         //触发批量删除监控按钮
         DeleteMonitors(){
-            console.log(this.selectMonitorsRows.length)
+            // console.log(this.selectMonitorsRows.length)
             if(this.selectMonitorsRows.length > 0){
                 this.okDeleteMonitors = true;
             }
@@ -666,7 +660,7 @@
                 alert("请先选择搜索项！");
                 return ;
             }
-            console.log(this.selectValue)
+            // console.log(this.selectValue)
             if(this.selectValue === '2'){
                 this.queryPage.url = this.searchValue
                 this.queryPage.name = ''
@@ -683,7 +677,7 @@
         },
         //点击检查记录按钮
         WatchHistory(row){
-            console.log(row)
+            // console.log(row)
             sessionStorage.setItem('watch_id',row.id);
             sessionStorage.setItem('watch_url',row.url);
             sessionStorage.setItem('front','monitors');
@@ -699,7 +693,7 @@
                 }
                 return ;
             }
-            console.log(row)
+            // console.log(row)
             let data = this.$qs.stringify(row)
             const {data: res} = await this.$axios.post('/watch/'+row.id+'/state',data,
             {
@@ -717,7 +711,6 @@
             }
         },
         CloseMonitors(){
-            console.log(this.selectMonitorsRows.length)
             if(this.selectMonitorsRows.length > 0){
                 this.okCloseMonitors = true;
             }

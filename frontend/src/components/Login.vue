@@ -83,17 +83,13 @@ export default{
         if(!valid) return 
         const {data: res} = await this.$axios.post('/auth/login',this.$qs.stringify(this.userForm))
         if(res.status ===200){
-          // console.log(res.data)
           window.sessionStorage.setItem('token',res.data.token)
           window.sessionStorage.setItem('role',res.data.role)
           window.sessionStorage.setItem('email',this.userForm.email)
-          // window.localStorage.setItem('token',res.data.token)
           this.$message.success(res.msg)
-          // console.log(res)
           if(res.data.role === 0) this.$router.push('/home')
           else this.$router.push('/admin')
           this.setCookie('verify_authenticity_token' , res.data.token);
-          // console.log(this.getCookie('verify_authenticity_token'))
         }else{
           this.$message.error(res.msg);
         }
@@ -101,12 +97,7 @@ export default{
       })
     },
     register(){
-      // console.log("-----")
       this.$router.push('/register')
-      // this.$router.push({ path: '/register' }).then(() => {
-      //   console.log("----")
-      //   location.reload()
-      // })
     },
     forgetPassword(){
 
@@ -135,17 +126,7 @@ export default{
     removeCookie(name){
       setCookie(name,"")
     },
-    test(){
-        // const cookies = new Cookies();
-        // const options = {
-        //   secure: true,
-        //   sameSite: 'none',
-        // };
-        // cookies.set('access_token', 'c212e015-d66e-460f-97ab-55fab8e19bed', options);
-        // console.log(this.getCookie('access_token'))
-    },
     handleSelect(val){
-        // console.log(val)
         if(val === "2-1") this.$i18n.locale = 'en'
         else this.$i18n.locale = 'zh'
     },

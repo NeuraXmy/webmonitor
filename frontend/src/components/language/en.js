@@ -12,7 +12,7 @@ export default{
         order: "My Orders",
         tool: "Tools",
         pay: "Payment Details",
-        invite: "My invitation(Optional)"
+        invite: "My invitation"
     },
     table: {
         username: 'Username',
@@ -28,7 +28,7 @@ export default{
         nickname: "Nickname",
         spaceDec: "Space Description",
         url: "URL",
-        invite: "Invitation code"
+        invite: "Invitation code(Optional)"
     },
     tabs: {
         addMonitorURL: "Add New Monitoring URL",
@@ -207,11 +207,37 @@ export default{
         myOrders: 'My Orders',
         id: 'ID',
         createTime: 'Create Time',
+        nickname: 'nickname',
         packageName: 'Package Name',
         period: 'Period',
-        monitorTotalCount: 'Monitoring Total Count',
+        monitorTotalCount: 'Total Monitor Count',
         orderAmount: 'Order Amount',
-        monitorRemainingCount: 'Monitoring Remaining Count',
+        monitorRemainingCount: 'Remaining Monitor Count',
+        current_period_end_time: 'Validity Period (Next Renewal Time)',
+        payment_state: 'Payment Status',
+        package_state: 'Package Status',
+        detail: 'View Details',
+        change_payment:'Change Payment',
+        cancel_subscribe: 'Cancel Subscription',
+        recover_subscribe: 'Recover Subscription',
+        payment_success: 'Payment Successful',
+        payment_cancel: 'Payment Failed',
+        perpetual: 'Perpetual',
+        disposable: 'One-time',
+        Daily_pay: 'Daily',
+        Monthly_pay: 'Monthly',
+        yearly_pay: 'Yearly',
+        edit: 'Edit',
+        Unsubscribe: 'After successful cancellation of the subscription, the current package limit will not be canceled. The package fee will stop from the next month and will be canceled at the beginning of the next cycle. It can be re-enabled before the package is canceled.',
+        Resubscribe: 'After successfully resubscribing, if no deduction is made in the current month, the system will make up for it.',
+        pay_time: 'Consumption time',
+        payment_detail: 'Payment Details',
+        change_card: 'Modify the card number',
+        save: 'Save',
+        view_order: 'View the order',
+        back_home:'Return to the home page',
+        re_order: 'Re-order',
+        okRevisePayment: 'Whether to modify the renewal card number.'
     },
     packages:{
         home: 'Home',
@@ -238,5 +264,18 @@ export default{
         confirm: 'Confirm',
         cancel: 'Cancel',
         addElementPrompt: 'Do you want to add this element?',
+    },
+    invite:{
+        fill_out_invitation_code: 'Invitation Code',
+        detail: 'Invite friends to use the system together. Once your invitation code is bound by a new user, both parties will get monitoring times. The more people who use your invitation code, the more monitoring times you will accumulate. A user can only bind an invitation code once.',
+        verify: 'Verify',
+        invitation_code: 'Invitation Code',
+        copy: 'Copy',
+        create_invitation_code: 'Create Invitation Code',
+        invitation_link: 'Invitation Link',
+        my_invition: 'My Invitation',
+        create_time: 'Created Time',
+        email: 'Email',
+        please_fill_out_code: 'Please Enter the Other Party Invitation Code'
     }
 }

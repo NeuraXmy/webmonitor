@@ -1,49 +1,42 @@
 <template>
     <el-card>
-        <el-form ref="MonitorRef" :rules="verifyRules" :model="verifyForm" label-width="100px" class="form_style">
-            <el-form-item label="填写邀请码" prop="code">
+        <el-form ref="MonitorRef" :rules="verifyRules" :model="verifyForm" label-width="130px" class="form_style">
+            <el-form-item :label="$t('invite.fill_out_invitation_code')" prop="code">
                 <el-col :span="10">
-                    <el-input v-model="verifyForm.invitation_code" placeholder="请输入对方邀请码" :disabled="invited"></el-input>
+                    <el-input v-model="verifyForm.invitation_code" :placeholder="$t('invite.please_fill_out_code')" :disabled="invited"></el-input>
                 </el-col>
                 <el-col :span="10" style="margin-left: 20px;">
-                    <el-button type="primary" round @click="verifyInvition" :loading="verify_Code_loading">验证</el-button>
+                    <el-button type="primary" round @click="verifyInvition" :loading="verify_Code_loading">{{$t('invite.verify')}}</el-button>
                 </el-col>
             </el-form-item>
         </el-form>
-        <el-text class="mx-1" size="small">邀请好友一起使用系统，您的邀请码一旦被新用户绑定，双方都会获得监控次数，使用您的邀请码人数越多，您获得的监控次数也会累加，一个用户只能绑定一次邀请码。</el-text>
+        <el-text class="mx-1" size="small">{{$t('invite.detail')}}</el-text>
     </el-card>
     <el-card style="margin-top: 20px;">
         <div style="display: flex; justify-content: space-between;">
             <div>
-                <span>邀请码     
+                <span>{{$t('invite.invitation_code')}}     
                     <el-text class="mx-1" size="small">{{ InvitionCode }}</el-text>
-                    <el-button type="primary" link @click="copyInvitationCode">复制</el-button>
+                    <el-button type="primary" link @click="copyInvitationCode">{{$t('invite.copy')}}</el-button>
                 </span>
             </div>
             <div style="display: flex; justify-content: flex-end;">
-                <el-button type="primary" round @click="CreateInvition" :loading="Create_Code_loading">生成邀请码</el-button>
+                <el-button type="primary" round @click="CreateInvition" :loading="Create_Code_loading">{{$t('invite.create_invitation_code')}}</el-button>
             </div>
         </div>
         <div>
-            <span>邀请链接  
+            <span>{{$t('invite.invitation_link')}}  
                 <el-text class="mx-1" size="small">{{ InvitionLink }}</el-text>
-                <el-button type="primary" link @click="copyInvitationLink">复制</el-button>
+                <el-button type="primary" link @click="copyInvitationLink">{{$t('invite.copy')}}</el-button>
             </span>
         </div>
     </el-card>
     <el-card style="margin-top: 20px;">
-        <span>我的邀请</span>
+        <span>{{$t('invite.my_invition')}}</span>
         <el-row>
             <el-table v-loading="loading" :data="InviteList" style="width: 100%">
-                <el-table-column prop="email" label="邮箱" width="1000" />
-                <el-table-column prop="create_time" label="创建时间" width="200" />
-                <!-- <el-table-column fixed="right" prop="edit" label="Edit" width="300">
-                    <template #default="scope">
-                        <el-button size="small" @click="WatchEdit(scope.row)"
-                        >{{$t('monitor.table.edit')}}</el-button
-                        >
-                    </template>
-                </el-table-column> -->
+                <el-table-column prop="email" :label="$t('invite.email')" width="1000" />
+                <el-table-column prop="create_time" :label="$t('invite.create_time')" width="200" />
             </el-table>
             <el-pagination
                 v-model:current-page="queryPage.page"

@@ -2,8 +2,8 @@
     <div>
         <el-breadcrumb>
             <el-breadcrumb-item :to="{ path: '/home' }">{{ $t('orders.home') }}</el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/orders' }">我的订单</el-breadcrumb-item>
-            <el-breadcrumb-item>更换支付</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/orders' }">{{ $t('orders.myOrders') }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ $t('orders.change_payment') }}</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card v-loading="loading">
             <el-container>
@@ -17,10 +17,10 @@
                     </el-row>
                 </el-header>
                 <el-main>
-                    <h4>修改卡号</h4>
+                    <h4>{{ $t('orders.change_card') }}</h4>
                     <form id="payment-form" style="margin-bottom: 20px;">
                         <div id="card-element"></div>
-                        <el-button style="margin-top: 20px;" type="primary" plain @click="this.okRevisePayment = true" >保存</el-button>
+                        <el-button style="margin-top: 20px;" type="primary" plain @click="this.okRevisePayment = true" >{{ $t('orders.save') }}</el-button>
                     </form>
                 </el-main>
             </el-container>
@@ -31,7 +31,7 @@
         width="30%"
         align-center
         >
-        <span>是否修改续费卡号。</span>
+        <span>{{ $t('orders.okRevisePayment') }}</span>
         <template #footer>
             <span class="dialog-footer">
             <el-button @click="okRevisePayment = false">{{$t('packages.cancel')}}</el-button>

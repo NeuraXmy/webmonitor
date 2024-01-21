@@ -2,30 +2,22 @@
     <div>
         <el-breadcrumb>
             <el-breadcrumb-item :to="{ path: '/home' }">{{ $t('orders.home') }}</el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/orders' }">我的订单</el-breadcrumb-item>
-            <el-breadcrumb-item>支付详单</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/orders' }">{{ $t('orders.myOrders') }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ $t('orders.payment_detail') }}</el-breadcrumb-item>
         </el-breadcrumb>
         <el-card>
             <el-row>
                 <el-table v-loading="loading" :data="PayList" style="width: 100%">
                     <el-table-column prop="id" label="id" width="100" />
-                    <el-table-column prop="name" label="昵称" width="150" />
-                    <el-table-column prop="create_time" label="创建时间" width="200" />
-                    <el-table-column prop="status" label="支付状态" width="100" >
+                    <el-table-column prop="name" :label="$t('orders.nickname')" width="150" />
+                    <el-table-column prop="create_time" :label="$t('orders.createTime')" width="200" />
+                    <el-table-column prop="status" :label="$t('orders.payment_state')" width="200" >
                         <template #default="scope">
-                            <span v-if="scope.row.status === 2">支付成功</span>
-                            <span v-else>支付失败</span>
+                            <span v-if="scope.row.status === 2">{{ $t('orders.payment_success') }}</span>
+                            <span v-else>{{ $t('orders.payment_cancel') }}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="pay_time" label="消费时间" width="200" />
-                    <!-- <el-table-column prop="period_type" :label="$t('orders.period')" width="60" /> -->
-                    <!-- <el-table-column prop="edit" label="操作" width="100">
-                        <template #default="scope">
-                            <el-button size="small" @click="this.okUnsubscribe = true, this.UnsubscribeID = scope.row.id"
-                                >立即停用</el-button
-                            >
-                        </template> 
-                    </el-table-column> -->
+                    <el-table-column prop="pay_time" :label="$t('orders.pay_time')" width="200" />
                 </el-table>
                 <el-pagination
                     v-model:current-page="queryPage.page"
@@ -77,7 +69,7 @@ export default {
             })
             if(res.status !== 200) return  this.$message.error(res.msg)
             this.$message.success(res.msg)
-            console.log(res)
+            // console.log(res)
             this.loading = false
             this.TotalPages = res.data.total
             this.PayList = res.data.items
